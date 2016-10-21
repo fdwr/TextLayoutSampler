@@ -1,0 +1,50 @@
+TARGETNAME=LayoutTest
+TARGETTYPE=PROGRAM
+TARGET_DESTINATION=NTTEST\WINDOWSTEST\DGT\Text
+UMENTRY=wwinmain
+UMTYPE=windows
+
+_NT_TARGET_VERSION=$(_NT_TARGET_VERSION_LATEST)
+
+TEST_CODE=1
+
+SOURCES=\
+    DrawingCanvas.cpp \
+    LayoutCanvas.cpp \
+    GlyphLayoutSource.cpp \
+    LayoutEditor.cpp \
+    LayoutViewWindow.cpp \
+    LayoutInputWindow.cpp \
+    LayoutOutputWindow.cpp \
+    SystemFontsWindow.cpp \
+    MetricsOutputWindow.cpp \
+    GlyphOrientationsWindow.cpp \
+    WindowUtility.cpp \
+    AttributeList.cpp \
+    MainWindow.cpp \
+    MainWindow.rc \
+
+INCLUDES = \
+    $(INCLUDES); \
+    $(WHITE_BOX_INCLUDES); \
+
+TARGETLIBS = \
+    $(SDK_LIB_PATH)\usp10.lib \
+    $(SDK_LIB_PATH)\gdi32.lib \
+    $(TARGETLIBS) \
+    $(WHITE_BOX_TARGETLIBS) \
+    $(SDK_LIB_PATH)\user32.lib \
+    $(SDK_LIB_PATH)\kernel32.lib \
+    $(SDK_LIB_PATH)\shell32.lib \
+    $(SDK_LIB_PATH)\comctl32.lib \
+    $(SDK_LIB_PATH)\comdlg32.lib \
+    $(SDK_LIB_PATH)\ntdll.lib \
+    $(SDK_LIB_PATH)\msimg32.lib \
+    $(SDK_LIB_PATH)\gdiplus.lib \
+    $(SDK_LIB_PATH)\d2d1.lib \
+    $(SDK_LIB_PATH)\WindowsCodecs.lib \
+
+#    $(MINCORE_SDK_LIB_VPATH)\api-ms-win-core-path-l1.lib \
+
+PRECOMPILED_INCLUDE=precomp.h
+PRECOMPILED_CXX=1

@@ -2239,8 +2239,6 @@ HRESULT DrawableObjectDirect2DDrawColorBitmapGlyphRun::Draw(
     cachedGlyphRun.GetGlyphAdvancesIfNull();
     cachedGlyphRun.fontEmSize = std::max(cachedGlyphRun.fontEmSize, 0.01f);
 
-    //--MyIDWriteFontFace4 myFontFace4(fontFace_.fontFace, drawingCanvas.GetDWriteFactoryWeakRef());
-
     ComPtr<IDWriteFontFace4> fontFace4;
     IFR(fontFace_.fontFace->QueryInterface(OUT &fontFace4));
     //--DWRITE_GLYPH_IMAGE_FORMATS glyphDataFormats;
@@ -2464,8 +2462,12 @@ HRESULT DrawableObjectDirect2DDrawText::Draw(
     bool enablePixelSnapping = attributeSource.GetValue(DrawableObjectAttributePixelSnapping, true);
     bool isClipped = attributeSource.GetValue(DrawableObjectAttributeClipping, false);
 
+    auto* d2dRenderTarget = drawingCanvas.GetD2DRenderTargetWeakRef();
+    ComPtr<ID2D1DeviceContext> deviceContext;
+    d2dRenderTarget->QueryInterface(OUT &deviceContext);
+
     D2D1_DRAW_TEXT_OPTIONS drawTextOptions = D2D1_DRAW_TEXT_OPTIONS_NONE;
-    if (enableColorFonts)
+    if (enableColorFonts && deviceContext != nullptr /* Windows 8.1 added device context and color support*/)
     {
         drawTextOptions |= D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT;
     }
@@ -2478,7 +2480,6 @@ HRESULT DrawableObjectDirect2DDrawText::Draw(
         drawTextOptions |= D2D1_DRAW_TEXT_OPTIONS_CLIP;
     }
 
-    auto* d2dRenderTarget = drawingCanvas.GetD2DRenderTargetWeakRef();
     d2dRenderTarget->SetTextRenderingParams(renderingParams_.renderingParams);
     d2dRenderTarget->SetTransform(&transform.d2d);
     d2dRenderTarget->BeginDraw();

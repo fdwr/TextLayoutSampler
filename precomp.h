@@ -81,21 +81,23 @@
 #include <CommDlg.h>
 #include <ShellApi.h>
 
+#include <DWrite_3.h>
+#include <D2D1_3.h>
+#include <D2D1_3Helper.h>
+#include <D2D1Helper.h>
+#include <WinCodec.h>
+
 // hack:::
-enum DXGI_COLOR_SPACE_TYPE : INT32;
-#include "s:\grfx_dev\onecoreuap\windows\published\main\DCommon.h"
-#include "s:\grfx_dev\onecoreuap\windows\published\main\D2DBaseTypes.h"
-#include "s:\grfx_dev\onecoreuap\windows\published\main\DWrite_3.h"
+//enum DXGI_COLOR_SPACE_TYPE : INT32;
+//#include "s:\grfx_dev\onecoreuap\windows\published\main\DCommon.h"
+//#include "s:\grfx_dev\onecoreuap\windows\published\main\D2DBaseTypes.h"
+//#include "s:\grfx_dev\onecoreuap\windows\published\main\DWrite_3.h"
 //#include "s:\grfx_dev\onecoreuap\windows\published\main\d2d1_3helper.h"
-#include "s:\grfx_dev\onecoreuap\windows\published\main\d2d1effects_2.h"
-#include "s:\grfx_dev\onecoreuap\windows\published\main\D2D1_3.copy.h"
+//#include "s:\grfx_dev\onecoreuap\windows\published\main\d2d1effects_2.h"
+//#include "s:\grfx_dev\onecoreuap\windows\published\main\D2D1_3.copy.h"
 //#include "s:\grfx_dev\onecoreuap\windows\published\main\D2D1_3helper.h"
 //#include "s:\grfx_dev\onecoreuap\windows\published\main\D2D1_3.h"
-//#include <DWrite_2.h>
 // :::hack
-//#include <d2d1.h>
-#include <d2d1helper.h>
-#include <wincodec.h>
 
 #include <usp10.h>
 

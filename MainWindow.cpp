@@ -1437,6 +1437,7 @@ HRESULT MainWindow::LoadFontFileIntoDrawableObjects(_In_z_ char16_t const* fileP
 
     IFR(CreateFontCollection(dwriteFactory, ToWChar(filePath), IntLen(filePath), OUT &fontCollection));
 
+    // todo: If GetFontFamily fails, try to get the IDWriteFontFace directly, which may succeed if there are zero instances in the font.
     IFR(fontCollection->GetFontFamily(/*index*/0, OUT &fontFamily));
     IFR(fontFamily->GetFirstMatchingFont(DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STRETCH_NORMAL, DWRITE_FONT_STYLE_NORMAL, OUT &font));
 

@@ -18,6 +18,7 @@
 [Xx]64/
 [Xx]86/
 [Bb]uild/
+Win32_Debug/
 bld/
 [Bb]in/
 [Oo]bj/
@@ -59,6 +60,7 @@ artifacts/
 *.tlb
 *.tli
 *.tlh
+*.tlog
 *.tmp
 *.tmp_proj
 *.log
@@ -240,3 +242,4 @@ ModelManifest.xml
 
 # FAKE - F# Make
 .fake/
+/RemoveFontResource.vcxproj.filters

@@ -1109,3 +1109,312 @@ public:
 };
 
 #endif
+
+
+#if 0
+#include <stdint.h>
+
+struct BackwardsEndianUint32
+{
+    constexpr BackwardsEndianUint32(uint32_t n)
+        :   value_{((n>>24)&255),((n>>16)&255),((n>>8)&255),((n>>0)&255)}
+    {
+    }
+
+    // Explicit getter returning native type. Converts from file representation,
+    // which is little-endian.
+    uint32_t Get() const throw()
+    {
+        return 
+            (static_cast<uint32_t>(value_[3]) << 24) | 
+            (static_cast<uint32_t>(value_[2]) << 16) | 
+            (static_cast<uint32_t>(value_[1]) << 8) | 
+            value_[0];
+    }
+
+    // Implicit conversion to native type.
+    operator uint32_t() const throw()
+    {
+        return Get();
+    }
+
+    void Set(uint32_t v) throw()
+    {
+        value_[0] = uint8_t(v);
+        value_[1] = uint8_t(v >> 8);
+        value_[2] = uint8_t(v >> 16);
+        value_[3] = uint8_t(v >> 24);
+    }
+
+    BackwardsEndianUint32& operator =(uint32_t v) throw()
+    {
+        Set(v);
+        return *this;
+    }
+
+    uint8_t value_[4];
+};
+
+
+static const BackwardsEndianUint32 g_n[] = {23};
+#endif
+
+#if 0 // todo:delete
+void ExportSvgs(char16_t const* fileInputPath, char16_t const* fileOutputPattern)
+{
+    std::vector<uint8_t> fileBytes;
+    ReadBinaryFile(fileInputPath, OUT fileBytes);
+    auto fileBytesArrayRef = make_array_ref(fileBytes);
+    auto recastFileBytes = fileBytesArrayRef.reinterpret_as<char>();
+    std::string fileChars(recastFileBytes.data(), recastFileBytes.size());
+    std::string xmlHeader("<?xml");
+    std::u16string filePath;
+    int i = 0;
+    for (size_t begin = 0; begin < fileChars.size(); )
+    {
+        auto end = fileChars.find(xmlHeader, begin+1);
+        if (end == std::string::npos)
+        {
+            end = fileChars.size();
+        }
+        GetFormattedString(OUT filePath, fileOutputPattern, i);
+        WriteBinaryFile(filePath.data(), fileChars.data() + begin, end - begin);
+        begin = end;
+        ++i;
+    }
+}
+
+//ExportSvgs(u"D:/fonts/color/svg/Emoji One/EmojiOne-Regular_10014h_BC6DF4h.svg", u"D:/fonts/color/svg/Emoji One/EmojiOne-Regular_%003d.svg");
+//ExportSvgs(u"D:/fonts/color/svg/Segoe UI Emoji/seguiemj_SVG_EC878h_2CE4FEh.svg", u"D:/fonts/color/svg/Segoe UI Emoji/seguiemj_SVG_%003d.svg");
+//ExportSvgs(u"D:/fonts/color/svg/Source Code Pro/SourceCodePro-Regular_2CF70h_1BB7h.svg", u"D:/fonts/color/svg/Source Code Pro/SourceCodePro-Regular_%003d.svg");
+//ExportSvgs(u"D:/fonts/color/svg/Trajan Color/TrajanColor-SharedSVG_A90h_8352h.otf.svg", u"D:/fonts/color/svg/Trajan Color/TrajanColor-SharedSVG_%003d.svg");
+
+
+#endif
+
+#if 0 // todo:delete
+void ExportPngs(char16_t const* fileInputPath, char16_t const* fileOutputPattern)
+{
+    std::vector<uint8_t> fileBytes;
+    ReadBinaryFile(fileInputPath, OUT fileBytes);
+    auto fileBytesArrayRef = make_array_ref(fileBytes);
+    auto recastFileBytes = fileBytesArrayRef.reinterpret_as<char>();
+    std::string fileChars(recastFileBytes.data(), recastFileBytes.size());
+    std::string pngHeader("/x0089PNG");
+    std::u16string filePath;
+    int i = 0;
+    size_t begin = fileChars.find(pngHeader, 0);
+    while (begin < fileChars.size())
+    {
+        auto end = fileChars.find(pngHeader, begin+1);
+        if (end == std::string::npos)
+        {
+            end = fileChars.size();
+        }
+        GetFormattedString(OUT filePath, fileOutputPattern, i);
+        WriteBinaryFile(filePath.data(), fileChars.data() + begin, end - begin);
+        begin = end;
+        ++i;
+    }
+}
+
+//ExportPngs(u"d:/fonts/color/sbix/Apple Color Emoji 2015-08-28.ttf", u"d:/fonts/color/sbix/Apple Color Emoji Pngs/Apple Color Emoji 2015-08-28_%003d.png");
+//ExportPngs(u"d:/fonts/color/sbix/Ringo-Blingo-sbixOFL-2.003.ttf", u"d:/fonts/color/sbix/Ringo-Blingo Pngs/Ringo-Blingo-sbixOFL-2.003_%003d.png");
+//ExportPngs(u"C:/Windows/Resources/Themes/aero/aero.msstyles", u"c:/temp/aero/aero_%003d.png");
+
+
+
+#endif
+
+
+
+#if 0
+
+__interface DECLSPEC_UUID("100cad4e-d6af-4c9e-8a08-d695b11caa49") IFoo
+{
+    virtual int f1() abstract;
+    virtual int f2() abstract;
+};
+
+__interface DECLSPEC_UUID("200cad4e-d6af-4c9e-8a08-d695b11caa49") IFooA : IFoo
+{
+    virtual int f3() abstract;
+    virtual int f4() abstract;
+};
+
+__interface DECLSPEC_UUID("300cad4e-d6af-4c9e-8a08-d695b11caa49") IFooA2 : IFooA
+{
+    virtual int f5() abstract;
+    virtual int f6() abstract;
+};
+
+__interface DECLSPEC_UUID("400cad4e-d6af-4c9e-8a08-d695b11caa49") IFooB : IFoo
+{
+    virtual int f7() abstract;
+    virtual int f8() abstract;
+};
+
+class Foo : public IFooA2, public IFooB
+{
+    virtual int f1() { return 1; }
+    virtual int f2() { return 2; }
+    virtual int f3() { return 3; }
+    virtual int f4() { return 4; }
+    virtual int f5() { return 5; }
+    virtual int f6() { return 6; }
+    virtual int f7() { return 7; }
+    virtual int f8() { return 8; }
+};
+
+
+#if 0
+template <typename T0, typename T1>
+class TypeListNode
+{
+public:
+    typedef T0 Head;
+    typedef T1 Tail;
+};
+
+template <typename... Ts>
+struct TypeList
+{};
+
+template <typename T, typename... Ts>
+struct TypeList<T, Ts...> : TypeList<Ts...>
+{
+    //TypeList(T t, Ts... ts) : TypeList<Ts...>(ts...), tail(t) {}
+public:
+    using Head = T0;
+    using Tail = T1;
+};
+#endif
+
+struct GuidAndPointerAdjustment
+{
+    GUID guid;
+    ptrdiff_t pointerAdjustment;
+
+    constexpr void* AdjustPointer(void* p) const throw()
+    {
+        return reinterpret_cast<uint8_t*>(p) + pointerAdjustment;
+    }
+};
+
+template <typename BaseType, typename SupportedType>
+ptrdiff_t GetPointerAdjustment()
+{
+    return reinterpret_cast<uint8_t*>(reinterpret_cast<BaseType*>(42)) // Use any non-zero constant
+         - reinterpret_cast<uint8_t*>(static_cast<SupportedType*>(reinterpret_cast<BaseType*>(42)));
+}
+
+template <typename... Ts> struct MyTypeList {};
+
+// Variable size array of GUID and pointer adjustments.
+template <typename BaseType, typename SupportedType, typename... Ts>
+struct MyTypeList<BaseType, SupportedType, Ts...> : MyTypeList<BaseType, Ts...>
+{
+    constexpr MyTypeList()
+    :   MyTypeList<BaseType, Ts...>(),
+        entry{ __uuidof(SupportedType), GetPointerAdjustment<BaseType, SupportedType>()}
+    {}
+
+    GuidAndPointerAdjustment entry;
+};
+
+static_assert(sizeof(GuidAndPointerAdjustment) == sizeof(MyTypeList<IUnknown>), "Must be same size to treat as if array.");
+
+size_t sg = sizeof();
+size_t smt = sizeof();
+
+HRESULT QueryInterfaceImpl(
+    IID const& iid,
+    array_ref<GuidAndPointerAdjustment const> interfaces,
+    void* originalObjectPointer,
+    _Out_ void** newObjectPointer
+    )
+{
+    for (auto& i : interfaces)
+    {
+        if (i.guid == iid)
+        {
+            *newObjectPointer = i.AdjustPointer(originalObjectPointer);
+            return S_OK;
+        }
+    }
+    *newObjectPointer = nullptr;
+    return E_NOTIMPL;
+}
+
+
+using MyInterfaceList = MyTypeList<Foo, IFooA, IFooA2, IFooB>;
+static MyInterfaceList g_myInterfaceList;
+
+
+class IThing
+{
+    virtual HRESULT STDMETHODCALLTYPE QueryInterface(IID const& iid, _Out_ void** object) throw()
+    {
+        auto interfaceArrayRef = make_array_ref(&g_myInterfaceList.entry, sizeof(g_myInterfaceList) / sizeof(g_myInterfaceList.entry));
+        return QueryInterfaceImpl(iid, interfaceArrayRef, this, object);
+    }
+};
+
+
+//
+//template <typename ObjectType>
+//void MyQueryInterface(ObjectType* object, void** newObject)
+//{
+//    *newObject = nullptr;
+//}
+
+
+void foo(IUnknown* i)
+{
+    ;
+}
+
+
+void foo()
+{
+    IDWriteTextLayout2* tl = nullptr;
+    foo(tl);
+
+    Foo f;
+
+    size_t s = sizeof(MyInterfaceList);
+    size_t sg = sizeof(GuidAndPointerAdjustment);
+    size_t smt = sizeof(MyTypeList<IUnknown>);
+    size_t si = sizeof(g_myInterfaceList);
+    s; sg; smt; si;
+
+    Foo*    foo    = static_cast<Foo*>(&f);
+    IFoo*   ifoo   = static_cast<IFoo*>(static_cast<IFooA*>(&f));
+    IFooA*  ifooa  = static_cast<IFooA*>(&f);
+    IFooA2* ifooa2 = static_cast<IFooA2*>(&f);
+    IFooB*  ifoob  = static_cast<IFooB*>(&f);
+
+    foo    ;
+    ifoo   ;
+    ifooa  ;
+    ifooa2 ;
+    ifoob  ;
+
+    Foo* bogusfoo = reinterpret_cast<Foo*>(65536);
+    Foo*    nullptrfoo    = static_cast<Foo*>(static_cast<Foo*>(bogusfoo));
+    IFoo*   nullptrifoo   = static_cast<IFoo*>(static_cast<IFooA*>(static_cast<Foo*>(bogusfoo)));
+    IFooA*  nullptrifooa  = static_cast<IFooA*>(static_cast<Foo*>(bogusfoo));
+    IFooA2* nullptrifooa2 = static_cast<IFooA2*>(static_cast<Foo*>(bogusfoo));
+    IFooB*  nullptrifoob  = static_cast<IFooB*>(static_cast<Foo*>(bogusfoo));
+
+    nullptrfoo    ;
+    nullptrifoo   ;
+    nullptrifooa  ;
+    nullptrifooa2 ;
+    nullptrifoob  ;
+}
+
+
+
+#endif
+

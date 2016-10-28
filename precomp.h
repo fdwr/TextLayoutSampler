@@ -87,17 +87,20 @@
 #include <D2D1Helper.h>
 #include <WinCodec.h>
 
-// hack:::
-//enum DXGI_COLOR_SPACE_TYPE : INT32;
-//#include "s:\grfx_dev\onecoreuap\windows\published\main\DCommon.h"
-//#include "s:\grfx_dev\onecoreuap\windows\published\main\D2DBaseTypes.h"
-//#include "s:\grfx_dev\onecoreuap\windows\published\main\DWrite_3.h"
-//#include "s:\grfx_dev\onecoreuap\windows\published\main\d2d1_3helper.h"
-//#include "s:\grfx_dev\onecoreuap\windows\published\main\d2d1effects_2.h"
-//#include "s:\grfx_dev\onecoreuap\windows\published\main\D2D1_3.copy.h"
-//#include "s:\grfx_dev\onecoreuap\windows\published\main\D2D1_3helper.h"
-//#include "s:\grfx_dev\onecoreuap\windows\published\main\D2D1_3.h"
-// :::hack
+#include <DxgiFormat.h>
+#include <DxgiType.h>
+#include <Dxgi.h>
+#include <DCommon.h>
+#include <DWrite_1.h>
+#include <DWrite_2.h>
+#include <DWrite_3.h>
+#include <D2DBaseTypes.h>
+#include <D2D1_1.h>
+#include <D2D1_2.h>
+#include <D2D1_3.h>
+#include <D2D1_1helper.h>
+#include <D2D1_2helper.h>
+#include <D2D1_3helper.h>
 
 #include <usp10.h>
 

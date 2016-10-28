@@ -2241,8 +2241,6 @@ HRESULT DrawableObjectDirect2DDrawColorBitmapGlyphRun::Draw(
 
     ComPtr<IDWriteFontFace4> fontFace4;
     IFR(fontFace_.fontFace->QueryInterface(OUT &fontFace4));
-    //--DWRITE_GLYPH_IMAGE_FORMATS glyphDataFormats;
-    //--myFontFace4.GetGlyphDataFormats(OUT &glyphDataFormats);
 
     ComPtr<IDWriteFactory4> dwriteFactory4;
     IFR(drawingCanvas.GetDWriteFactoryWeakRef()->QueryInterface(OUT &dwriteFactory4));
@@ -2255,6 +2253,7 @@ HRESULT DrawableObjectDirect2DDrawColorBitmapGlyphRun::Draw(
 
     auto glyphImageFormats = fontFace4->GetGlyphImageFormats();
 
+    // Prioritize by quality.
     if (glyphImageFormats & DWRITE_GLYPH_IMAGE_FORMATS_PREMULTIPLIED_B8G8R8A8)
         actualGlyphDataFormat = DWRITE_GLYPH_IMAGE_FORMATS_PREMULTIPLIED_B8G8R8A8;
     else if (glyphImageFormats & DWRITE_GLYPH_IMAGE_FORMATS_PNG)

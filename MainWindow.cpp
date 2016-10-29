@@ -1740,9 +1740,13 @@ HRESULT MainWindow::ExportFontGlyphData()
     // Save the font data finally.
 
     HRESULT hr = DrawableObject::ExportFontGlyphData(drawableObject, drawingCanvas, filePath);
-    if (SUCCEEDED(hr))
+    if (hr == S_OK)
     {
         AppendLog(u"Exported glyph data to file path '%s'.\r\n", filePath.c_str());
+    }
+    else if (SUCCEEDED(hr))
+    {
+        ShowMessageAndAppendLog(u"The font had no SVG/PNG/TIFF/JPEG glyph image data to export (just TrueType/CFF outlines).\r\n");
     }
     else
     {

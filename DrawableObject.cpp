@@ -1084,6 +1084,15 @@ void AppendNumber(
 }
 
 
+constexpr DWRITE_GLYPH_IMAGE_FORMATS c_imageDataFormats =
+    DWRITE_GLYPH_IMAGE_FORMATS_SVG  |
+    DWRITE_GLYPH_IMAGE_FORMATS_PNG  |
+    DWRITE_GLYPH_IMAGE_FORMATS_JPEG |
+    DWRITE_GLYPH_IMAGE_FORMATS_TIFF |
+    DWRITE_GLYPH_IMAGE_FORMATS_PREMULTIPLIED_B8G8R8A8;
+    // Exclude TrueType, CFF, COLR
+
+
 HRESULT DrawableObject::ExportFontGlyphData(
     IAttributeSource& attributeSource,
     DrawingCanvas& drawingCanvas,
@@ -1104,6 +1113,11 @@ HRESULT DrawableObject::ExportFontGlyphData(
     IFR(dwriteFontFace.fontFace->QueryInterface(OUT &dwriteFontFace4));
     dwriteFontFace.fontFace->GetMetrics(OUT &fontMetrics);
 
+    DWRITE_GLYPH_IMAGE_FORMATS glyphImageFormats = dwriteFontFace4->GetGlyphImageFormats();
+
+    if ((glyphImageFormats & c_imageDataFormats) == DWRITE_GLYPH_IMAGE_FORMATS_NONE)
+        return S_FALSE;
+
     // Map every glyph in the font to a Unicode character for the file naming.
     {
         std::vector<uint32_t> unicodeCharacters(UnicodeTotal);
@@ -1123,15 +1137,10 @@ HRESULT DrawableObject::ExportFontGlyphData(
 
     for (uint32_t glyphId = 0, glyphCount = dwriteFontFace.fontFace->GetGlyphCount(); glyphId < glyphCount; ++glyphId)
     {
-        DWRITE_GLYPH_IMAGE_FORMATS glyphImageFormats = DWRITE_GLYPH_IMAGE_FORMATS_NONE;
         dwriteFontFace4->GetGlyphImageFormats(glyphId, 0, UINT32_MAX, OUT &glyphImageFormats);
 
         // Mask out any unknown formats (or monochrome outline formats like TrueType and CFF).
-        glyphImageFormats &= DWRITE_GLYPH_IMAGE_FORMATS_SVG |
-                             DWRITE_GLYPH_IMAGE_FORMATS_PNG |
-                             DWRITE_GLYPH_IMAGE_FORMATS_JPEG |
-                             DWRITE_GLYPH_IMAGE_FORMATS_TIFF |
-                             DWRITE_GLYPH_IMAGE_FORMATS_PREMULTIPLIED_B8G8R8A8;
+        glyphImageFormats &= c_imageDataFormats;
 
         // Enumerate all the image formats found for this glyph.
         for (DWRITE_GLYPH_IMAGE_FORMATS currentGlyphImageFormat = DWRITE_GLYPH_IMAGE_FORMATS(1);

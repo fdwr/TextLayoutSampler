@@ -2031,14 +2031,6 @@ HRESULT DrawColorGlyphRun(
 }
 
 
-struct IntSequence
-{
-    IntSequence (int initialValue = 0) : value(initialValue) { }
-    int operator() () { return value++; }
-    int value;
-};
-
-
 // Return a per-character (0..UnicodeTotal-1) coverage count for all the
 // font faces, where the array index corresponds to each Unicode code point
 // and is incremented once for each font that supports it. If a specific
@@ -2062,13 +2054,13 @@ HRESULT GetFontCharacterCoverageCounts(
 
     coverageCounts.resize(unicodeCharactersCount);
     std::vector<char32_t> allUnicodeCharacters;
-    std::vector<uint16_t> glyphs(unicodeCharactersCount);
+    std::vector<uint16_t> glyphIds(unicodeCharactersCount);
 
     if (useEntireUnicodeRange)
     {
         // No list of characters given, so return the whole Unicode array.
         allUnicodeCharacters.resize(unicodeCharactersCount);
-        std::generate(allUnicodeCharacters.begin(), allUnicodeCharacters.end(), IntSequence());
+        std::iota(allUnicodeCharacters.begin(), allUnicodeCharacters.end(), 0);
         unicodeCharacters = allUnicodeCharacters.data();
     }
 
@@ -2077,10 +2069,10 @@ HRESULT GetFontCharacterCoverageCounts(
     for (uint32_t i = 0; i < fontFacesCount; ++i)
     {
         auto* counts = coverageCounts.data();
-        IFR(fontFaces[i]->GetGlyphIndices(reinterpret_cast<uint32_t const*>(unicodeCharacters), unicodeCharactersCount, glyphs.data()));
+        IFR(fontFaces[i]->GetGlyphIndices(reinterpret_cast<uint32_t const*>(unicodeCharacters), unicodeCharactersCount, glyphIds.data()));
         for (char32_t ch = 0; ch < unicodeCharactersCount; ++ch)
         {
-            if (glyphs[ch] != 0)
+            if (glyphIds[ch] != 0)
             {
                 if (++counts[ch] == 0)
                     counts[ch] = UINT16_MAX;

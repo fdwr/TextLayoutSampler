@@ -28,6 +28,7 @@ HRESULT EnumerateMatchingFiles(
 
 const char16_t* FindFileNameStart(array_ref<const char16_t> fileName);
 
+// Returns a pointer to the extension found or the end of the string if not found.
 const char16_t* FindFileNameExtension(array_ref<const char16_t> fileName);
 
 bool FileContainsWildcard(array_ref<const char16_t> fileName);

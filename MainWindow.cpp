@@ -743,10 +743,8 @@ void MainWindow::UpdateAttributeValuesEdit()
     char16_t const* cueBannerText = u"<no attributes selected>";
     bool hasMultilineText = false;
 
-    auto attributeList = GetWindowFromId(hwnd_, IdcAttributesList);
-    std::vector<uint32_t> attributeIndices = GetListViewMatchingIndices(attributeList, LVNI_SELECTED, false);
+    std::vector<uint32_t> attributeIndices = GetSelectedAttributeIndices();
     std::vector<uint32_t> drawableObjectIndices = GetSelectedDrawableObjectIndices();
-    ListViewRemapIndicesToLparam(attributeList, IN OUT attributeIndices);
 
     // Set the edit control's cue banner text based on which attributes are selected.
     if (!attributeIndices.empty())
@@ -1072,6 +1070,24 @@ MainWindow::DialogProcResult CALLBACK MainWindow::ProcessDragAndDrop(HWND hwnd, 
 std::vector<uint32_t> MainWindow::GetSelectedDrawableObjectIndices()
 {
     return GetListViewMatchingIndices(GetWindowFromId(hwnd_, IdcDrawableObjectsList), LVNI_SELECTED,  /*returnAllIfNoMatch*/true);
+}
+
+
+std::vector<uint32_t> MainWindow::GetSelectedAttributeIndices()
+{
+    // The user can select multiple attributes via control+click.
+    // If none are selected, use the previous selected attribute,
+    // which can occur if a filter hides the attributes.
+    auto attributeList = GetWindowFromId(hwnd_, IdcAttributesList);
+
+    std::vector<uint32_t> attributeIndices = GetListViewMatchingIndices(attributeList, LVNI_SELECTED, /*returnAllIfNoMatch*/false);
+    std::vector<uint32_t> drawableObjectIndices = GetSelectedDrawableObjectIndices();
+    ListViewRemapIndicesToLparam(attributeList, IN OUT attributeIndices);
+
+    if (attributeIndices.empty() && selectedAttributeIndex_ < DrawableObjectAttributeTotal)
+        attributeIndices.push_back(selectedAttributeIndex_);
+
+    return attributeIndices;
 }
 
 
@@ -1610,11 +1626,35 @@ HRESULT MainWindow::GetSelectedDrawableObject(_Out_ uint32_t& selectedDrawableOb
 
     if (index >= drawableObjects_.size())
     {
-        ShowMessageAndAppendLog(u"Select exactly one drawable object first.");
-        return S_FALSE;
+        ShowMessageAndAppendLog(u"Select one drawable object first.");
+        return E_BOUNDS;
     }
 
     selectedDrawableObject = index;
+    return S_OK;
+}
+
+
+HRESULT MainWindow::GetFileOrFamilyName(
+    uint32_t selectedDrawableObjectIndex,
+    _Out_ std::u16string& fileOrFamilyName
+    )
+{
+    if (selectedDrawableObjectIndex >= drawableObjects_.size())
+        return E_BOUNDS;
+
+    auto& drawableObject = drawableObjects_[selectedDrawableObjectIndex];
+    auto originalFontFilePath = drawableObject.GetString(DrawableObjectAttributeFontFilePath);
+    if (!originalFontFilePath.empty())
+    {
+        fileOrFamilyName.assign(originalFontFilePath.data(), originalFontFilePath.size());
+    }
+    else
+    {
+        auto familyName = drawableObject.GetString(DrawableObjectAttributeFontFamily);
+        fileOrFamilyName.assign(familyName.data(), familyName.size());
+    }
+
     return S_OK;
 }
 
@@ -1625,46 +1665,21 @@ HRESULT MainWindow::SaveSelectedFontFile()
     auto const* filters = u"Font files\0" u"*.ttf;*.otf;*.ttc;*.cff\0"
                           u"All files (*)\0" u"*\0";
 
-    // Get the first selected drawable item.
+    // Get the first selected drawable item to use either
+    // the existing file path or family name.
     uint32_t selectedDrawableObjectIndex;
-    auto hr = GetSelectedDrawableObject(OUT selectedDrawableObjectIndex);
-    if (hr != S_OK)
-        return hr;
-
-    // Get a default file name, either from the existing file path or family name.
-    {
-        auto& drawableObject = drawableObjects_[selectedDrawableObjectIndex];
-        auto originalFontFilePath = drawableObject.GetString(DrawableObjectAttributeFontFilePath);
-        if (!originalFontFilePath.empty())
-        {
-            filePath.assign(originalFontFilePath.data(), originalFontFilePath.size());
-        }
-        else
-        {
-            auto familyName = drawableObject.GetString(DrawableObjectAttributeFontFamily);
-            if (!familyName.empty())
-            {
-                filePath.assign(familyName.data(), familyName.size());
-            }
-        }
-    }
+    IFR(GetSelectedDrawableObject(OUT selectedDrawableObjectIndex));
+    IFR(GetFileOrFamilyName(selectedDrawableObjectIndex, OUT filePath));
 
     if (!GetSaveFileName(hwnd_, filePath.c_str(), filters, u"ttf", OUT filePath))
         return S_OK;
-
-    // Get the first selected drawable item.
-    if (selectedDrawableObjectIndex >= drawableObjects_.size())
-    {
-        ShowMessageAndAppendLog(u"No drawable objects selected");
-        return S_FALSE;
-    }
 
     DrawingCanvasControl& drawingCanvas = *DrawingCanvasControl::GetClass(GetWindowFromId(hwnd_, IdcDrawingCanvas));
     auto& drawableObject = drawableObjects_[selectedDrawableObjectIndex];
 
     // Save the font data finally.
 
-    hr = DrawableObject::SaveFontFile(drawableObject, drawingCanvas, filePath.c_str());
+    HRESULT hr = DrawableObject::SaveFontFile(drawableObject, drawingCanvas, filePath.c_str());
     if (SUCCEEDED(hr))
     {
         AppendLog(u"Wrote font to file '%s'.\r\n", filePath.c_str());
@@ -1686,9 +1701,7 @@ HRESULT MainWindow::SaveSelectedFontFile()
 HRESULT MainWindow::CopyAllFontCharactersToClipboard()
 {
     uint32_t selectedDrawableObjectIndex;
-    auto hr = GetSelectedDrawableObject(OUT selectedDrawableObjectIndex);
-    if (hr != S_OK)
-        return hr;
+    IFR(GetSelectedDrawableObject(OUT selectedDrawableObjectIndex));
 
     DrawingCanvasControl& drawingCanvas = *DrawingCanvasControl::GetClass(GetWindowFromId(hwnd_, IdcDrawingCanvas));
     auto& drawableObject = drawableObjects_[selectedDrawableObjectIndex];
@@ -1698,6 +1711,45 @@ HRESULT MainWindow::CopyAllFontCharactersToClipboard()
     IFR(CopyTextToClipboard(hwnd_, characters));
 
     return S_OK;
+}
+
+
+HRESULT MainWindow::ExportFontGlyphData()
+{
+    std::u16string filePath;
+    auto const* filters = u"Font glyph files\0" u"*.svg;*.png;*.tiff;*.tif;*.jpeg;*.jpg\0"
+                          u"All files (*)\0" u"*\0";
+
+    // Get the first selected drawable item.
+    uint32_t selectedDrawableObjectIndex;
+    IFR(GetSelectedDrawableObject(OUT selectedDrawableObjectIndex));
+    IFR(GetFileOrFamilyName(selectedDrawableObjectIndex, OUT filePath));
+
+    // Remove any extension, appending underscore to separate.
+    filePath.erase(FindFileNameExtension(filePath) - filePath.data());
+    if (!filePath.empty() && filePath.back() == '.')
+        filePath.pop_back();
+    filePath += u"_";
+
+    if (!GetSaveFileName(hwnd_, filePath.c_str(), filters, nullptr, OUT filePath))
+        return S_OK;
+
+    DrawingCanvasControl& drawingCanvas = *DrawingCanvasControl::GetClass(GetWindowFromId(hwnd_, IdcDrawingCanvas));
+    auto& drawableObject = drawableObjects_[selectedDrawableObjectIndex];
+
+    // Save the font data finally.
+
+    HRESULT hr = DrawableObject::ExportFontGlyphData(drawableObject, drawingCanvas, filePath);
+    if (SUCCEEDED(hr))
+    {
+        AppendLog(u"Exported glyph data to file path '%s'.\r\n", filePath.c_str());
+    }
+    else
+    {
+        ShowMessageAndAppendLog(u"Could not write glyph data to files '%s'. Error = 0x%08X", filePath.c_str(), hr);
+    }
+
+    return hr;
 }
 
 
@@ -1760,10 +1812,8 @@ void MainWindow::UpdateDrawableObjectValuesUsing(std::u16string const& newString
     if (drawableObjects_.empty())
         return;
 
-    auto attributeList = GetWindowFromId(hwnd_, IdcAttributesList);
-    std::vector<uint32_t> attributeIndices = GetListViewMatchingIndices(attributeList, LVNI_SELECTED, /*returnAllIfNoMatch*/false);
+    std::vector<uint32_t> attributeIndices = GetSelectedAttributeIndices();
     std::vector<uint32_t> drawableObjectIndices = GetSelectedDrawableObjectIndices();
-    ListViewRemapIndicesToLparam(attributeList, IN OUT attributeIndices);
 
     if (drawableObjectIndices.empty() || attributeIndices.empty())
         return;
@@ -1823,11 +1873,11 @@ void MainWindow::ChangeSettingsVisibility(SettingsVisibility settingsVisibility)
 }
 
 
-MainWindow::DialogProcResult CALLBACK MainWindow::OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
+MainWindow::DialogProcResult CALLBACK MainWindow::OnCommand(HWND hwnd, int id, HWND hwndControl, UINT codeNotify)
 {
     #if DEBUG_SHOW_WINDOWS_MESSAGES
     if (id != IdcLog)
-        AppendLog(L"Message=%d, id=%d, ctl=%08X, notify=%d\r\n", WM_COMMAND, id, hwndCtl, codeNotify);
+        AppendLog(L"Message=%d, id=%d, ctl=%08X, notify=%d\r\n", WM_COMMAND, id, hwndControl, codeNotify);
     #endif
 
     // Parse the menu selections:
@@ -1904,7 +1954,7 @@ MainWindow::DialogProcResult CALLBACK MainWindow::OnCommand(HWND hwnd, int id, H
                 // Update the values list if single line edit to reprioritize values.
                 // Avoid doing so for multi-line text controls which are long and won't
                 // match choices in the list anyway usually.
-                bool isMultiline = !!(GetWindowStyle(hwndCtl) & ES_MULTILINE);
+                bool isMultiline = !!(GetWindowStyle(hwndControl) & ES_MULTILINE);
                 if (!isMultiline)
                     isTypingAttributeValueToFilter_ = true;
 
@@ -1993,6 +2043,10 @@ MainWindow::DialogProcResult CALLBACK MainWindow::OnCommand(HWND hwnd, int id, H
         SelectFontFile();
         break;
 
+    case IdcAssortedActions:
+        OnAssortedActions(hwndControl);
+        break;
+
     default:
         return false; // unhandled
     }
@@ -2074,7 +2128,7 @@ MainWindow::DialogProcResult CALLBACK MainWindow::OnNotification(HWND hwnd, int 
             break;
 
         //case NM_DBLCLK: Ignore clicks.
-        case LVN_ITEMACTIVATE:
+        case LVN_ITEMACTIVATE: // Double click
             {
                 // Determine which column was clicked to select the attribute in the list.
                 NMITEMACTIVATE const& itemActivate = reinterpret_cast<NMITEMACTIVATE&>(nmh);
@@ -2087,10 +2141,9 @@ MainWindow::DialogProcResult CALLBACK MainWindow::OnNotification(HWND hwnd, int 
                 // Map column to attribute
                 auto attributeListViewHwnd = GetWindowFromId(hwnd_, IdcAttributesList);
                 rowIndex = ListViewRemapLparamToIndex(attributeListViewHwnd, hitTestInfo.iSubItem);
-                if (rowIndex < 0)
-                    break;
-
                 ListView_SelectSingleVisibleItem(attributeListViewHwnd, rowIndex);
+                selectedAttributeIndex_ = DrawableObjectAttribute(hitTestInfo.iSubItem);
+
                 UpdateUi(); // Update everything now rather than deferred, so that setting focus works well.
                 HWND editHwnd = GetWindowFromId(hwnd_, IdcAttributeValuesEdit);
                 SetFocus(editHwnd);
@@ -2345,24 +2398,12 @@ MainWindow::DialogProcResult CALLBACK MainWindow::OnNotification(HWND hwnd, int 
         case BCN_DROPDOWN:
             {
                 NMBCDROPDOWN const& dropDown = reinterpret_cast<NMBCDROPDOWN&>(nmh);
-                TrackPopupMenu_Item items[] = {
-                    {IdcSaveSelectedFontFile,  u"Save font file..."},
-                    {IdcCopyAllFontCharacters, u"Copy all font characters to clipboard"},
-                };
-
-                int menuId = TrackPopupMenu(
-                    make_array_ref(items, countof(items)),
-                    dropDown.hdr.hwndFrom,
-                    hwnd_
-                    );
-
-                switch (menuId)
-                {
-                case IdcSaveSelectedFontFile: SaveSelectedFontFile(); break;
-                case IdcCopyAllFontCharacters: CopyAllFontCharactersToClipboard(); break;
-                }
+                OnAssortedActions(dropDown.hdr.hwndFrom);
             }
             break;
+
+        default:
+            return false;
         }
         break;
 
@@ -2406,7 +2447,7 @@ void MainWindow::Resize(int id)
                 /* 10 */ WindowPosition(GetWindowFromId(hwnd, IdcSettingsLight), PositionOptionsAlignTop),
                 /* 11 */ WindowPosition(GetWindowFromId(hwnd, IdcSettingsFull), PositionOptionsAlignTop),
                 /* 12 */ WindowPosition(GetWindowFromId(hwnd, IdcAssortedActions), PositionOptionsAlignTop),
-                /* 13 */ WindowPosition(GetWindowFromId(hwnd, IdcEditText), PositionOptionsFillWidth | PositionOptionsAlignTop | PositionOptionsPreNewLine),
+                /* 13 */ WindowPosition(GetWindowFromId(hwnd, IdcEditText), PositionOptionsFillWidth | PositionOptionsFillHeight | PositionOptionsAlignTop | PositionOptionsPreNewLine),
                 /* 14 */ WindowPosition(GetWindowFromId(hwnd, IdcCanvasLabelsVisible), PositionOptionsAlignTop),
                 /* 15 */ WindowPosition(GetWindowFromId(hwnd, IdcCanvasLabelsAdjacent), PositionOptionsAlignTop | PositionOptionsPostNewLine),
                 /* 16 */ WindowPosition(GetWindowFromId(hwnd, IdcDrawableObjectsList), PositionOptionsFillWidth | PositionOptionsFillHeight | PositionOptionsPreNewLine),
@@ -2418,6 +2459,7 @@ void MainWindow::Resize(int id)
                 /* 22 */ WindowPosition(GetWindowFromId(hwnd, IdcDrawingCanvas), PositionOptionsFillWidth | PositionOptionsFillHeight | PositionOptionsAlignLeft | PositionOptionsPreNewLine),
                 /* 23 */ WindowPosition(GetWindowFromId(hwnd, IdcLog), PositionOptionsFillWidth | PositionOptionsAlignTop | PositionOptionsPreNewLine),
             };
+            WindowPosition& windowPositionEditText              = windowPositions[13];
             WindowPosition& windowPositionDrawableObjectsList   = windowPositions[16];
             WindowPosition& windowPositionAttributesFilterEdit  = windowPositions[17];
             WindowPosition& windowPositionAttributesList        = windowPositions[18];
@@ -2430,6 +2472,7 @@ void MainWindow::Resize(int id)
             windowPositionDrawableObjectsList.ClampRect({0x7FFF,340});
             windowPositionAttributesList.ClampRect({340,340});
             windowPositionAttributeValuesList.ClampRect({340,340});
+            windowPositionEditText.ClampRect({0x7FFF,160});
             WindowPosition::ReflowGrid(windowPositions, uint32_t(countof(windowPositions)), clientRect, spacing, 0, PositionOptionsNone);
 
             // Resize the objects edit and list controls.
@@ -2477,6 +2520,29 @@ void MainWindow::Resize(int id)
             }
         }
         break;
+    }
+}
+
+
+void MainWindow::OnAssortedActions(HWND anchorControl)
+{
+    TrackPopupMenu_Item constexpr static items[] = {
+        {IdcSaveSelectedFontFile,  u"Save font file..."},
+        {IdcCopyAllFontCharacters, u"Copy all font characters to clipboard"},
+        {IdcExportGlyphImageData, u"Export all glyph image data..."},
+    };
+
+    int menuId = TrackPopupMenu(
+        make_array_ref(items, countof(items)),
+        anchorControl,
+        hwnd_
+        );
+
+    switch (menuId)
+    {
+    case IdcSaveSelectedFontFile: SaveSelectedFontFile(); break;
+    case IdcCopyAllFontCharacters: CopyAllFontCharactersToClipboard(); break;
+    case IdcExportGlyphImageData: ExportFontGlyphData(); break;
     }
 }
 

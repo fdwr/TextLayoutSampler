@@ -1160,7 +1160,7 @@ int MapScrollBarCodeToPosition(HWND hwnd, int barType, UINT code, int smallStep,
 
 
 int TrackPopupMenu(
-    array_ref<TrackPopupMenu_Item> items,
+    array_ref<TrackPopupMenu_Item const> items,
     HWND controlHwnd,
     HWND parentHwnd
     )

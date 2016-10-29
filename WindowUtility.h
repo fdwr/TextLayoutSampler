@@ -27,9 +27,9 @@ int GetWindowText(HWND hwnd, _Out_ std::u16string& s);
 BOOL GetWindowPos(HWND hwnd, _Out_ RECT& rect);
 
 HMENU WINAPI GetSubMenu(
-    __in HMENU parentMenu,
-    __in UINT item,
-    __in BOOL byPosition
+    HMENU parentMenu,
+    UINT item,
+    BOOL byPosition
     );
 
 struct TrackPopupMenu_Item
@@ -40,7 +40,7 @@ struct TrackPopupMenu_Item
 
 // Creates the menu given the item list.
 int TrackPopupMenu(
-    array_ref<TrackPopupMenu_Item> items,
+    array_ref<TrackPopupMenu_Item const> items,
     HWND controlHwnd,
     HWND parentHwnd
     );

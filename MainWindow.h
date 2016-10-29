@@ -67,6 +67,7 @@ public:
     HRESULT LoadDrawableObjectsSettings(_In_z_ char16_t const* filePath, bool clearExistingItems = true, bool merge = false);
     HRESULT StoreDrawableObjectsSettings(_In_z_ char16_t const* filePath);
     HRESULT SaveSelectedFontFile();
+    HRESULT ExportFontGlyphData();
     HRESULT GetSelectedDrawableObject(_Out_ uint32_t& selectedDrawableObject); // S_FALSE and ~0 if none.
     HRESULT CopyAllFontCharactersToClipboard();
     HRESULT GetLogFontFromDrawableObjects(_Out_ LOGFONT& logFont);
@@ -102,6 +103,8 @@ protected:
     HRESULT SelectFontFile();
     HRESULT SelectFontFamily();
     std::vector<uint32_t> GetSelectedDrawableObjectIndices();
+    std::vector<uint32_t> GetSelectedAttributeIndices();
+    HRESULT GetFileOrFamilyName(uint32_t selectedDrawableObjectIndex, _Out_ std::u16string& fileOrFamilyName);
 
 ////////////////////////////////////////
 // Miscellaneous public.
@@ -122,6 +125,7 @@ protected:
     MainWindow::DialogProcResult CALLBACK OnVerticalScroll(HWND hwnd, HWND controlHandle, UINT code, int position);
     MainWindow::DialogProcResult CALLBACK ProcessDragAndDrop(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
     void OnHorizontalOrVerticalScroll(HWND hwnd, int barType, UINT code, int smallStep);
+    void OnAssortedActions(HWND anchorControl);
 
     HWND GetSubdialogItem(int dialogId, int childId);
 

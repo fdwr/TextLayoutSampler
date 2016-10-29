@@ -1,6 +1,7 @@
 // include file for standard system include files,
 // or project specific include files that are used frequently, but
 // are changed infrequently
+//#pragma once
 #pragma once
 
 // Disable unknown pragma warnings (for when when compiling directly with VC)

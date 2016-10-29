@@ -1015,7 +1015,7 @@ HRESULT SaveDWriteFontFile(
     IFR(fontFileLoader->CreateStreamFromKey(fontFileReferenceKey, fontFileReferenceKeySize, OUT &fontFileStream));
     IFR(fontFileStream->GetFileSize(OUT &fileSize));
     IFR(fontFileStream->ReadFileFragment(OUT &fragment, 0, fileSize, OUT &fragmentContext));
-    return WriteBinaryFile(filePath, OUT fragment, static_cast<uint32_t>(fileSize));
+    return WriteBinaryFile(filePath, fragment, static_cast<uint32_t>(fileSize));
 }
 
 
@@ -1041,7 +1041,7 @@ HRESULT SaveGdiFontFile(
         return E_FAIL; // GetLastError doesn't seem to return a useful result (ERROR_SUCCESS).
     }
 
-    return WriteBinaryFile(filePath, OUT fileData);
+    return WriteBinaryFile(filePath, fileData);
 }
 
 
@@ -1066,6 +1066,124 @@ HRESULT DrawableObject::SaveFontFile(
         IFR(dwriteFontFace.Update(attributeSource, drawingCanvas));
         return SaveDWriteFontFile(dwriteFontFace.fontFace, filePath);
     }
+}
+
+
+void AppendNumber(
+    _Inout_ std::u16string& fileName,
+    char16_t const* format,
+    uint32_t number
+    )
+{
+    // Generate the filename: base + number + extension.
+    size_t const baseFileNameSize = fileName.size();
+    size_t const maxDigitCount = 12;
+    fileName.resize(baseFileNameSize + maxDigitCount);
+    _snwprintf_s(ToWChar(&fileName[0] + baseFileNameSize), maxDigitCount, maxDigitCount, ToWChar(format), number);
+    fileName.resize(wcslen(ToWChar(fileName.data())));
+}
+
+
+HRESULT DrawableObject::ExportFontGlyphData(
+    IAttributeSource& attributeSource,
+    DrawingCanvas& drawingCanvas,
+    array_ref<char16_t const> filePathPrefix
+    )
+{
+    auto functionType = attributeSource.GetValue(DrawableObjectAttributeFunction, DrawableObjectFunctionNop);
+
+    // todo: Remap if GDI font model.
+    // if (IsGdiOrGdiPlusFunction(functionType))
+
+    std::map<uint32_t, uint32_t> glyphToUnicodeCodepoint;
+
+    CachedDWriteFontFace dwriteFontFace;
+    ComPtr<IDWriteFontFace4> dwriteFontFace4;
+    DWRITE_FONT_METRICS fontMetrics;
+    IFR(dwriteFontFace.Update(attributeSource, drawingCanvas));
+    IFR(dwriteFontFace.fontFace->QueryInterface(OUT &dwriteFontFace4));
+    dwriteFontFace.fontFace->GetMetrics(OUT &fontMetrics);
+
+    // Map every glyph in the font to a Unicode character for the file naming.
+    {
+        std::vector<uint32_t> unicodeCharacters(UnicodeTotal);
+        std::vector<uint16_t> glyphIds(UnicodeTotal);
+        std::iota(unicodeCharacters.data(), unicodeCharacters.data() + UnicodeTotal, 0);
+        IFR(dwriteFontFace.fontFace->GetGlyphIndices(unicodeCharacters.data(), UnicodeTotal, glyphIds.data()));
+        for (uint32_t ch = 0; ch < UnicodeTotal; ++ch)
+        {
+            auto glyphId = glyphIds[ch];
+            if (glyphId != 0)
+                glyphToUnicodeCodepoint.insert({glyphId, ch});
+        }
+    }
+
+
+    std::u16string filePath(filePathPrefix.data(), filePathPrefix.data_end());
+
+    for (uint32_t glyphId = 0, glyphCount = dwriteFontFace.fontFace->GetGlyphCount(); glyphId < glyphCount; ++glyphId)
+    {
+        DWRITE_GLYPH_IMAGE_FORMATS glyphImageFormats = DWRITE_GLYPH_IMAGE_FORMATS_NONE;
+        dwriteFontFace4->GetGlyphImageFormats(glyphId, 0, UINT32_MAX, OUT &glyphImageFormats);
+
+        // Mask out any unknown formats (or monochrome outline formats like TrueType and CFF).
+        glyphImageFormats &= DWRITE_GLYPH_IMAGE_FORMATS_SVG |
+                             DWRITE_GLYPH_IMAGE_FORMATS_PNG |
+                             DWRITE_GLYPH_IMAGE_FORMATS_JPEG |
+                             DWRITE_GLYPH_IMAGE_FORMATS_TIFF |
+                             DWRITE_GLYPH_IMAGE_FORMATS_PREMULTIPLIED_B8G8R8A8;
+
+        // Enumerate all the image formats found for this glyph.
+        for (DWRITE_GLYPH_IMAGE_FORMATS currentGlyphImageFormat = DWRITE_GLYPH_IMAGE_FORMATS(1);
+             glyphImageFormats >= currentGlyphImageFormat;
+             currentGlyphImageFormat = DWRITE_GLYPH_IMAGE_FORMATS(currentGlyphImageFormat << 1))
+        {
+            if (glyphImageFormats & currentGlyphImageFormat)
+            {
+                glyphImageFormats &= ~currentGlyphImageFormat;
+
+                // Generate the filename: base + glyphid + [unicode] extension.
+                char16_t const* filenameExtension = u".bin";
+                switch (currentGlyphImageFormat)
+                {
+                case DWRITE_GLYPH_IMAGE_FORMATS_SVG:  filenameExtension = u".svg";  break;
+                case DWRITE_GLYPH_IMAGE_FORMATS_PNG:  filenameExtension = u".png";  break;
+                case DWRITE_GLYPH_IMAGE_FORMATS_JPEG: filenameExtension = u".jpeg"; break;
+                case DWRITE_GLYPH_IMAGE_FORMATS_TIFF: filenameExtension = u".tiff"; break;
+                // case DWRITE_GLYPH_IMAGE_FORMATS_PREMULTIPLIED_B8G8R8A8: keep .bin
+                }
+
+                filePath.resize(filePathPrefix.size());
+                AppendNumber(IN OUT filePath, u"g%05d", glyphId);
+                uint32_t unicodeCharacter = glyphToUnicodeCodepoint[glyphId];
+                if (unicodeCharacter != 0)
+                {
+                    filePath.append(u"_U+", 3);
+                    AppendNumber(IN OUT filePath, u"%04X", unicodeCharacter);
+                }
+                filePath += filenameExtension;
+
+                // Write the image data to a file.
+                DWRITE_GLYPH_IMAGE_DATA glyphData;
+                void* glyphDataContext = nullptr;
+                dwriteFontFace4->GetGlyphImageData(
+                    glyphId,
+                    fontMetrics.designUnitsPerEm,
+                    currentGlyphImageFormat,
+                    OUT &glyphData,
+                    OUT &glyphDataContext
+                    );
+
+                HRESULT hr = WriteBinaryFile(filePath.c_str(), glyphData.imageData, glyphData.imageDataSize);
+
+                dwriteFontFace4->ReleaseGlyphImageData(glyphDataContext);
+
+                IFR(hr);
+            }
+        }
+    }
+
+    return S_OK;
 }
 
 

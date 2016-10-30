@@ -82,15 +82,18 @@
 #include <CommDlg.h>
 #include <ShellApi.h>
 
+#include <DxgiFormat.h>
+#include <DxgiType.h>
+#include <Dxgi.h>
+
+#if WINSDKVER_14393
+
 #include <DWrite_3.h>
 #include <D2D1_3.h>
 #include <D2D1_3Helper.h>
 #include <D2D1Helper.h>
 #include <WinCodec.h>
 
-#include <DxgiFormat.h>
-#include <DxgiType.h>
-#include <Dxgi.h>
 #include <DCommon.h>
 #include <DWrite_1.h>
 #include <DWrite_2.h>
@@ -102,6 +105,26 @@
 #include <D2D1_1helper.h>
 #include <D2D1_2helper.h>
 #include <D2D1_3helper.h>
+
+#else // Older SDK. So use newer versions of the 2D headers.
+
+#include "Windows2DHeaders14393/DCommon.h"
+#include "Windows2DHeaders14393/DWrite_1.h"
+#include "Windows2DHeaders14393/DWrite_2.h"
+#include "Windows2DHeaders14393/DWrite_3.h"
+#include "Windows2DHeaders14393/D2DBaseTypes.h"
+#include "Windows2DHeaders14393/D2D1.h"
+#include "Windows2DHeaders14393/D2D1_1.h"
+#include "Windows2DHeaders14393/D2D1_2.h"
+#include "Windows2DHeaders14393/D2D1_3.h"
+#include "Windows2DHeaders14393/D2D1Helper.h"
+#include "Windows2DHeaders14393/D2D1_1helper.h"
+#include "Windows2DHeaders14393/D2D1_2helper.h"
+#include "Windows2DHeaders14393/D2D1_3helper.h"
+
+#endif
+
+#include <WinCodec.h>
 
 #include <usp10.h>
 

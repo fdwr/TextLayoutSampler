@@ -10,7 +10,7 @@
 
 const D2D_RECT_F DrawableObject::emptyRect = { 0,0,0,0 };
 const DX_MATRIX_3X2F DrawableObject::identityTransform = {1,0,0,1,0,0};
-const float DrawableObject::defaultWidth = 256;
+const float DrawableObject::defaultWidth = 300;
 const float DrawableObject::defaultHeight = 64;
 const float DrawableObject::defaultFontSize = 18.0f;
 const float DrawableObject::defaultTabWidth = defaultFontSize * 4;
@@ -511,9 +511,11 @@ const Attribute::PredefinedValue DrawableObject::fontSizes[] = {
     {104},
     {112},
     {120},
+    {128},
     {144},
     {160},
     {192},
+    {256},
 };
 
 const Attribute::PredefinedValue DrawableObject::layoutSizes[] = {
@@ -526,6 +528,7 @@ const Attribute::PredefinedValue DrawableObject::layoutSizes[] = {
     { 200},
     { 256},
     { 300},
+    { 480},
     { 512},
     { 768},
     { 1024},
@@ -1034,6 +1037,7 @@ HRESULT SaveGdiFontFile(
         GetFontData(hdc, 0, 0, fileData.data(), static_cast<DWORD>(fileData.size()));
     }
     SelectFont(hdc, previousFont);
+    // todo: Ensure font is actual font, not a fallback like Arial.
     hdc.Clear();
 
     if (fileSize == GDI_ERROR)
@@ -1045,28 +1049,63 @@ HRESULT SaveGdiFontFile(
 }
 
 
+
 HRESULT DrawableObject::SaveFontFile(
     IAttributeSource& attributeSource,
     DrawingCanvas& drawingCanvas,
     char16_t const* filePath
     )
 {
+    ComPtr<IDWriteFontFace> fontFace;
+    IFR(GetDWriteFontFace(attributeSource, drawingCanvas, OUT &fontFace));
+    return SaveDWriteFontFile(fontFace, filePath);
+}
+
+
+HRESULT DrawableObject::GetDWriteFontFace(
+    IAttributeSource& attributeSource,
+    DrawingCanvas& drawingCanvas,
+    _COM_Outptr_ IDWriteFontFace** fontFace
+    )
+{
+    *fontFace = nullptr;
+
     auto functionType = attributeSource.GetValue(DrawableObjectAttributeFunction, DrawableObjectFunctionNop);
 
     // Check whether it's a GDI or DWrite based function.
     if (IsGdiOrGdiPlusFunction(functionType))
     {
         CachedGdiFont gdiFont;
+        ComPtr<IDWriteGdiInterop> gdiInterop;
+        ComPtr<IDWriteFontFace> localFontFace;
         IFR(gdiFont.EnsureCached(attributeSource, drawingCanvas));
-        return SaveGdiFontFile(gdiFont.font, filePath);
+
+        array_ref<char16_t const> desiredFamilyName = attributeSource.GetString(DrawableObjectAttributeFontFamily);
+        char16_t actualFamilyName[256];
+
+        GdiDeviceContext hdc = CreateDC(L"DISPLAY", nullptr, nullptr, nullptr);
+        HFONT previousFont = SelectFont(hdc, gdiFont.font);
+        IDWriteFactory* factory = drawingCanvas.GetDWriteFactoryWeakRef();
+        IFR(factory->GetGdiInterop(OUT &gdiInterop));
+        IFR(gdiInterop->CreateFontFaceFromHdc(hdc, OUT &localFontFace));
+        GetTextFace(hdc, countof(actualFamilyName), OUT ToWChar(actualFamilyName));
+        SelectFont(hdc, previousFont);
+
+        if (wcscmp(ToWChar(actualFamilyName), ToWChar(desiredFamilyName.data())) != 0)
+            return DWRITE_E_NOFONT; // GDI could not load the given font.
+
+        *fontFace = localFontFace.Detach();
     }
     else
     {
         CachedDWriteFontFace dwriteFontFace;
         IFR(dwriteFontFace.Update(attributeSource, drawingCanvas));
-        return SaveDWriteFontFile(dwriteFontFace.fontFace, filePath);
+        *fontFace = dwriteFontFace.fontFace.Detach();
     }
+
+    return S_OK;
 }
+
 
 
 void AppendNumber(
@@ -1099,21 +1138,17 @@ HRESULT DrawableObject::ExportFontGlyphData(
     array_ref<char16_t const> filePathPrefix
     )
 {
-    auto functionType = attributeSource.GetValue(DrawableObjectAttributeFunction, DrawableObjectFunctionNop);
+    ComPtr<IDWriteFontFace> fontFace;
+    ComPtr<IDWriteFontFace4> fontFace4;
+    DWRITE_FONT_METRICS fontMetrics;
 
-    // todo: Remap if GDI font model.
-    // if (IsGdiOrGdiPlusFunction(functionType))
+    IFR(GetDWriteFontFace(attributeSource, drawingCanvas, OUT &fontFace));
 
     std::map<uint32_t, uint32_t> glyphToUnicodeCodepoint;
+    IFR(fontFace->QueryInterface(OUT &fontFace4));
+    fontFace->GetMetrics(OUT &fontMetrics);
 
-    CachedDWriteFontFace dwriteFontFace;
-    ComPtr<IDWriteFontFace4> dwriteFontFace4;
-    DWRITE_FONT_METRICS fontMetrics;
-    IFR(dwriteFontFace.Update(attributeSource, drawingCanvas));
-    IFR(dwriteFontFace.fontFace->QueryInterface(OUT &dwriteFontFace4));
-    dwriteFontFace.fontFace->GetMetrics(OUT &fontMetrics);
-
-    DWRITE_GLYPH_IMAGE_FORMATS glyphImageFormats = dwriteFontFace4->GetGlyphImageFormats();
+    DWRITE_GLYPH_IMAGE_FORMATS glyphImageFormats = fontFace4->GetGlyphImageFormats();
 
     if ((glyphImageFormats & c_imageDataFormats) == DWRITE_GLYPH_IMAGE_FORMATS_NONE)
         return S_FALSE;
@@ -1123,7 +1158,7 @@ HRESULT DrawableObject::ExportFontGlyphData(
         std::vector<uint32_t> unicodeCharacters(UnicodeTotal);
         std::vector<uint16_t> glyphIds(UnicodeTotal);
         std::iota(unicodeCharacters.data(), unicodeCharacters.data() + UnicodeTotal, 0);
-        IFR(dwriteFontFace.fontFace->GetGlyphIndices(unicodeCharacters.data(), UnicodeTotal, glyphIds.data()));
+        IFR(fontFace->GetGlyphIndices(unicodeCharacters.data(), UnicodeTotal, glyphIds.data()));
         for (uint32_t ch = 0; ch < UnicodeTotal; ++ch)
         {
             auto glyphId = glyphIds[ch];
@@ -1132,12 +1167,11 @@ HRESULT DrawableObject::ExportFontGlyphData(
         }
     }
 
-
     std::u16string filePath(filePathPrefix.data(), filePathPrefix.data_end());
 
-    for (uint32_t glyphId = 0, glyphCount = dwriteFontFace.fontFace->GetGlyphCount(); glyphId < glyphCount; ++glyphId)
+    for (uint32_t glyphId = 0, glyphCount = fontFace->GetGlyphCount(); glyphId < glyphCount; ++glyphId)
     {
-        dwriteFontFace4->GetGlyphImageFormats(glyphId, 0, UINT32_MAX, OUT &glyphImageFormats);
+        fontFace4->GetGlyphImageFormats(glyphId, 0, UINT32_MAX, OUT &glyphImageFormats);
 
         // Mask out any unknown formats (or monochrome outline formats like TrueType and CFF).
         glyphImageFormats &= c_imageDataFormats;
@@ -1175,7 +1209,7 @@ HRESULT DrawableObject::ExportFontGlyphData(
                 // Write the image data to a file.
                 DWRITE_GLYPH_IMAGE_DATA glyphData;
                 void* glyphDataContext = nullptr;
-                dwriteFontFace4->GetGlyphImageData(
+                fontFace4->GetGlyphImageData(
                     glyphId,
                     fontMetrics.designUnitsPerEm,
                     currentGlyphImageFormat,
@@ -1185,7 +1219,7 @@ HRESULT DrawableObject::ExportFontGlyphData(
 
                 HRESULT hr = WriteBinaryFile(filePath.c_str(), glyphData.imageData, glyphData.imageDataSize);
 
-                dwriteFontFace4->ReleaseGlyphImageData(glyphDataContext);
+                fontFace4->ReleaseGlyphImageData(glyphDataContext);
 
                 IFR(hr);
             }
@@ -1199,37 +1233,18 @@ HRESULT DrawableObject::ExportFontGlyphData(
 HRESULT DrawableObject::GetFontCharacters(
     IAttributeSource& attributeSource,
     DrawingCanvas& drawingCanvas,
+    bool getOnlyColorFontCharacters,
     _Out_ std::u16string& characters
     )
 {
-    auto functionType = attributeSource.GetValue(DrawableObjectAttributeFunction, DrawableObjectFunctionNop);
-
     ComPtr<IDWriteFontFace> fontFace;
-    if (IsGdiOrGdiPlusFunction(functionType))
-    {
-        CachedGdiFont gdiFont;
-        ComPtr<IDWriteGdiInterop> gdiInterop;
-        IDWriteFactory* factory = drawingCanvas.GetDWriteFactoryWeakRef();
-
-        IFR(gdiFont.EnsureCached(attributeSource, drawingCanvas));
-
-        GdiDeviceContext hdc = CreateDC(L"DISPLAY", nullptr, nullptr, nullptr);
-        HFONT previousFont = SelectFont(hdc, gdiFont.font);
-        IFR(factory->GetGdiInterop(OUT &gdiInterop));
-        IFR(gdiInterop->CreateFontFaceFromHdc(hdc, OUT &fontFace));
-        SelectFont(hdc, previousFont);
-    }
-    else
-    {
-        CachedDWriteFontFace dwriteFontFace;
-        IFR(dwriteFontFace.Update(attributeSource, drawingCanvas));
-        fontFace = dwriteFontFace.fontFace;
-    }
+    IFR(GetDWriteFontFace(attributeSource, drawingCanvas, OUT &fontFace));
 
     std::vector<uint16_t> characterCounts;
     IFR(GetFontCharacterCoverageCounts(
         { &fontFace, 1 },
         { },
+        getOnlyColorFontCharacters,
         [&](uint32_t i, uint32_t total) {;},
         OUT characterCounts
         ));

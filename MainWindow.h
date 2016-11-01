@@ -63,13 +63,14 @@ public:
     struct FontFamilyNameProperties;
 
     HRESULT LoadTextFileIntoDrawableObjects(_In_z_ char16_t const* filePath);
+    HRESULT StoreTextFileFromDrawableObjects(_In_z_ char16_t const* filePath);
     HRESULT LoadFontFileIntoDrawableObjects(_In_z_ char16_t const* filePath);
     HRESULT LoadDrawableObjectsSettings(_In_z_ char16_t const* filePath, bool clearExistingItems = true, bool merge = false);
     HRESULT StoreDrawableObjectsSettings(_In_z_ char16_t const* filePath);
     HRESULT SaveSelectedFontFile();
     HRESULT ExportFontGlyphData();
     HRESULT GetSelectedDrawableObject(_Out_ uint32_t& selectedDrawableObject); // S_FALSE and ~0 if none.
-    HRESULT CopyAllFontCharactersToClipboard();
+    HRESULT GetAllFontCharacters(bool copyToClipboardInstead, bool getOnlyColorFontCharacters);
     HRESULT GetLogFontFromDrawableObjects(_Out_ LOGFONT& logFont);
     HRESULT UpdateDrawableObjectsFromFontFamilyNameProperties(FontFamilyNameProperties const& fontFamilyNameProperties);
 
@@ -114,6 +115,7 @@ public:
     void AppendLog(const char16_t* logMessage, ...);
     void AppendLogDirect(const char16_t* logMessage);
     void ShowMessageAndAppendLog(const char16_t* logMessage, ...);
+    HRESULT ShowMessageIfError(const char16_t* logMessage, HRESULT hr);
     void ClearLog();
 
 ////////////////////////////////////////

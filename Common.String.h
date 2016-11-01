@@ -86,11 +86,13 @@ size_t ConvertUtf32ToUtf16(
     OUT array_ref<char16_t> utf16text
     ) throw();
 
+// Consumes the byte order mark.
 void ConvertTextUtf8ToUtf16(
     array_ref<char const> utf8text,
     OUT std::u16string& utf16text
     );
 
+// Prepends a byte order mark.
 void ConvertTextUtf16ToUtf8(
     array_ref<char16_t const> utf16text,
     OUT std::string& utf8text

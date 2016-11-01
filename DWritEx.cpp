@@ -17,7 +17,32 @@
 
 ////////////////////////////////////////
 
-const static DX_MATRIX_3X2F identityTransform = {1,0,0,1,0,0};
+namespace
+{
+    const static DX_MATRIX_3X2F g_identityTransform = {1,0,0,1,0,0};
+
+    DWRITE_GLYPH_IMAGE_FORMATS g_allMonochromaticOutlineGlyphImageFormats =
+        DWRITE_GLYPH_IMAGE_FORMATS_TRUETYPE |
+        DWRITE_GLYPH_IMAGE_FORMATS_CFF |
+        DWRITE_GLYPH_IMAGE_FORMATS_COLR
+        // DWRITE_GLYPH_IMAGE_FORMATS_SVG |
+        // DWRITE_GLYPH_IMAGE_FORMATS_PNG |
+        // DWRITE_GLYPH_IMAGE_FORMATS_TIFF |
+        // DWRITE_GLYPH_IMAGE_FORMATS_JPEG |
+        // DWRITE_GLYPH_IMAGE_FORMATS_PREMULTIPLIED_B8G8R8A8
+        ;
+
+    DWRITE_GLYPH_IMAGE_FORMATS g_allNonOutlineGlyphImageFormats =
+        // DWRITE_GLYPH_IMAGE_FORMATS_TRUETYPE |
+        // DWRITE_GLYPH_IMAGE_FORMATS_CFF |
+        // DWRITE_GLYPH_IMAGE_FORMATS_COLR
+        DWRITE_GLYPH_IMAGE_FORMATS_SVG |
+        DWRITE_GLYPH_IMAGE_FORMATS_PNG |
+        DWRITE_GLYPH_IMAGE_FORMATS_TIFF |
+        DWRITE_GLYPH_IMAGE_FORMATS_JPEG |
+        DWRITE_GLYPH_IMAGE_FORMATS_PREMULTIPLIED_B8G8R8A8
+        ;
+}
 
 
 // Load it dynamically.
@@ -1707,7 +1732,7 @@ public:
         _Out_ DWRITE_MATRIX* transform
         ) throw() override
     {
-        *transform = identityTransform.dwrite;
+        *transform = g_identityTransform.dwrite;
         return S_OK;
     }
 
@@ -1790,18 +1815,6 @@ namespace
             );
     }
 
-    // todo::: remove SVG from list, plus PNG.
-    DWRITE_GLYPH_IMAGE_FORMATS allSupportedGlyphImageFormats =
-        DWRITE_GLYPH_IMAGE_FORMATS_CFF |
-        DWRITE_GLYPH_IMAGE_FORMATS_TRUETYPE |
-        DWRITE_GLYPH_IMAGE_FORMATS_COLR
-        // DWRITE_GLYPH_IMAGE_FORMATS_SVG |
-        // DWRITE_GLYPH_IMAGE_FORMATS_PNG |
-        // DWRITE_GLYPH_IMAGE_FORMATS_TIFF |
-        // DWRITE_GLYPH_IMAGE_FORMATS_JPEG |
-        // DWRITE_GLYPH_IMAGE_FORMATS_PREMULTIPLIED_B8G8R8A8
-        ;
-
     HRESULT GetColorGlyphRunEnumerator(
         IDWriteFactory* dwriteFactory,
         DWRITE_GLYPH_RUN const& glyphRun,
@@ -1834,7 +1847,7 @@ namespace
                     { baselineOriginX, baselineOriginY },
                     &glyphRun,
                     nullptr,
-                    allSupportedGlyphImageFormats,
+                    g_allMonochromaticOutlineGlyphImageFormats,
                     DWRITE_MEASURING_MODE_NATURAL,
                     &transform,
                     colorPalette,
@@ -2038,6 +2051,7 @@ HRESULT DrawColorGlyphRun(
 HRESULT GetFontCharacterCoverageCounts(
     array_ref<IDWriteFontFace* const> fontFaces,
     array_ref<char32_t const> unicodeCharactersIn,
+    bool getOnlyColorFontCharacters,
     std::function<void(uint32_t i, uint32_t total)> progress,
     _Out_ std::vector<uint16_t>& coverageCounts
     )
@@ -2068,16 +2082,36 @@ HRESULT GetFontCharacterCoverageCounts(
     uint32_t fontFacesCount = static_cast<uint32_t>(fontFaces.size());
     for (uint32_t i = 0; i < fontFacesCount; ++i)
     {
+        ComPtr<IDWriteFontFace4> fontFace4;
         auto* counts = coverageCounts.data();
-        IFR(fontFaces[i]->GetGlyphIndices(reinterpret_cast<uint32_t const*>(unicodeCharacters), unicodeCharactersCount, glyphIds.data()));
+        auto* fontFace = fontFaces[i];
+
+        IFR(fontFace->GetGlyphIndices(reinterpret_cast<uint32_t const*>(unicodeCharacters), unicodeCharactersCount, glyphIds.data()));
+        if (getOnlyColorFontCharacters)
+        {
+            IFR(fontFace->QueryInterface(OUT &fontFace4));
+        }
+        
         for (char32_t ch = 0; ch < unicodeCharactersCount; ++ch)
         {
-            if (glyphIds[ch] != 0)
+            if (glyphIds[ch] == 0)
+                continue;
+
+            if (getOnlyColorFontCharacters)
             {
-                if (++counts[ch] == 0)
-                    counts[ch] = UINT16_MAX;
+                DWRITE_GLYPH_IMAGE_FORMATS glyphImageFormats = DWRITE_GLYPH_IMAGE_FORMATS_NONE;
+                IFR(fontFace4->GetGlyphImageFormats(glyphIds[ch], 0, UINT32_MAX, OUT &glyphImageFormats));
+                if (!(glyphImageFormats & g_allNonOutlineGlyphImageFormats))
+                {
+                    continue;
+                }
             }
+
+            // Found another character supported by the font.
+            if (++counts[ch] == 0)
+                counts[ch] = UINT16_MAX;
         }
+
         progress(i, fontFacesCount);
     }
 

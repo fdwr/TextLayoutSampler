@@ -205,6 +205,7 @@ HRESULT DrawColorGlyphRun(
 HRESULT GetFontCharacterCoverageCounts(
     array_ref<IDWriteFontFace* const> fontFaces,
     array_ref<char32_t const> unicodeCharactersIn,
+    bool getOnlyColorFontCharacters,
     std::function<void(uint32_t i, uint32_t total)> progress,
     _Out_ std::vector<uint16_t>& coverageCounts
     );

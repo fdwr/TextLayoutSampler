@@ -58,6 +58,12 @@ import MessageBoxShaded;
 HACCEL MainWindow::g_accelTable;
 int const g_smallMouseWheelStep = 20;
 
+char16_t const* g_openSaveFiltersList = u"All supported text layout sampler files\0" u"*.TextLayoutSamplerSettings;*.txt\0"
+                                        u"Layout Sampler Settings (*.TextLayoutSamplerSettings)\0" u"*.TextLayoutSamplerSettings\0"
+                                        u"Text files (*.txt)\0" u"*.txt\0"
+                                        u"All files (*)\0" u"*\0";
+
+
 ////////////////////////////////////////
 
 
@@ -1051,6 +1057,10 @@ MainWindow::DialogProcResult CALLBACK MainWindow::ProcessDragAndDrop(HWND hwnd, 
             {
                 hr = LoadFontFileIntoDrawableObjects(fileName.data());
             }
+            else
+            {
+                hr = HRESULT_FROM_WIN32(ERROR_BAD_FORMAT);
+            }
 
             if (FAILED(hr))
                 break;
@@ -1060,7 +1070,9 @@ MainWindow::DialogProcResult CALLBACK MainWindow::ProcessDragAndDrop(HWND hwnd, 
     }
     DragFinish(hDrop);
 
-    if (FAILED(hr))
+    if (hr == HRESULT_FROM_WIN32(ERROR_BAD_FORMAT))
+        ShowMessageAndAppendLog(u"Unknown file format '%s', 0x%08X", fileName.c_str(), hr);
+    else if (FAILED(hr))
         ShowMessageAndAppendLog(u"Failed to load file '%s', 0x%08X", fileName.c_str(), hr);
 
     return DialogProcResult(/*handled*/ true, /*value*/ 0);
@@ -1466,12 +1478,8 @@ HRESULT MainWindow::LoadFontFileIntoDrawableObjects(_In_z_ char16_t const* fileP
 HRESULT MainWindow::LoadDrawableObjectsSettings(bool clearExistingItems, bool merge)
 {
     std::u16string filePath;
-    auto const* filters = u"All supported text layout sampler files\0" u"*.TextLayoutSamplerSettings;*.txt\0"
-                          u"Layout Sampler Settings (*.TextLayoutSamplerSettings)\0" u"*.TextLayoutSamplerSettings\0"
-                          u"Text files (*.txt)\0" u"*.txt\0"
-                          u"All files (*)\0" u"*\0";
 
-    if (!GetOpenFileName(hwnd_, filters, OUT filePath, u"Open settings or text file"))
+    if (!GetOpenFileName(hwnd_, g_openSaveFiltersList, OUT filePath, u"Open settings or text file"))
         return S_OK;
 
     // todo::: consolidate this extension checking logic somewhere.
@@ -1487,8 +1495,10 @@ HRESULT MainWindow::LoadDrawableObjectsSettings(bool clearExistingItems, bool me
         hr = LoadTextFileIntoDrawableObjects(filePath.c_str());
     }
 
-    if (FAILED(hr))
-        ShowMessageAndAppendLog(u"Failed to load settings file '%s', 0x%08X", filePath.c_str(), hr);
+    if (hr == HRESULT_FROM_WIN32(ERROR_BAD_FORMAT))
+        ShowMessageAndAppendLog(u"Unknown file format '%s', 0x%08X", filePath.c_str(), hr);
+    else if (FAILED(hr))
+        ShowMessageAndAppendLog(u"Failed to load from file '%s', 0x%08X", filePath.c_str(), hr);
 
     return hr;
 }
@@ -1611,10 +1621,28 @@ HRESULT MainWindow::LoadTextFileIntoDrawableObjects(_In_z_ char16_t const* fileP
 }
 
 
-HRESULT MainWindow::GetSelectedDrawableObject(_Out_ uint32_t& selectedDrawableObject)
+HRESULT MainWindow::StoreTextFileFromDrawableObjects(_In_z_ char16_t const* filePath)
+{
+    std::u16string outputText;
+
+    AppendLog(u"Writing text file '%s'\r\n", filePath);
+
+    uint32_t selectedDrawableObjectIndex;
+    if (SUCCEEDED(MainWindow::GetSelectedDrawableObject(OUT selectedDrawableObjectIndex)))
+    {
+        auto& drawableObject = drawableObjects_[selectedDrawableObjectIndex];
+        auto text = drawableObject.GetString(DrawableObjectAttributeText);
+        IFR(WriteTextFile(filePath, text.data(), static_cast<uint32_t>(text.size()) ));
+    }
+
+    return S_OK;
+}
+
+
+HRESULT MainWindow::GetSelectedDrawableObject(_Out_ uint32_t& selectedDrawableObjectIndex)
 {
     // Return the first selected index, or the first drawable object if none are selected.
-    selectedDrawableObject = ~0u;
+    selectedDrawableObjectIndex = ~0u;
     uint32_t index = 0;
 
     // Get the current selected drawable item (if exactly one).
@@ -1630,7 +1658,7 @@ HRESULT MainWindow::GetSelectedDrawableObject(_Out_ uint32_t& selectedDrawableOb
         return E_BOUNDS;
     }
 
-    selectedDrawableObject = index;
+    selectedDrawableObjectIndex = index;
     return S_OK;
 }
 
@@ -1698,7 +1726,7 @@ HRESULT MainWindow::SaveSelectedFontFile()
 }
 
 
-HRESULT MainWindow::CopyAllFontCharactersToClipboard()
+HRESULT MainWindow::GetAllFontCharacters(bool copyToClipboardInstead, bool getOnlyColorFontCharacters)
 {
     uint32_t selectedDrawableObjectIndex;
     IFR(GetSelectedDrawableObject(OUT selectedDrawableObjectIndex));
@@ -1707,8 +1735,31 @@ HRESULT MainWindow::CopyAllFontCharactersToClipboard()
     auto& drawableObject = drawableObjects_[selectedDrawableObjectIndex];
 
     std::u16string characters;
-    IFR(DrawableObject::GetFontCharacters(drawableObject, drawingCanvas, OUT characters));
-    IFR(CopyTextToClipboard(hwnd_, characters));
+    IFR(ShowMessageIfError(
+        u"Could not get font characters.\r\nError = 0x%08X",
+        DrawableObject::GetFontCharacters(drawableObject, drawingCanvas, getOnlyColorFontCharacters, OUT characters)
+    ));
+
+    if (copyToClipboardInstead)
+    {
+        IFR(CopyTextToClipboard(hwnd_, characters));
+    }
+    else
+    {
+        std::vector<uint32_t> drawableObjectIndices = GetSelectedDrawableObjectIndices();
+        DrawableObjectAndValues::Set(drawableObjects_, drawableObjectIndices, DrawableObjectAttributeText, characters);
+        DrawableObjectAndValues::Update(drawableObjects_, drawableObjectIndices);
+    }
+
+    DeferUpdateUi(
+        NeededUiUpdateDrawableObjectsListView |
+        NeededUiUpdateAttributesListView |
+        NeededUiUpdateAttributeValuesListView |
+        NeededUiUpdateAttributeValuesEdit |
+        NeededUiUpdateAttributeValuesSlider |
+        NeededUiUpdateDrawableObjectsCanvas |
+        NeededUiUpdateTextEdit
+        );
 
     return S_OK;
 }
@@ -1760,13 +1811,36 @@ HRESULT MainWindow::ExportFontGlyphData()
 HRESULT MainWindow::StoreDrawableObjectsSettings()
 {
     std::u16string filePath;
-    auto const* filters = u"Layout Sampler Settings (*.TextLayoutSamplerSettings)\0" u"*.TextLayoutSamplerSettings\0"
-                          u"All files (*)\0" u"*\0";
 
-    if (!GetSaveFileName(hwnd_, previousSettingsFilePath_.c_str(), filters, u"TextLayoutSamplerSettings", OUT filePath))
+    if (!GetSaveFileName(hwnd_, previousSettingsFilePath_.c_str(), g_openSaveFiltersList, u"TextLayoutSamplerSettings", OUT filePath))
         return S_OK;
 
-    return StoreDrawableObjectsSettings(filePath.c_str());
+    HRESULT hr = HRESULT_FROM_WIN32(ERROR_BAD_FORMAT);
+    auto* filenameExtension = FindFileNameExtension(filePath);
+
+    if (_wcsicmp(ToWChar(filenameExtension), L"TextLayoutSamplerSettings") == 0)
+    {
+        hr = StoreDrawableObjectsSettings(filePath.c_str());
+    }
+    else if (_wcsicmp(ToWChar(filenameExtension), L"txt") == 0)
+    {
+        hr = StoreTextFileFromDrawableObjects(filePath.c_str());
+    }
+
+    if (hr == S_OK)
+    {
+        AppendLog(u"Wrote successfully.\r\n", filePath.c_str());
+    }
+    if (hr == HRESULT_FROM_WIN32(ERROR_BAD_FORMAT)) // Consolidate this repeated error message.
+    {
+        ShowMessageAndAppendLog(u"Unknown file format '%s', 0x%08X", filePath.c_str(), hr);
+    }
+    else if (FAILED(hr))
+    {
+        ShowMessageAndAppendLog(u"Failed to save to file '%s', 0x%08X", filePath.c_str(), hr);
+    }
+
+    return hr;
 }
 
 
@@ -2532,6 +2606,8 @@ void MainWindow::OnAssortedActions(HWND anchorControl)
 {
     TrackPopupMenu_Item constexpr static items[] = {
         {IdcSaveSelectedFontFile,  u"Save font file..."},
+        {IdcGetAllFontCharacters, u"Get all font characters"},
+        {IdcGetAllColorFontCharacters, u"Get all color font characters"},
         {IdcCopyAllFontCharacters, u"Copy all font characters to clipboard"},
         {IdcExportGlyphImageData, u"Export all glyph image data..."},
     };
@@ -2545,7 +2621,9 @@ void MainWindow::OnAssortedActions(HWND anchorControl)
     switch (menuId)
     {
     case IdcSaveSelectedFontFile: SaveSelectedFontFile(); break;
-    case IdcCopyAllFontCharacters: CopyAllFontCharactersToClipboard(); break;
+    case IdcGetAllFontCharacters: GetAllFontCharacters(/*copyToClipboardInstead*/false, /*getOnlyColorFontCharacters*/ false); break;
+    case IdcGetAllColorFontCharacters: GetAllFontCharacters(/*copyToClipboardInstead*/false, /*getOnlyColorFontCharacters*/ true); break;
+    case IdcCopyAllFontCharacters: GetAllFontCharacters(/*copyToClipboardInstead*/true, /*getOnlyColorFontCharacters*/ false); break;
     case IdcExportGlyphImageData: ExportFontGlyphData(); break;
     }
 }
@@ -2591,6 +2669,16 @@ void MainWindow::AppendLog(const char16_t* logMessage, ...)
     StringCchVPrintf(OUT ToWChar(buffer), countof(buffer), ToWChar(logMessage), argList);
 
     AppendLogDirect(buffer);
+}
+
+
+HRESULT MainWindow::ShowMessageIfError(const char16_t* logMessage, HRESULT hr)
+{
+    if (FAILED(hr))
+    {
+        MainWindow::ShowMessageAndAppendLog(logMessage, hr);
+    }
+    return hr;
 }
 
 

@@ -98,7 +98,7 @@ HRESULT WriteTextFile(
 
     try
     {
-        ConvertTextUtf16ToUtf8(make_array_ref(text, textLength), IN OUT fileData);
+        ConvertTextUtf16ToUtf8(make_array_ref(text, textLength), OUT fileData);
     }
     catch (...)
     {

@@ -1540,7 +1540,7 @@ HRESULT DrawableObjectUser32DrawText::DrawInternal(
         std::swap(intLayoutWidth, intLayoutHeight);
         rect.left   = top;
         rect.top    = -left - intLayoutHeight;
-        rect.right  = left + intLayoutWidth;
+        rect.right  = top + intLayoutWidth;
         rect.bottom = -left;
         DX_MATRIX_3X2F cw90 = {0,1,-1,0,0,0};
         CombineMatrix(cw90, transform, OUT finalTransform);
@@ -1685,7 +1685,7 @@ HRESULT DrawableObjectUser32DrawText::DrawInternal(
     if (contentBounds != nullptr)
     {
         LONG columnWidth = rect.right - rect.left;
-        LONG left, right;
+        LONG right;
 
         // Fix the DT_CALCRECT bad behavior. Even though it returns coordinates
         // in a rect, it doesn't actually set left and top fields!? This means
@@ -1870,7 +1870,7 @@ protected:
 HRESULT CachedDWriteGlyphRun::Update(
     IAttributeSource& attributeSource,
     DrawingCanvas& drawingCanvas,
-    _In_ IDWriteFontFace* fontFace // weak reference
+    _In_ IDWriteFontFace* newFontFace // weak reference
     )
 {
     array_ref<DWRITE_GLYPH_OFFSET const> glyphOffsets;
@@ -1898,7 +1898,7 @@ HRESULT CachedDWriteGlyphRun::Update(
             glyphBuffer_.resize(convertedLength);
 
             uint32_t* codePoints = reinterpret_cast<uint32_t*>(utf32text.data());
-            IFR(fontFace->GetGlyphIndices(codePoints, uint32_t(convertedLength), OUT glyphBuffer_.data()));
+            IFR(newFontFace->GetGlyphIndices(codePoints, uint32_t(convertedLength), OUT glyphBuffer_.data()));
             glyphs = glyphBuffer_;
         }
     }
@@ -1913,7 +1913,7 @@ HRESULT CachedDWriteGlyphRun::Update(
 
     DWRITE_GLYPH_RUN& glyphRun = *static_cast<DWRITE_GLYPH_RUN*>(this);
     glyphRun = {
-        fontFace,
+        newFontFace,
         fontSize,
         static_cast<uint32_t>(glyphs.size()),
         glyphs.data(),

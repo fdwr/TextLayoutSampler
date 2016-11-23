@@ -273,14 +273,14 @@ void ListViewWriter::ReserveItemCount(int itemCount)
 
 void ListViewWriter::SelectAndFocusItem(int i)
 {
-    uint32_t state = (i == -1) ? LVIS_SELECTED : LVIS_FOCUSED|LVIS_SELECTED;
-    ListView_SetItemState(this->hwnd, i, state, state);
+    uint32_t newState = (i == -1) ? LVIS_SELECTED : LVIS_FOCUSED|LVIS_SELECTED;
+    ListView_SetItemState(this->hwnd, i, newState, newState);
 }
 
 void ListViewWriter::SelectItem(int i)
 {
-    uint32_t state = LVIS_SELECTED;
-    ListView_SetItemState(this->hwnd, i, state, state);
+    uint32_t newState = LVIS_SELECTED;
+    ListView_SetItemState(this->hwnd, i, newState, newState);
 }
 
 void ListViewWriter::SelectItem()
@@ -291,8 +291,8 @@ void ListViewWriter::SelectItem()
 void ListViewWriter::FocusItem(int i)
 {
     assert(i != -1);
-    uint32_t state = LVIS_FOCUSED;
-    ListView_SetItemState(this->hwnd, i, state, state);
+    uint32_t newState = LVIS_FOCUSED;
+    ListView_SetItemState(this->hwnd, i, newState, newState);
 }
 
 void ListViewWriter::EnsureVisible()

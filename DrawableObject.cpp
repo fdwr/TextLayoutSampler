@@ -2,8 +2,9 @@
 //  Author:         Dwayne Robinson
 //  History:        2015-06-19 Created
 //  Description:    Individual drawable objects. Note that drawable objects
-//                  generally don't hold much state themselves, getting
-//                  attributes from their AttributeSource as needed.
+//                  generally don't hold much state themselves (except caching
+//                  for performance), getting attributes from their
+//                  AttributeSource as needed.
 //----------------------------------------------------------------------------
 #include "precomp.h"
 

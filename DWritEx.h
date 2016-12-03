@@ -143,23 +143,37 @@ HRESULT GetLocalizedString(
     OUT std::u16string& value
     ) throw();
 
-HRESULT GetFaceNames(
+HRESULT GetFontFaceName(
     IDWriteFont* font,
-    _In_z_ wchar_t const* languageName,
+    _In_opt_z_ wchar_t const* languageName,
     OUT std::u16string& value
     );
 
 // Returns the family name of the font (in the language requested, if available, else the default English name).
 HRESULT GetFontFamilyName(
     IDWriteFont* font,
-    _In_z_ wchar_t const* languageName,
+    _In_opt_z_ wchar_t const* languageName,
     OUT std::u16string& value
     );
 
 HRESULT GetFontFamilyName(
     IDWriteFontFamily* fontFamily,
-    _In_z_ wchar_t const* languageName,
-    OUT std::u16string& value
+    _In_opt_z_ wchar_t const* languageName,
+    OUT std::u16string& stringValue
+    );
+
+HRESULT GetInformationalString(
+    IDWriteFont* font,
+    DWRITE_INFORMATIONAL_STRING_ID informationalStringID,
+    _In_opt_z_ wchar_t const* languageName,
+    _Out_ std::u16string& stringValue
+    );
+
+HRESULT GetInformationalString(
+    IDWriteFontFace* fontFace,
+    DWRITE_INFORMATIONAL_STRING_ID informationalStringID,
+    _In_opt_z_ wchar_t const* languageName,
+    _Out_ std::u16string& value
     );
 
 bool IsKnownFontFileExtension(_In_z_ const wchar_t* fileExtension) throw();

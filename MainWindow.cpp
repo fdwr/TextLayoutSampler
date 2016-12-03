@@ -1,9 +1,4 @@
 ﻿/*
-
-"\\redmond\win\Users\DWAYNER\bin\dwrite tests\data\AppleColorEmoji.TextLayoutSamplerSettings"
-"\\redmond\win\Users\DWAYNER\bin\dwrite tests\data\NotoColorEmojiCBDT.TextLayoutSamplerSettings"
-"\\redmond\win\Users\DWAYNER\bin\dwrite tests\data\MsGothicEmbeddedBitmaps.TextLayoutSamplerSettings"
-
 todo:::
 Rendering mode
 Custom font fallback
@@ -1465,7 +1460,44 @@ HRESULT MainWindow::LoadFontFileIntoDrawableObjects(_In_z_ char16_t const* fileP
 
     IFR(CreateFontCollection(dwriteFactory, ToWChar(filePath), IntLen(filePath), OUT &fontCollection));
 
-    // todo: If GetFontFamily fails, try to get the IDWriteFontFace directly, which may succeed if there are zero instances in the font.
+    std::u16string familyName, faceName, win32FamilyName, win32FaceName, preferredFamilyName, preferredFaceName, fullName;
+
+    // Print all the found faces.
+    for (uint32_t familyIndex = 0, familyCount = fontCollection->GetFontFamilyCount(); familyIndex < familyCount; ++familyIndex)
+    {
+        ComPtr<IDWriteFontFamily> innerFontFamily;
+        if (FAILED(fontCollection->GetFontFamily(familyIndex, OUT &innerFontFamily)))
+            continue;
+
+        GetFontFamilyName(innerFontFamily.Get(), nullptr, OUT familyName);
+
+        for (uint32_t faceIndex = 0, faceCount = innerFontFamily->GetFontCount(); faceIndex < faceCount; ++faceIndex)
+        {
+            ComPtr<IDWriteFont> innerFont;
+            if (FAILED(innerFontFamily->GetFont(faceIndex, OUT &innerFont))/* || innerFont->GetSimulations() != DWRITE_FONT_SIMULATIONS_NONE*/)
+                continue;
+
+            GetFontFaceName(innerFont, nullptr, OUT faceName);
+            GetInformationalString(innerFont, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES, nullptr, OUT win32FamilyName);
+            GetInformationalString(innerFont, DWRITE_INFORMATIONAL_STRING_WIN32_SUBFAMILY_NAMES, nullptr, OUT win32FaceName);
+            GetInformationalString(innerFont, DWRITE_INFORMATIONAL_STRING_PREFERRED_FAMILY_NAMES, nullptr, OUT preferredFamilyName);
+            GetInformationalString(innerFont, DWRITE_INFORMATIONAL_STRING_PREFERRED_SUBFAMILY_NAMES, nullptr, OUT preferredFaceName);
+            GetInformationalString(innerFont, DWRITE_INFORMATIONAL_STRING_FULL_NAME, nullptr, OUT fullName);
+
+            AppendLog(u"%d:%d = wws:'%s'|'%s',  pref:'%s'|'%s',  win32:'%s'|'%s',  full:'%s'\r\n",
+                familyIndex,
+                faceIndex,
+                familyName.c_str(),
+                faceName.c_str(),
+                preferredFamilyName.c_str(),
+                preferredFaceName.c_str(),
+                win32FamilyName.c_str(),
+                win32FaceName.c_str(),
+                fullName.c_str()
+            );
+        }
+    }
+
     IFR(fontCollection->GetFontFamily(/*index*/0, OUT &fontFamily));
     IFR(fontFamily->GetFirstMatchingFont(DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STRETCH_NORMAL, DWRITE_FONT_STYLE_NORMAL, OUT &font));
 

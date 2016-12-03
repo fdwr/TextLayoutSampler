@@ -1243,10 +1243,10 @@ HRESULT GetFileModifiedDate(
 HRESULT GetLocalizedStringLanguage(
     IDWriteLocalizedStrings* strings,
     uint32_t stringIndex,
-    OUT std::u16string& value
+    OUT std::u16string& stringValue
     )
 {
-    value.clear();
+    stringValue.clear();
 
     if (strings == nullptr)
         return E_INVALIDARG;
@@ -1258,23 +1258,23 @@ HRESULT GetLocalizedStringLanguage(
 
     try
     {
-        value.resize(length);
+        stringValue.resize(length);
     }
     catch (std::bad_alloc)
     {
         return E_OUTOFMEMORY; // This is the only exception type we need to worry about.
     }
-    return strings->GetLocaleName(stringIndex, OUT ToWChar(&value[0]), length + 1);
+    return strings->GetLocaleName(stringIndex, OUT ToWChar(&stringValue[0]), length + 1);
 }
 
 
 HRESULT GetLocalizedString(
     IDWriteLocalizedStrings* strings,
     _In_opt_z_ const wchar_t* preferredLanguage,
-    OUT std::u16string& value
+    OUT std::u16string& stringValue
     )
 {
-    value.clear();
+    stringValue.clear();
 
     if (strings == nullptr)
         return E_INVALIDARG;
@@ -1296,17 +1296,17 @@ HRESULT GetLocalizedString(
         stringIndex = 0; // Just try the first index.
     }
 
-    return GetLocalizedString(strings, stringIndex, OUT value);
+    return GetLocalizedString(strings, stringIndex, OUT stringValue);
 }
 
 
 HRESULT GetLocalizedString(
     IDWriteLocalizedStrings* strings,
     uint32_t stringIndex,
-    OUT std::u16string& value
+    OUT std::u16string& stringValue
     )
 {
-    value.clear();
+    stringValue.clear();
     if (strings == nullptr || strings->GetCount() == 0)
         return S_OK;
 
@@ -1317,31 +1317,31 @@ HRESULT GetLocalizedString(
 
     try
     {
-        value.resize(length);
+        stringValue.resize(length);
     }
     catch (std::bad_alloc)
     {
         return E_OUTOFMEMORY; // This is the only exception type we need to worry about.
     }
-    IFR(strings->GetString(stringIndex, OUT ToWChar(&value[0]), length + 1));
+    IFR(strings->GetString(stringIndex, OUT ToWChar(&stringValue[0]), length + 1));
 
     return S_OK;
 }
 
 
-HRESULT GetFaceNames(
+HRESULT GetFontFaceName(
     IDWriteFont* font,
-    _In_z_ wchar_t const* languageName,
-    OUT std::u16string& value
+    _In_opt_z_ wchar_t const* languageName,
+    OUT std::u16string& stringValue
     )
 {
-    value.clear();
+    stringValue.clear();
     if (font == nullptr)
         return E_INVALIDARG;
 
     ComPtr<IDWriteLocalizedStrings> fontFaceNames;
     IFR(font->GetFaceNames(OUT &fontFaceNames));
-    IFR(GetLocalizedString(fontFaceNames, languageName, OUT value));
+    IFR(GetLocalizedString(fontFaceNames, languageName, OUT stringValue));
 
     return S_OK;
 }
@@ -1349,39 +1349,88 @@ HRESULT GetFaceNames(
 
 HRESULT GetFontFamilyName(
     IDWriteFont* font,
-    _In_z_ wchar_t const* languageName,
-    OUT std::u16string& value
+    _In_opt_z_ wchar_t const* languageName,
+    OUT std::u16string& stringValue
     )
 {
-    value.clear();
+    stringValue.clear();
     if (font == nullptr)
         return E_INVALIDARG;
 
     ComPtr<IDWriteLocalizedStrings> fontFamilyNames;
     ComPtr<IDWriteFontFamily> fontFamily;
-    IFR(font->GetFontFamily(OUT &fontFamily));
-    IFR(fontFamily->GetFamilyNames(OUT &fontFamilyNames));
-    IFR(GetLocalizedString(fontFamilyNames, languageName, OUT value));
-
-    return S_OK;
+    return GetFontFamilyName(fontFamily, languageName, OUT stringValue);
 }
 
 
 HRESULT GetFontFamilyName(
     IDWriteFontFamily* fontFamily,
-    _In_z_ wchar_t const* languageName,
-    OUT std::u16string& value
+    _In_opt_z_ wchar_t const* languageName,
+    OUT std::u16string& stringValue
     )
 {
-    value.clear();
+    stringValue.clear();
     if (fontFamily == nullptr)
         return E_INVALIDARG;
 
     ComPtr<IDWriteLocalizedStrings> fontFamilyNames;
     IFR(fontFamily->GetFamilyNames(OUT &fontFamilyNames));
-    IFR(GetLocalizedString(fontFamilyNames, languageName, OUT value));
+    return GetLocalizedString(fontFamilyNames, languageName, OUT stringValue);
+}
 
-    return S_OK;
+
+HRESULT GetInformationalString(
+    IDWriteFont* font,
+    DWRITE_INFORMATIONAL_STRING_ID informationalStringID,
+    _In_opt_z_ wchar_t const* languageName,
+    _Out_ std::u16string& stringValue
+    )
+{
+    // Handle the multiple intermediate steps and just return the string.
+    stringValue.clear();
+
+    BOOL stringExists;
+    ComPtr<IDWriteLocalizedStrings> localizedStrings;
+    IFR(font->GetInformationalStrings(
+        informationalStringID,
+        OUT &localizedStrings,
+        OUT &stringExists
+        ));
+    if (stringExists == false)
+    {
+        return S_OK; // Just return empty string.
+    }
+
+    return GetLocalizedString(localizedStrings, languageName, OUT stringValue);
+}
+
+
+HRESULT GetInformationalString(
+    IDWriteFontFace* fontFace,
+    DWRITE_INFORMATIONAL_STRING_ID informationalStringID,
+    _In_opt_z_ wchar_t const* languageName,
+    _Out_ std::u16string& stringValue
+    )
+{
+    // Handle the multiple intermediate steps and just return the string.
+    // If the string does not exist, just return emptiness.
+    stringValue.clear();
+
+    BOOL stringExists;
+    ComPtr<IDWriteFontFace3> fontFace3;
+    ComPtr<IDWriteLocalizedStrings> localizedStrings;
+    IFR(fontFace->QueryInterface(OUT &fontFace3));
+    IFR(fontFace3->GetInformationalStrings(
+        informationalStringID,
+        OUT &localizedStrings,
+        OUT &stringExists
+        ));
+    if (stringExists == false)
+    {
+        return S_OK; // Just return empty string.
+    }
+
+    return GetLocalizedString(localizedStrings, languageName, OUT stringValue);
 }
 
 

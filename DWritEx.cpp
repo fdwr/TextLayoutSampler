@@ -1357,8 +1357,8 @@ HRESULT GetFontFamilyName(
     if (font == nullptr)
         return E_INVALIDARG;
 
-    ComPtr<IDWriteLocalizedStrings> fontFamilyNames;
     ComPtr<IDWriteFontFamily> fontFamily;
+    IFR(font->GetFontFamily(OUT &fontFamily));
     return GetFontFamilyName(fontFamily, languageName, OUT stringValue);
 }
 

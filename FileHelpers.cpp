@@ -11,6 +11,9 @@
 #include <string>
 #include <Shlwapi.h>
 #include "FileHelpers.h"
+#include "Common.AutoResource.h"
+#include "Common.ArrayRef.h"
+#include "Common.String.h"
 
 
 #pragma comment(lib, "Shlwapi.lib")

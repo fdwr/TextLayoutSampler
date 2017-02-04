@@ -443,7 +443,7 @@ using ComPtr = AutoResource<ResourceType*, ComResourceTypePolicy, IUnknown*>;
 // template argument without the caller/container worrying about whether it
 // is raw or owned, and the reader is clear that it's a weak pointer.
 
-static_assert(sizeof(uint32_t*) == sizeof(void*), "Expect all pointers have same size, such as void* and resourceType*");
+static_assert(sizeof(int*) == sizeof(void*), "Expect all pointers have same size, such as void* and resourceType*");
 
 template <typename ResourceType>
 struct UnownedMemoryPointerPolicy : public DefaultResourceTypePolicy<ResourceType>

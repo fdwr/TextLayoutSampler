@@ -10,6 +10,7 @@
 //
 //----------------------------------------------------------------------------
 #include "precomp.h"
+#include "Common.String.h"
 
 
 array_ref<char16_t const> ToChar16ArrayRef(_In_z_ char16_t const* text)

@@ -1317,7 +1317,7 @@ HRESULT CachedGdiFont::EnsureCached(IAttributeSource& attributeSource, DrawingCa
     auto gdiRenderingModeQuality = attributeSource.GetValue(DrawableObjectAttributeGdiRenderingMode, DEFAULT_QUALITY);
 
     LOGFONT logFont = {};
-    wcsncpy_s(logFont.lfFaceName, countof(logFont.lfFaceName), ToWChar(familyName.data()), familyName.size());
+    wcsncpy_s(logFont.lfFaceName, ToWChar(familyName.data()), _TRUNCATE);
     logFont.lfHeight            = -static_cast<LONG>(floor(fontSize));
     logFont.lfWidth             = 0;
     logFont.lfEscapement        = 0;

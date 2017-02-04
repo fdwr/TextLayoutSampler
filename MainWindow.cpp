@@ -1188,7 +1188,7 @@ HRESULT MainWindow::GetLogFontFromDrawableObjects(_Out_ LOGFONT& logFont)
         }
     }
 
-    wcsncpy_s(logFont.lfFaceName, ToWChar(familyName.data()), ARRAYSIZE(logFont.lfFaceName));
+    wcsncpy_s(logFont.lfFaceName, ToWChar(familyName.data()), _TRUNCATE);
 
     return S_OK;
 }

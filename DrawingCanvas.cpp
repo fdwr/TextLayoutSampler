@@ -305,8 +305,8 @@ bool DrawingCanvas::PaintFinish(HDC displayHdc, RECT const& rect)
     auto oldMode = SetGraphicsMode(memoryHdc, GM_COMPATIBLE);
     BitBlt(
         displayHdc,
-        0,0,
-        //rect.left, rect.top,
+        //0,0,
+        rect.left, rect.top,
         rect.right, rect.bottom,
         memoryHdc,
         0,0, 
@@ -335,8 +335,8 @@ HRESULT DrawingCanvas::InitializeRendering()
 
         /*
         IFR(dwriteFactory_->CreateCustomRenderingParams(
-            1.8f,   // Copied hard-coded values from the source code, since they're
-            0.5f,   // not exposed publicly in the header file.
+            1.8f,   // Default values used by DWrite.
+            0.5f,
             0.5f,
             g_PixelGeometry,
             g_RenderingMode,
@@ -469,6 +469,12 @@ void DrawingCanvas::SwitchRenderingAPI(CurrentRenderingApi currentRenderingApi)
             targetD2D_->EndDraw();
         }
         break;
+
+    case CurrentRenderingApiGdi:
+    case CurrentRenderingApiGdiPlus:
+        GdiFlush();
+        break;
+
     default:
         break; // No other API's currently have special Begin/End needs.
     }
@@ -483,6 +489,7 @@ void DrawingCanvas::SwitchRenderingAPI(CurrentRenderingApi currentRenderingApi)
             targetD2D_->BeginDraw();
         }
         break;
+
     default:
         break; // No other API's currently have special Begin/End needs.
     }
@@ -560,28 +567,6 @@ HRESULT DrawingCanvas::SetSharedResource(
 
     return S_OK;
 }
-
-
-#if 0 // todo: delete?
-HRESULT DrawingCanvas::GetSharedResource(
-    UUID const& typeUuid,
-    _In_z_ char16_t const* name,
-    std::function<HRESULT(IUnknown**)> const& missingResourceCallback,
-    _COM_Outptr_ IUnknown** resource
-    )
-{
-    auto hr = GetSharedResource(typeUuid, name, resource);
-    if (hr == E_NOT_SET)
-    {
-        ComPtr<IUnknown> newResource;
-        IFR(missingResourceCallback(OUT &newResource));
-        IFR(SetSharedResource(typeUuid, name, newResource));
-        *resource = newResource.Detach();
-        return S_OK;
-    }
-    return hr;
-}
-#endif
 
 
 HRESULT DrawingCanvas::ClearSharedResources()

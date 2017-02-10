@@ -261,9 +261,6 @@ public:
 
     HRESULT GetSharedResource(UUID const& typeUuid, _In_z_ char16_t const* name, _COM_Outptr_ IUnknown** resource);
     HRESULT SetSharedResource(UUID const& typeUuid, _In_z_ char16_t const* name, IUnknown* resource);
-    #if 0 // todo: delete?
-    HRESULT GetSharedResource(UUID const& typeUuid, _In_z_ char16_t const* name, std::function<HRESULT(IUnknown**)> const& missingResourceCallback, _COM_Outptr_ IUnknown** resource);
-    #endif
     HRESULT RetireStaleSharedResources();
     HRESULT ClearSharedResources();
 

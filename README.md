@@ -5,4 +5,4 @@ Supports:
 - Arbitrary number of text objects with different text, font, direction, language, and rendering settings.
 - DirectWrite, Direct2D, GDI, GDI+
 
-C++, compiled with Visual Studio 2015 Preview 5.
+C++, compiled with Visual Studio 2017 RC.

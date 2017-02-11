@@ -495,7 +495,7 @@ void MainWindow::FillAttributesListView()
     lw.mask |= LVIF_PARAM;
 
     std::vector<uint32_t> listIndices(countof(DrawableObject::attributeList));
-    ListSubstringPrioritizer substringPrioritizer(attributeFilter_, countof(DrawableObject::attributeList));
+    ListSubstringPrioritizer substringPrioritizer(attributeFilter_, static_cast<uint32_t>(countof(DrawableObject::attributeList)));
 
     // Get the filtered list.
     for (uint32_t i = 0; i < countof(DrawableObject::attributeList); ++i)
@@ -1840,6 +1840,68 @@ HRESULT MainWindow::ExportFontGlyphData()
 }
 
 
+HRESULT MainWindow::AutofitDrawableObjects(bool useMaximumWidth, bool useMaximumHeight)
+{
+    // Autofit all the selected objects to their actual contents, looping through and asking each
+    // for its bounds, the updating its properties.
+
+    std::vector<uint32_t> drawableObjectIndices = GetSelectedDrawableObjectIndices();
+    auto const drawableObjectsTotal = drawableObjects_.size();
+    DrawingCanvasControl& drawingCanvas = *DrawingCanvasControl::GetClass(GetWindowFromId(hwnd_, IdcDrawingCanvas));
+
+    std::vector<D2D_SIZE_F> sizes(drawableObjects_.size());
+    float maximumWidth = 0, maximumHeight = 0;
+
+    // The first pass gets the sizes of all the objects.
+    for (auto drawableObjectIndex : drawableObjectIndices)
+    {
+        if (drawableObjectIndex >= drawableObjectsTotal)
+            continue;
+
+        auto& drawableObject = drawableObjects_[drawableObjectIndex];
+
+        D2D_RECT_F layoutBounds, contentBounds;
+        if (SUCCEEDED(drawableObject.drawableObject_->GetBounds(drawableObject, drawingCanvas, OUT layoutBounds, OUT contentBounds)))
+        {
+            PixelAlignRect(IN OUT contentBounds);
+            auto& size    = sizes[drawableObjectIndex];
+            size.width    = contentBounds.right - contentBounds.left;
+            size.height   = contentBounds.bottom - contentBounds.top;
+            maximumWidth  = std::max(maximumWidth, size.width);
+            maximumHeight = std::max(maximumHeight, size.height);
+        }
+    }
+
+    // The second pass updates them, considering whether to maximize them to the largest object found.
+    for (auto drawableObjectIndex : drawableObjectIndices)
+    {
+        if (drawableObjectIndex >= drawableObjectsTotal)
+            continue;
+
+        auto& drawableObject = drawableObjects_[drawableObjectIndex];
+        D2D_SIZE_F& size = sizes[drawableObjectIndex];
+        if (size.width > 0 && size.height > 0)
+        {
+            drawableObject.Set(DrawableObjectAttributeWidth,  uint32_t(useMaximumWidth  ? std::max(maximumWidth,  size.width)  : size.width));
+            drawableObject.Set(DrawableObjectAttributeHeight, uint32_t(useMaximumHeight ? std::max(maximumHeight, size.height) : size.height));
+            drawableObject.Update();
+        }
+    }
+
+    DeferUpdateUi(
+        NeededUiUpdateDrawableObjectsListView |
+        NeededUiUpdateAttributesListView |
+        NeededUiUpdateAttributeValuesListView |
+        NeededUiUpdateAttributeValuesEdit |
+        NeededUiUpdateAttributeValuesSlider |
+        NeededUiUpdateDrawableObjectsCanvas |
+        NeededUiUpdateTextEdit
+    );
+
+    return S_OK;
+}
+
+
 HRESULT MainWindow::StoreDrawableObjectsSettings()
 {
     std::u16string filePath;
@@ -2638,10 +2700,14 @@ void MainWindow::OnAssortedActions(HWND anchorControl)
 {
     TrackPopupMenu_Item constexpr static items[] = {
         {IdcSaveSelectedFontFile,  u"Save font file..."},
+        {IdcExportGlyphImageData, u"Export all glyph image data..." },
+        { 0, u"-" },
         {IdcGetAllFontCharacters, u"Get all font characters"},
         {IdcGetAllColorFontCharacters, u"Get all color font characters"},
         {IdcCopyAllFontCharacters, u"Copy all font characters to clipboard"},
-        {IdcExportGlyphImageData, u"Export all glyph image data..."},
+        {0, u"-"},
+        { IdcAutofitDrawableObjects, u"Autofit drawable objects" },
+        {IdcAutofitDrawableObjectsUniformly, u"Autofit drawable objects uniformly" },
     };
 
     int menuId = TrackPopupMenu(
@@ -2657,6 +2723,8 @@ void MainWindow::OnAssortedActions(HWND anchorControl)
     case IdcGetAllColorFontCharacters: GetAllFontCharacters(/*copyToClipboardInstead*/false, /*getOnlyColorFontCharacters*/ true); break;
     case IdcCopyAllFontCharacters: GetAllFontCharacters(/*copyToClipboardInstead*/true, /*getOnlyColorFontCharacters*/ false); break;
     case IdcExportGlyphImageData: ExportFontGlyphData(); break;
+    case IdcAutofitDrawableObjects: AutofitDrawableObjects(/*useMaximumWidth*/false, /*useMaximumHeight*/false); break;
+    case IdcAutofitDrawableObjectsUniformly: AutofitDrawableObjects(/*useMaximumWidth*/true, /*useMaximumHeight*/true); break;
     }
 }
 

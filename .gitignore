@@ -23,6 +23,8 @@
 [Bb]uild/
 Win32_Debug/
 Win32_Release/
+x64_Debug/
+x64_Release/
 bld/
 [Bb]in/
 [Oo]bj/
@@ -248,3 +250,5 @@ ModelManifest.xml
 # FAKE - F# Make
 .fake/
 /RemoveFontResource.vcxproj.filters
+/x64_Debug
+/x64_Debug

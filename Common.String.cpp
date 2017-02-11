@@ -68,6 +68,13 @@ void RemoveTrailingZeroes(std::u16string& text) throw()
 }
 
 
+array_ref<wchar_t> to_wstring(int32_t value, OUT array_ref<wchar_t> s)
+{
+    auto charactersWritten = swprintf_s(s.data(), s.size(), L"%d", value);
+    return make_array_ref(s.data(), std::max(charactersWritten, 0));
+}
+
+
 // Internal version. Should call the other two overloads publicly.
 void GetFormattedString(_Inout_ std::u16string& returnString, bool shouldConcatenate, _In_z_ const char16_t* formatString, va_list vargs) 
 {

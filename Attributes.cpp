@@ -599,7 +599,7 @@ HRESULT Attribute::GetPredefinedValueIndices(
     if (predefinedValuesCount == 0)
         return S_OK;
 
-    ListSubstringPrioritizer substringPrioritizer(ToChar16ArrayRef(stringValue), predefinedValuesCount);
+    ListSubstringPrioritizer substringPrioritizer(ToChar16ArrayRef(stringValue), static_cast<uint32_t>(predefinedValuesCount));
 
     for (uint32_t i = 0; i < predefinedValuesCount; ++i)
     {

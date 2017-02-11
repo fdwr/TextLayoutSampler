@@ -582,7 +582,7 @@ void DrawableObjectAndValues::Update(
     size_t const totalDrawableObjects = drawableObjects.size();
     for (uint32_t i : drawableObjectsIndices)
     {
-        ThrowIf(i >= totalDrawableObjects, "Drawing object listview is not consistent with internal array size!");
+        ThrowIf(i >= totalDrawableObjects, "Drawing object index is not consistent with internal array size!");
         drawableObjects[i].Update();
     }
 }
@@ -703,8 +703,9 @@ HRESULT DrawableObjectAndValues::Set(DrawableObjectAttribute attributeIndex, _In
 
 HRESULT DrawableObjectAndValues::Set(DrawableObjectAttribute attributeIndex, _In_z_ uint32_t value)
 {
-    auto stringValue = std::to_wstring(value);
-    return Set(attributeIndex, ToChar16(stringValue.c_str()));
+    wchar_t buffer[12];
+    auto stringValue = to_wstring(value, OUT buffer);
+    return Set(attributeIndex, ToChar16(stringValue.data()));
 }
 
 

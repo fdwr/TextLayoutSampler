@@ -1165,10 +1165,18 @@ int TrackPopupMenu(
     HWND parentHwnd
     )
 {
+    // Insert an array of menu items, or a separator if '-'.
     HMENU menu = CreatePopupMenu();
     for (auto const& item : items)
     {
-        AppendMenu(menu, MF_STRING, item.id, ToWChar(item.name));
+        if (item.name[0] == '-')
+        {
+            AppendMenu(menu, MF_SEPARATOR, item.id, ToWChar(item.name));
+        }
+        else
+        {
+            AppendMenu(menu, MF_STRING, item.id, ToWChar(item.name));
+        }
     }
     auto menuId = TrackPopupMenu(menu, controlHwnd, parentHwnd);
     DestroyMenu(menu);

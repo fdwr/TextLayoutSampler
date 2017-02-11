@@ -69,6 +69,7 @@ public:
     HRESULT StoreDrawableObjectsSettings(_In_z_ char16_t const* filePath);
     HRESULT SaveSelectedFontFile();
     HRESULT ExportFontGlyphData();
+    HRESULT AutofitDrawableObjects(bool useMaximumWidth, bool useMaximumHeight);
     HRESULT GetSelectedDrawableObject(_Out_ uint32_t& selectedDrawableObject); // S_FALSE and ~0 if none.
     HRESULT GetAllFontCharacters(bool copyToClipboardInstead, bool getOnlyColorFontCharacters);
     HRESULT GetLogFontFromDrawableObjects(_Out_ LOGFONT& logFont);

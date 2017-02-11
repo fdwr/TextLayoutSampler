@@ -106,6 +106,7 @@ void UnquoteString(_Inout_ std::u16string& path);
 void ToUpperCase(_Inout_ array_ref<char16_t> s);
 void UnescapeString(_In_z_ const char16_t* escapedText, OUT std::u16string& expandedText);
 void RemoveTrailingZeroes(_Inout_ std::u16string& text) throw();
+array_ref<wchar_t> to_wstring(int32_t value, OUT array_ref<wchar_t> s);
 
 static_assert(sizeof(wchar_t) == sizeof(char16_t), "These casts only work on platforms where wchar_t is 16 bits.");
 inline wchar_t* ToWChar(char16_t* p) { return reinterpret_cast<wchar_t*>(p); }

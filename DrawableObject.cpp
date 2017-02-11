@@ -1089,7 +1089,7 @@ HRESULT DrawableObject::GetDWriteFontFace(
         IDWriteFactory* factory = drawingCanvas.GetDWriteFactoryWeakRef();
         IFR(factory->GetGdiInterop(OUT &gdiInterop));
         IFR(gdiInterop->CreateFontFaceFromHdc(hdc, OUT &localFontFace));
-        GetTextFace(hdc, countof(actualFamilyName), OUT ToWChar(actualFamilyName));
+        GetTextFace(hdc, static_cast<uint32_t>(countof(actualFamilyName)), OUT ToWChar(actualFamilyName));
         SelectFont(hdc, previousFont);
 
         if (wcscmp(ToWChar(actualFamilyName), ToWChar(desiredFamilyName.data())) != 0)
@@ -2029,7 +2029,7 @@ HRESULT CachedDWriteTextFormat::EnsureCached(IAttributeSource& attributeSource, 
         CreateFontCollection(
             factory,
             ToWChar(customFontFilePath.data()),
-            customFontFilePath.size(),
+            static_cast<uint32_t>(customFontFilePath.size()),
             OUT &fontCollection
             );
 

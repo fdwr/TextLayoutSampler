@@ -605,7 +605,7 @@ HRESULT Attribute::GetPredefinedValueIndices(
     {
         auto& valueMapping = predefinedValues[i];
         auto* name = valueMapping.GetName();
-        auto weight =substringPrioritizer.GetStringWeight(ToChar16ArrayRef(name));
+        auto weight = substringPrioritizer.GetStringWeight(ToChar16ArrayRef(name));
         substringPrioritizer.SetItemWeight(i, weight);
     }
 

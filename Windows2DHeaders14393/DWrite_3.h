@@ -1578,6 +1578,8 @@ interface DWRITE_DECLARE_INTERFACE("4556BE70-3ABD-4F70-90BE-421780A6F515") IDWri
         _In_ IDWriteFontSet* fontSet,
         _COM_Outptr_ IDWriteFontSet** filteredSet
         ) PURE;
+
+    using IDWriteGdiInterop::CreateFontFromLOGFONT;
 };
 
 /// <summary>
@@ -1684,6 +1686,9 @@ interface DWRITE_DECLARE_INTERFACE("F67E0EDD-9E3D-4ECC-8C32-4183253DFE70") IDWri
     /// Standard HRESULT error code.
     /// </returns>
     STDMETHOD(GetLineSpacing)(_Out_ DWRITE_LINE_SPACING* lineSpacingOptions) PURE;
+
+    using IDWriteTextFormat1::SetLineSpacing;
+    using IDWriteTextFormat1::GetLineSpacing;
 };
 
 interface DWRITE_DECLARE_INTERFACE("07DDCD52-020E-4DE8-AC33-6C953D83F92D") IDWriteTextLayout3 : public IDWriteTextLayout2
@@ -1738,6 +1743,10 @@ interface DWRITE_DECLARE_INTERFACE("07DDCD52-020E-4DE8-AC33-6C953D83F92D") IDWri
         UINT32 maxLineCount,
         _Out_ UINT32* actualLineCount
         ) PURE;
+
+    using IDWriteTextLayout2::SetLineSpacing;
+    using IDWriteTextLayout2::GetLineSpacing;
+    using IDWriteTextLayout2::GetLineMetrics;
 };
 
 
@@ -2058,5 +2067,358 @@ interface DWRITE_DECLARE_INTERFACE("4B0B5BD3-0797-4549-8AC5-FE915CC53856") IDWri
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+#if NTDDI_VERSION >= NTDDI_WIN10_RS2
+
+interface DWRITE_DECLARE_INTERFACE("3FF7715F-3CDC-4DC6-9B72-EC5621DCCAFD") IDWriteFontSetBuilder1 : public IDWriteFontSetBuilder
+{
+    /// <summary>
+    /// Adds references to all the fonts in the specified font file. The method
+    /// parses the font file to determine the fonts and their properties.
+    /// </summary>
+    /// <param name="fontFile">Font file reference object to add to the set.</param>
+    /// <returns>
+    /// Standard HRESULT error code.
+    /// </returns>
+    STDMETHOD(AddFontFile)(
+        _In_ IDWriteFontFile* fontFile
+        ) throw();
+};
+
+/// <summary>
+/// The IDWriteAsyncResult interface represents the result of an asynchronous
+/// operation. A client can use the interface to wait for the operation to
+/// complete and to get the result.
+/// </summary>
+interface DWRITE_DECLARE_INTERFACE("CE25F8FD-863B-4D13-9651-C1F88DC73FE2") IDWriteAsyncResult : public IUnknown
+{
+    /// <summary>
+    /// The GetWaitHandleMethod method returns a handle that can be used to wait 
+    /// for the asynchronous operation to complete. The handle remains valid
+    /// until the interface is released.
+    /// </summary>
+    STDMETHOD_(HANDLE, GetWaitHandle)() PURE;
+
+    /// <summary>
+    /// The GetResult method returns the result of the asynchronous operation.
+    /// The return value is E_PENDING if the operation has not yet completed.
+    /// </summary>
+    STDMETHOD(GetResult)() PURE;
+};
+
+
+/// <summary>
+/// DWRITE_FILE_FRAGMENT represents a range of bytes in a font file.
+/// </summary>
+struct DWRITE_FILE_FRAGMENT
+{
+    /// <summary>
+    /// Starting offset of the fragment from the beginning of the file.
+    /// </summary>
+    UINT64 fileOffset;
+
+    /// <summary>
+    /// Size of the file fragment, in bytes.
+    /// </summary>
+    UINT64 fragmentSize;
+};
+
+
+/// <summary>
+/// IDWriteRemoteFontFileStream represents a font file stream parts of which may be 
+/// non-local. Non-local data must be downloaded before it can be accessed using 
+/// ReadFragment. The interface exposes methods to download font data and query the 
+/// locality of font data.
+/// </summary>
+/// <remarks>
+/// For more information, see the description of IDWriteRemoteFontFileLoader.
+/// </remarks>
+interface DWRITE_DECLARE_INTERFACE("4DB3757A-2C72-4ED9-B2B6-1ABABE1AFF9C") IDWriteRemoteFontFileStream : public IDWriteFontFileStream
+{
+    /// <summary>
+    /// GetLocalFileSize returns the number of bytes of the font file that are
+    /// currently local, which should always be less than or equal to the full
+    /// file size returned by GetFileSize. If the locality is remote, the return
+    /// value is zero. If the file is fully local, the return value must be the
+    /// same as GetFileSize.
+    /// </summary>
+    /// <param name="localFileSize">Receives the local size of the file.</param>
+    /// <returns>
+    /// Standard HRESULT error code.
+    /// </returns>
+    STDMETHOD(GetLocalFileSize)(
+        _Out_ UINT64* localFileSize
+        ) PURE;
+
+    /// <summary>
+    /// GetFileFragmentLocality returns information about the locality of a byte range (i.e.,
+    /// font fragment) within the font file stream.
+    /// </summary>
+    /// <param name="fileOffset">Offset of the fragment from the beginning of the font file.</param>
+    /// <param name="fragmentSize">Size of the fragment in bytes.</param>
+    /// <param name="isLocal">Receives TRUE if the first byte of the fragment is local, FALSE if not.</param>
+    /// <param name="partialSize">Receives the number of contiguous bytes from the start of the
+    /// fragment that have the same locality as the first byte.</param>
+    /// <returns>
+    /// Standard HRESULT error code.
+    /// </returns>
+    STDMETHOD(GetFileFragmentLocality)(
+        UINT64 fileOffset,
+        UINT64 fragmentSize,
+        _Out_ BOOL* isLocal,
+        _Out_range_(0, fragmentSize) UINT64* partialSize
+        ) PURE;
+
+    /// <summary>
+    /// Gets the current locality of the file.
+    /// </summary>
+    /// <returns>
+    /// Returns the locality enumeration (i.e., remote, partial, or local).
+    /// </returns>
+    STDMETHOD_(DWRITE_LOCALITY, GetLocality)() PURE;
+
+    /// <summary>
+    /// BeginDownload begins downloading all or part of the font file.
+    /// </summary>
+    /// <param name="fileFragments">Array of structures, each specifying a byte
+    /// range to download.</param>
+    /// <param name="fragmentCount">Number of elements in the fileFragments array.
+    /// This can be zero to just download file information, such as the size.</param>
+    /// <param name="asyncResult">Receives an object that can be used to wait for
+    /// the asynchronous download to complete and to get the download result upon 
+    /// completion. The result may be NULL if the download completes synchronously.
+    /// For example, this can happen if method determines that the requested data
+    /// is already local.</param>
+    /// <returns>
+    /// Standard HRESULT error code.
+    /// </returns>
+    STDMETHOD(BeginDownload)(
+        _In_ UUID const* downloadOperationID,
+        _In_reads_(fragmentCount) DWRITE_FILE_FRAGMENT const* fileFragments,
+        UINT32 fragmentCount,
+        _COM_Outptr_result_maybenull_ IDWriteAsyncResult** asyncResult
+        ) PURE;
+};
+
+
+/// <summary>
+/// Specifies the container format of a font resource. A container format is distinct from
+/// a font file format (DWRITE_FONT_FILE_TYPE) because the container describes the container
+/// in which the underlying font file is packaged.
+/// </summary>
+enum DWRITE_CONTAINER_TYPE
+{
+    DWRITE_CONTAINER_TYPE_UNKNOWN,
+    DWRITE_CONTAINER_TYPE_WOFF,
+    DWRITE_CONTAINER_TYPE_WOFF2
+};
+
+
+/// <summary>
+/// The IDWriteRemoteFontFileLoader interface represents a font file loader that can access 
+/// remote (i.e., downloadable) fonts. The IDWriteFactory5::CreateHttpFontFileLoader method
+/// returns an instance of this interface, or a client can create its own implementation.
+/// </summary>
+/// <remarks>
+/// Calls to a remote file loader or stream should never block waiting for network operations.
+/// Any call that cannot succeeded immediately using local (e.g., cached) must should return
+/// DWRITE_E_REMOTEFONT. This error signifies to DWrite that it should add requests to the 
+/// font download queue.
+/// </remarks>
+interface DWRITE_DECLARE_INTERFACE("68648C83-6EDE-46C0-AB46-20083A887FDE") IDWriteRemoteFontFileLoader : public IDWriteFontFileLoader
+{
+    /// <summary>
+    /// Creates a remote font file stream object that encapsulates an open file resource
+    /// and can be used to download remote file data.
+    /// </summary>
+    /// <param name="fontFileReferenceKey">Font file reference key that uniquely identifies the font file resource
+    /// within the scope of the font loader being used.</param>
+    /// <param name="fontFileReferenceKeySize">Size of font file reference key in bytes.</param>
+    /// <param name="fontFileStream">Pointer to the newly created font file stream.</param>
+    /// <returns>
+    /// Standard HRESULT error code.
+    /// </returns>
+    /// <remarks>
+    /// Unlike CreateStreamFromKey, this method can be used to create a stream for a remote file.
+    /// If the file is remote, the client must call IDWriteRemoteFontFileStream::DownloadFileInformation
+    /// before the stream can be used to get the file size or access data.
+    /// </remarks>
+    STDMETHOD(CreateRemoteStreamFromKey)(
+        _In_reads_bytes_(fontFileReferenceKeySize) void const* fontFileReferenceKey,
+        UINT32 fontFileReferenceKeySize,
+        _COM_Outptr_ IDWriteRemoteFontFileStream** fontFileStream
+        ) PURE;
+
+    /// <summary>
+    /// Gets the locality of the file resource identified by the unique key.
+    /// </summary>
+    /// <param name="fontFileReferenceKey">Font file reference key that uniquely identifies the font file resource
+    /// within the scope of the font loader being used.</param>
+    /// <param name="fontFileReferenceKeySize">Size of font file reference key in bytes.</param>
+    /// <param name="locality">Locality of the file.</param>
+    /// <returns>
+    /// Standard HRESULT error code.
+    /// </returns>
+    STDMETHOD(GetLocalityFromKey)(
+        _In_reads_bytes_(fontFileReferenceKeySize) void const* fontFileReferenceKey,
+        UINT32 fontFileReferenceKeySize,
+        _Out_ DWRITE_LOCALITY* locality
+        ) PURE;
+
+    /// <summary>
+    /// Creates a font file reference from a URL if the loader supports this capability.
+    /// </summary>
+    /// <param name="factory">Factory used to create the font file reference.</param>
+    /// <param name="baseUrl">Optional base URL. The base URL is used to resolve the fontFileUrl
+    /// if it is relative. For example, the baseUrl might be the URL of the referring document
+    /// that contained the fontFileUrl.</param>
+    /// <param name="fontFileUrl">URL of the font resource.</param>
+    /// <param name="fontFile">Receives a pointer to the newly created font file reference.</param>
+    /// <returns>
+    /// Standard HRESULT error code, or E_NOTIMPL if the loader does not implement this method.
+    /// </returns>
+    STDMETHOD(CreateFontFileReferenceFromUrl)(
+        IDWriteFactory* factory,
+        _In_opt_z_ WCHAR const* baseUrl,
+        _In_z_ WCHAR const* fontFileUrl,
+        _COM_Outptr_ IDWriteFontFile** fontFile
+        ) PURE;
+};
+
+
+/// <summary>
+/// The IDWriteInMemoryFontFileLoader interface enables clients to reference
+/// in-memory fonts without having to implement a custom loader. The 
+/// IDWriteFactory5::CreateInMemoryFontFileLoader method returns an instance
+/// of this interface, which the client is responsible for registering and
+/// unregistering using IDWriteFactory::RegisterFontFileLoader and 
+/// IDWriteFactory::UnregisterFontFileLoader.
+/// </summary>
+interface DWRITE_DECLARE_INTERFACE("DC102F47-A12D-4B1C-822D-9E117E33043F") IDWriteInMemoryFontFileLoader : public IDWriteFontFileLoader
+{
+    /// <summary>
+    /// The CreateInMemoryFontFileReference method creates a font file reference
+    /// (IDWriteFontFile object) from an array of bytes. The font file reference
+    /// is bound to the IDWRiteInMemoryFontFileLoader instance with which it was
+    /// created and remains valid for as long as that loader is registered with
+    /// the factory.
+    /// </summary>
+    /// <param name="factory">Factory object used to create the font file reference.</param>
+    /// <param name="fontData">Pointer to a memory block containing the font data.</param>
+    /// <param name="fontDataSize">Size of the font data.</param>
+    /// <param name="ownerObject">Optional object that owns the memory specified by
+    /// the fontData parameter. If this parameter is not NULL, the method stores a
+    /// pointer to the font data and adds a reference to the owner object. The
+    /// fontData pointer must remain valid until the owner object is released. If
+    /// this parameter is NULL, the method makes a copy of the font data.</param>
+    /// <param name="fontFile">Receives a pointer to the newly-created font file
+    /// reference.</param>
+    /// <returns>
+    /// Standard HRESULT error code.
+    /// </returns>
+    STDMETHOD(CreateInMemoryFontFileReference)(
+        IDWriteFactory* factory,
+        _In_reads_bytes_(fontDataSize) void const* fontData,
+        UINT32 fontDataSize,
+        _In_opt_ IUnknown* ownerObject,
+        _COM_Outptr_ IDWriteFontFile** fontFile
+        ) PURE;
+
+    /// <summary>
+    /// The GetFileCount method returns the number of font file references that
+    /// have been created using this loader instance.
+    /// </summary>
+    STDMETHOD_(UINT32, GetFileCount)() PURE;
+};
+
+
+/// <summary>
+/// The root factory interface for all DWrite objects.
+/// </summary>
+interface DWRITE_DECLARE_INTERFACE("958DB99A-BE2A-4F09-AF7D-65189803D1D3") IDWriteFactory5 : public IDWriteFactory4
+{
+    /// <summary>
+    /// Creates an empty font set builder to add font face references
+    /// and create a custom font set.
+    /// </summary>
+    /// <param name="fontSetBuilder">Holds the newly created font set builder object, or NULL in case of failure.</param>
+    /// <returns>
+    /// Standard HRESULT error code.
+    /// </returns>
+    STDMETHOD(CreateFontSetBuilder)(
+        _COM_Outptr_ IDWriteFontSetBuilder1** fontSetBuilder
+        ) PURE;
+
+    using IDWriteFactory3::CreateFontSetBuilder;
+
+    /// <summary>
+    /// The CreateInMemoryFontFileLoader method creates a loader object that can
+    /// be used to create font file references to in-memory fonts. The caller is 
+    /// responsible for registering and unregistering the loader.
+    /// </summary>
+    /// <param name="newLoader">Receives a pointer to the newly-created loader object.</param>
+    /// <returns>
+    /// Standard HRESULT error code.
+    /// </returns>
+    STDMETHOD(CreateInMemoryFontFileLoader)(
+        _COM_Outptr_ IDWriteInMemoryFontFileLoader** newLoader
+        ) PURE;
+
+    /// <summary>
+    /// The CreateHttpFontFileLoader function creates a remote font file loader 
+    /// that can create font file references from HTTP or HTTPS URLs. The caller
+    /// is responsible for registering and unregistering the loader.
+    /// </summary>
+    /// <param name="referrerUrl">Optional referrer URL for HTTP requests.</param>
+    /// <param name="extraHeaders">Optional additional header fields to include 
+    /// in HTTP requests. Each header field consists of a name followed by a colon
+    /// (":") and the field value, as specified by RFC 2616. Multiple header fields 
+    /// may be separated by newlines.</param>
+    /// <param name="newLoader">Receives a pointer to the newly-created loader object.</param>
+    /// <returns>
+    /// Standard HRESULT error code.
+    /// </returns>
+    STDMETHOD(CreateHttpFontFileLoader)(
+        _In_opt_z_ wchar_t const* referrerUrl,
+        _In_opt_z_ wchar_t const* extraHeaders,
+        _COM_Outptr_ IDWriteRemoteFontFileLoader** newLoader
+        );
+
+    /// <summary>
+    /// The AnalyzeContainerType method analyzes the specified file data to determine
+    /// whether it is a known font container format (e.g., WOFF or WOFF2).
+    /// </summary>
+    /// <returns>
+    /// Returns the container type if recognized. DWRITE_CONTAINER_TYPE_UNKOWNN is
+    /// returned for all other files, including uncompressed font files.
+    /// </returns>
+    STDMETHOD_(DWRITE_CONTAINER_TYPE, AnalyzeContainerType)(
+        _In_reads_bytes_(fileDataSize) void const* fileData,
+        UINT32 fileDataSize
+        ) PURE;
+
+    /// <summary>
+    /// The UnpackFontFile method unpacks font data from a container file (WOFF or
+    /// WOFF2) and returns the unpacked font data in the form of a font file stream.
+    /// </summary>
+    /// <param name="containerType">Container type returned by AnalyzeContainerType.</param>
+    /// <param name="fileData">Pointer to the compressed data.</param>
+    /// <param name="fileDataSize">Size of the compressed data, in bytes.</param>
+    /// <param name="unpackedFontStream">Receives a pointer to a newly created font
+    /// file stream containing the uncompressed data.</param>
+    /// <returns>
+    /// Standard HRESULT error code. The return value is E_INVALIDARG if the container
+    /// type is DWRITE_CONTAINER_TYPE_UNKNOWN.
+    /// </returns>
+    STDMETHOD(UnpackFontFile)(
+        DWRITE_CONTAINER_TYPE containerType,
+        _In_reads_bytes_(fileDataSize) void const* fileData,
+        UINT32 fileDataSize,
+        _COM_Outptr_ IDWriteFontFileStream** unpackedFontStream
+        ) PURE;
+};
+
+#endif // NTDDI_VERSION >= NTDDI_WIN10_RS2
 
 #endif // DWRITE_3_H_INCLUDED

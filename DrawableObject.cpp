@@ -54,6 +54,7 @@ const Attribute DrawableObject::attributeList[DrawableObjectAttributeTotal] =
     {Attribute::TypeUInteger32,     Attribute::SemanticEnumExclusive,0,             DrawableObjectAttributeGdiRenderingMode, u"gdi_rendering_mode", u"GDI rendering mode", u"", gdiRenderingModes, countof(gdiRenderingModes)},
     {Attribute::TypeUInteger32,     Attribute::SemanticEnumExclusive,0,             DrawableObjectAttributeGdiPlusRenderingMode, u"gdiplus_rendering_mode", u"GDI+ rendering mode", u"", gdiPlusRenderingModes, countof(gdiPlusRenderingModes)},
     {Attribute::TypeUInteger32,     Attribute::SemanticEnumExclusive,0            , DrawableObjectAttributeDWriteMeasuringMode, u"dwrite_measuring_mode", u"DWrite measuring mode", u"", dwriteMeasuringModes, countof(dwriteMeasuringModes) },
+    {Attribute::TypeUInteger32,     Attribute::SemanticEnumExclusive,0            , DrawableObjectAttributeDWriteVerticalGlyphOrientation, u"dwrite_vertical_glyph_orientation", u"DWrite vertical glyph orientation", u"", dwriteVerticalGlyphOrientation, countof(dwriteVerticalGlyphOrientation) },
     {Attribute::TypeString16,       Attribute::SemanticNone,         CategoryLight, DrawableObjectAttributeLanguageList, u"language_list", u"Language list", u"", languages, countof(languages)},
     {Attribute::TypeUInteger32,     Attribute::SemanticColor,        0            , DrawableObjectAttributeTextColor, u"text_color", u"Text color", u"000000", textColors, countof(textColors), u"Color as #FFFFFFFF, 255 128 0, or name" },
     {Attribute::TypeUInteger32,     Attribute::SemanticColor,        0            , DrawableObjectAttributeBackColor, u"back_color", u"Back color", u"#FFFFFFFF", textColors, countof(textColors), u"Color as #FFFFFFFF, 255 128 0, or name"},
@@ -72,7 +73,7 @@ const Attribute DrawableObject::attributeList[DrawableObjectAttributeTotal] =
     {Attribute::TypeCharacter32,    Attribute::SemanticNone,         0            , DrawableObjectAttributeTrimmingDelimiter, u"trimming_delimiter", u"Trimming delimiter", u"", trimmingDelimiters, countof(trimmingDelimiters) },
     {Attribute::TypeBool8,          Attribute::SemanticNone,         0            , DrawableObjectAttributeUser32DrawTextAsEditControl, u"user32_drawtext_edit_control", u"User32 DrawText DT_EDITCONTROL", u"", enabledValues, countof(enabledValues) },
 };
-static_assert(DrawableObjectAttributeTotal == 48, "A new attribute enum has been added. Update this table.");
+static_assert(DrawableObjectAttributeTotal == 49, "A new attribute enum has been added. Update this table.");
 
 
 const Attribute::PredefinedValue DrawableObject::functions[] = {
@@ -797,6 +798,11 @@ const Attribute::PredefinedValue DrawableObject::gdiRenderingModes[] = {
     {uint32_t(ANTIALIASED_QUALITY), u"Antialiased" },
     {uint32_t(CLEARTYPE_QUALITY), u"ClearType" },
     {uint32_t(CLEARTYPE_NATURAL_QUALITY), u"ClearType Natural" },
+};
+
+const Attribute::PredefinedValue DrawableObject::dwriteVerticalGlyphOrientation[] = {
+    { uint32_t(DWRITE_VERTICAL_GLYPH_ORIENTATION_DEFAULT), u"Default" },
+    { uint32_t(DWRITE_VERTICAL_GLYPH_ORIENTATION_STACKED), u"Stacked" },
 };
 
 const Attribute::PredefinedValue DrawableObject::gdiPlusRenderingModes[] = {
@@ -2079,22 +2085,30 @@ HRESULT CachedDWriteTextFormat::EnsureCached(IAttributeSource& attributeSource, 
         textFormat->SetIncrementalTabStop(tabWidths[0]);
     }
 
+    ComPtr<IDWriteTextFormat1> textFormat1;
+    textFormat->QueryInterface(OUT &textFormat1);
+
     // There isn't a simple switch to turn off fallback in IDWriteTextFormat,
     // but you can just create an empty font fallback definition.
     bool useFontFallback = attributeSource.GetValue(DrawableObjectAttributeFontFallback, true);
     if (!useFontFallback)
     {
         ComPtr<IDWriteFactory2> factory2;
-        ComPtr<IDWriteTextFormat1> textFormat1;
         ComPtr<IDWriteFontFallbackBuilder> fontFallbackBuilder;
         ComPtr<IDWriteFontFallback> fontFallback;
-        if (SUCCEEDED(factory->QueryInterface(OUT &factory2))
-        &&  SUCCEEDED(textFormat->QueryInterface(OUT &textFormat1))
+        if (textFormat1 != nullptr
+        &&  SUCCEEDED(factory->QueryInterface(OUT &factory2))
         &&  SUCCEEDED(factory2->CreateFontFallbackBuilder(OUT &fontFallbackBuilder))
         &&  SUCCEEDED(fontFallbackBuilder->CreateFontFallback(OUT &fontFallback)))
         {
             textFormat1->SetFontFallback(fontFallback);
         }
+    }
+
+    DWRITE_VERTICAL_GLYPH_ORIENTATION verticalGlyphOrientation = attributeSource.GetValue(DrawableObjectAttributeDWriteVerticalGlyphOrientation, DWRITE_VERTICAL_GLYPH_ORIENTATION_DEFAULT);
+    if (textFormat1 != nullptr)
+    {
+        textFormat1->SetVerticalGlyphOrientation(verticalGlyphOrientation);
     }
 
     return S_OK;

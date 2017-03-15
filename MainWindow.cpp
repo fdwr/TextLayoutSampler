@@ -1483,8 +1483,9 @@ HRESULT MainWindow::LoadFontFileIntoDrawableObjects(_In_z_ char16_t const* fileP
             GetInformationalString(innerFont, DWRITE_INFORMATIONAL_STRING_PREFERRED_FAMILY_NAMES, nullptr, OUT preferredFamilyName);
             GetInformationalString(innerFont, DWRITE_INFORMATIONAL_STRING_PREFERRED_SUBFAMILY_NAMES, nullptr, OUT preferredFaceName);
             GetInformationalString(innerFont, DWRITE_INFORMATIONAL_STRING_FULL_NAME, nullptr, OUT fullName);
+            DWRITE_FONT_SIMULATIONS fontSimulations = innerFont->GetSimulations();
 
-            AppendLog(u"%d:%d = wws:'%s'|'%s',  pref:'%s'|'%s',  win32:'%s'|'%s',  full:'%s'\r\n",
+            AppendLog(u"%d:%d = wws:'%s'|'%s',  pref:'%s'|'%s',  win32:'%s'|'%s',  full:'%s'%s wght=%d wdth=%d slnt=%d\r\n",
                 familyIndex,
                 faceIndex,
                 familyName.c_str(),
@@ -1493,7 +1494,11 @@ HRESULT MainWindow::LoadFontFileIntoDrawableObjects(_In_z_ char16_t const* fileP
                 preferredFaceName.c_str(),
                 win32FamilyName.c_str(),
                 win32FaceName.c_str(),
-                fullName.c_str()
+                fullName.c_str(),
+                fontSimulations != DWRITE_FONT_SIMULATIONS_NONE ? u",  simulated" : u"",
+                innerFont->GetWeight(),
+                innerFont->GetStretch(),
+                innerFont->GetStyle()
             );
         }
     }

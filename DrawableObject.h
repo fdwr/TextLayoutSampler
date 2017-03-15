@@ -43,6 +43,7 @@ enum DrawableObjectAttribute : uint32_t
     DrawableObjectAttributeGdiRenderingMode,
     DrawableObjectAttributeGdiPlusRenderingMode,
     DrawableObjectAttributeDWriteMeasuringMode,
+    DrawableObjectAttributeDWriteVerticalGlyphOrientation,
     DrawableObjectAttributeLanguageList,
     DrawableObjectAttributeTextColor,
     DrawableObjectAttributeBackColor,
@@ -191,6 +192,7 @@ public:
     static const Attribute::PredefinedValue wrappingModes[4];
     static const Attribute::PredefinedValue dwriteMeasuringModes[3];
     static const Attribute::PredefinedValue dwriteRenderingModes[7];
+    static const Attribute::PredefinedValue dwriteVerticalGlyphOrientation[2];
     static const Attribute::PredefinedValue gdiRenderingModes[7];
     static const Attribute::PredefinedValue gdiPlusRenderingModes[6];
     static const Attribute::PredefinedValue dwriteFontFaceTypes[8];

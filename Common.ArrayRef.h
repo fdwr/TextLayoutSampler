@@ -150,8 +150,8 @@ public:
     const_reverse_iterator crend() const    { return const_reverse_iterator(end_); }
 
     // Capacity
-    size_type size() const                  { return end_ - begin_; };
-    size_type size_in_bytes() const         { return to_byte_pointer(end_) - to_byte_pointer(begin_); };
+    size_type size() const                  { return end_ - begin_; }
+    size_type size_in_bytes() const         { return to_byte_pointer(end_) - to_byte_pointer(begin_); }
     size_type max_size() const              { return SIZE_MAX / sizeof(T); }
     bool empty() const                      { return begin_ == end_; }
 
@@ -165,7 +165,7 @@ public:
     // Mutators
     void clear()                            { begin_ = end_ = nullptr; }
     void remove_prefix(size_type n)         { begin_ += n; assert(begin_ <= end_); }
-    void remove_suffix(size_type n)         { end_   -= n; assert(begin_ <= end_); };
+    void remove_suffix(size_type n)         { end_   -= n; assert(begin_ <= end_); }
     void pop_back()                         { --end_;   assert(begin_ <= end_); }
     void pop_front()                        { ++begin_; assert(begin_ <= end_); }
 

@@ -11,6 +11,25 @@ interface IDWriteFactory;
 interface ID2D1RenderTarget;
 interface ID2D1Brush;
 
+
+// A much more useful metrics structure for display.
+// Side-bearings are awfully confusing with unclear positive/negative sign depending on whether inside or outside the
+// bounding box, plus an inverted 2D coordinate system compared to the rest of DirectWrite and Direct2D. So this
+// structure simply stores the two bounding boxes clearly.
+struct DWritExGlyphMetrics
+{
+    int32_t verticalOriginX;
+    int32_t verticalOriginY;
+    int32_t advanceWidth;
+    int32_t advanceHeight;
+    int32_t top;
+    int32_t left;
+    int32_t right;
+    int32_t bottom;
+
+    void Set(DWRITE_GLYPH_METRICS const& glyphMetrics);
+};
+
 HRESULT LoadDWrite(
     _In_z_ const wchar_t* dllPath,
     DWRITE_FACTORY_TYPE factoryType, // DWRITE_FACTORY_TYPE_SHARED

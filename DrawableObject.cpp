@@ -1918,6 +1918,20 @@ HRESULT CachedDWriteGlyphRun::Update(
 
     glyphAdvances_.clear();
 
+    // If the array of advances is smaller than the glyph run, repeat the last advance.
+    if (!glyphAdvances.empty() && glyphAdvances.size() < glyphs.size())
+    {
+        glyphAdvances_.resize(glyphs.size());
+        uint32_t lastGlyphIndex = static_cast<uint32_t>(glyphAdvances.size()) - 1;
+        uint32_t currentGlyphIndex = 0;
+        for (auto& advance : glyphAdvances_)
+        {
+            advance = glyphAdvances[std::min(currentGlyphIndex, lastGlyphIndex)];
+            ++currentGlyphIndex;
+        }
+        glyphAdvances = glyphAdvances_;
+    }
+
     DWRITE_GLYPH_RUN& glyphRun = *static_cast<DWRITE_GLYPH_RUN*>(this);
     glyphRun = {
         newFontFace,
@@ -2345,6 +2359,54 @@ HRESULT DrawableObjectDirect2DDrawGlyphRun::Draw(
     d2dRenderTarget->SetTextRenderingParams(renderingParams_.renderingParams);
     d2dRenderTarget->SetTransform(&transform.d2d);
     d2dRenderTarget->BeginDraw();
+
+    // hack::::
+    #if 0
+    DWRITE_FONT_METRICS fontMetrics;
+    std::vector<DWRITE_GLYPH_METRICS> glyphMetricsArray(cachedGlyphRun.glyphCount);
+    fontFace_.fontFace->GetMetrics(OUT &fontMetrics);
+    fontFace_.fontFace->GetDesignGlyphMetrics(
+        cachedGlyphRun.glyphIndices,
+        cachedGlyphRun.glyphCount,
+        OUT glyphMetricsArray.data(),
+        FALSE
+    );
+
+    float gx = 0;
+
+    for (uint32_t i = 0, ci = cachedGlyphRun.glyphCount; i < ci; ++i)
+    {
+        DWRITE_GLYPH_METRICS gm = glyphMetricsArray[i];
+
+        DWritExGlyphMetrics glyphMetrics;
+
+        glyphMetrics.Set(gm);
+        D2D_RECT_F rect = {
+            float(glyphMetrics.left),
+            float(glyphMetrics.top),
+            float(glyphMetrics.right),
+            float(glyphMetrics.bottom)
+        };
+        float scaleFactor = cachedGlyphRun.fontEmSize / fontMetrics.designUnitsPerEm;
+        rect.left   *= scaleFactor;
+        rect.top    *= scaleFactor;
+        rect.right  *= scaleFactor;
+        rect.bottom *= scaleFactor;
+        rect.left   += x + gx;
+        rect.top    += y;
+        rect.right  += x + gx;
+        rect.bottom += y;
+
+        brush->SetColor(ToD2DColor(0xFFFFFFFF));
+        d2dRenderTarget->DrawRectangle(&rect, brush);
+        brush->SetColor(ToD2DColor(bgraTextColor));
+
+        int32_t advance = cachedGlyphRun.isSideways ? gm.advanceHeight : gm.advanceWidth;
+        if (cachedGlyphRun.bidiLevel & 1)
+            advance = -advance;
+        gx += advance * scaleFactor;
+    }
+    #endif
 
     if (enableColorFonts)
     {

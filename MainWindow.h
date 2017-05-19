@@ -89,6 +89,7 @@ protected:
     void UpdateDrawableObjectsListView();
     void DeleteDrawableObjectsListViewSelected();
     void CreateDrawableObjectsListViewSelected();
+    void ShiftSelectedDrawableObjects(int32_t shiftDirection /* down = positive, up = negative */);
     HRESULT LoadDrawableObjectsSettings(bool clearExistingItems = true, bool merge = false);
     HRESULT StoreDrawableObjectsSettings();
     void UpdateAttributesListView();

@@ -37,6 +37,7 @@ enum DrawableObjectAttribute : uint32_t
     DrawableObjectAttributeReadingDirection,
     DrawableObjectAttributeColumnAlignment,
     DrawableObjectAttributeRowAlignment,
+    DrawableObjectAttributeJustification,
     DrawableObjectAttributeTypographicFeatures,
     DrawableObjectAttributeLineWrappingMode,
     DrawableObjectAttributeDWriteRenderingMode,
@@ -106,6 +107,12 @@ enum DrawableObjectAlignmentMode
     DrawableObjectAlignmentModeLeading = 0,
     DrawableObjectAlignmentModeTrailing = 1,
     DrawableObjectAlignmentModeCenter = 2,
+};
+
+enum DrawableObjectJustificationMode
+{
+    DrawableObjectJustificationModeUnjustified = 0,
+    DrawableObjectJustificationModeJustified = 1,
 };
 
 static_assert(DrawableObjectAlignmentModeLeading == DWRITE_TEXT_ALIGNMENT_LEADING, "");
@@ -189,6 +196,7 @@ public:
     static const Attribute::PredefinedValue stretches[9];
     static const Attribute::PredefinedValue slopes[3];
     static const Attribute::PredefinedValue alignments[3];
+    static const Attribute::PredefinedValue justifications[2];
     static const Attribute::PredefinedValue wrappingModes[4];
     static const Attribute::PredefinedValue dwriteMeasuringModes[3];
     static const Attribute::PredefinedValue dwriteRenderingModes[7];

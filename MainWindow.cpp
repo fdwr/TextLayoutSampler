@@ -672,7 +672,8 @@ void MainWindow::UpdateAttributeValuesListView()
     if (selectedAttributeIndex_ < DrawableObjectAttributeTotal)
     {
         Attribute const& attribute = DrawableObject::attributeList[selectedAttributeIndex_];
-        std::vector<uint32_t> orderedIndices(attribute.predefinedValuesCount);
+        uint32_t const predefinedValuesCount = static_cast<uint32_t>(attribute.predefinedValues.size());
+        std::vector<uint32_t> orderedIndices(predefinedValuesCount);
 
         if (attribute.semantic == Attribute::SemanticLongText || !isTypingAttributeValueToFilter_)
         {
@@ -689,7 +690,7 @@ void MainWindow::UpdateAttributeValuesListView()
 
         int selectedItem = -1; // Keep track of which value to select, if any.
 
-        for (uint32_t i = 0; i < attribute.predefinedValuesCount; ++i)
+        for (uint32_t i = 0; i < predefinedValuesCount; ++i)
         {
             // Get the name and value for each column.
             uint32_t valueIndex = orderedIndices[i];
@@ -935,6 +936,7 @@ void MainWindow::CreateDrawableObjectsListViewSelected()
     std::vector<uint32_t> drawableObjectIndices = GetListViewMatchingIndices(drawableObjectsListView, LVNI_SELECTED, /*returnAllIfNoMatch*/false);
     std::vector<uint32_t> attributeValueIndices = GetListViewMatchingIndices(attributeValuesListView, LVNI_SELECTED, /*returnAllIfNoMatch*/false);
 
+    // Create a default object or duplicate a selected one.
     size_t const originalDrawableObjectsCount = drawableObjects_.size();
     if (originalDrawableObjectsCount == 0)
     {
@@ -972,12 +974,13 @@ void MainWindow::CreateDrawableObjectsListViewSelected()
 
         // Apply attribute all value permutations, for each attribute, and each new object.
         auto const& attribute = DrawableObject::attributeList[selectedAttributeIndex_];
+        uint32_t const predefinedValuesCount = static_cast<uint32_t>(attribute.predefinedValues.size());
         std::u16string stringValueBuffer;
         size_t drawableObjectIndex = originalDrawableObjectsCount;
 
         for (auto& attributeValueIndex : attributeValueIndices)
         {
-            if (attributeValueIndex >= attribute.predefinedValuesCount)
+            if (attributeValueIndex >= predefinedValuesCount)
                 continue;
 
             // Read the attribute string value.
@@ -1002,6 +1005,65 @@ void MainWindow::CreateDrawableObjectsListViewSelected()
         drawableObject.Invalidate();
         drawableObject.Update();
     }
+
+    DeferUpdateUi(
+        NeededUiUpdateDrawableObjectsListView |
+        NeededUiUpdateAttributesListView |
+        NeededUiUpdateAttributeValuesListView |
+        NeededUiUpdateAttributeValuesEdit |
+        NeededUiUpdateAttributeValuesSlider |
+        NeededUiUpdateDrawableObjectsCanvas
+    );
+}
+
+
+void MainWindow::ShiftSelectedDrawableObjects(int32_t shiftDirection /* down = positive, up = negative */)
+{
+    if (shiftDirection == 0)
+        return; // Nop
+
+    auto drawableObjectsListView = GetWindowFromId(hwnd_, IdcDrawableObjectsList);
+    size_t const drawableObjectsCount = drawableObjects_.size();
+    std::vector<uint32_t> drawableObjectIndices = GetListViewMatchingIndices(drawableObjectsListView, LVNI_SELECTED, /*returnAllIfNoMatch*/false);
+    if (drawableObjectIndices.empty())
+        return; // Nop
+
+    int32_t iDelta = (/*if shifting up*/ shiftDirection < 0) ? /*swap down*/1 : /*swap up*/ -1;
+    uint32_t begin = 0, end = drawableObjectIndices.size(); // if shifting up
+
+    // Check for selected lines already being at either end, thus unabled to shift further.
+    if (shiftDirection > 0)
+    {
+        // Shifting selected lines down, progressing up.
+        begin = end - 1;
+        end = 0xFFFFFFFF;
+        if (drawableObjectIndices.back() == drawableObjectsCount - 1)
+            return;
+    }
+    else // shiftDirection < 0
+    {
+        // Shifting selected lines up, progressing down.
+        if (drawableObjectIndices.front() == 0)
+            return;
+    }
+
+    for (uint32_t i = begin; i != end; i += iDelta)
+    {
+        auto drawableObjectIndex = drawableObjectIndices[i];
+        if (drawableObjectIndex >= drawableObjectsCount)
+            continue;
+        std::swap(drawableObjects_[drawableObjectIndex], drawableObjects_[drawableObjectIndex - iDelta]);
+        //drawableObject.Invalidate();
+        //drawableObject.Update();
+    }
+
+
+    // Update all the copied objects, since attributes have been changed.
+    // todo:delete
+    //for (auto& drawableObject : make_iterator_range(drawableObjects_.data(), originalDrawableObjectsCount, newDrawableObjectsCount))
+    //{
+    //
+    //}
 
     DeferUpdateUi(
         NeededUiUpdateDrawableObjectsListView |
@@ -1485,7 +1547,8 @@ HRESULT MainWindow::LoadFontFileIntoDrawableObjects(_In_z_ char16_t const* fileP
             GetInformationalString(innerFont, DWRITE_INFORMATIONAL_STRING_FULL_NAME, nullptr, OUT fullName);
             DWRITE_FONT_SIMULATIONS fontSimulations = innerFont->GetSimulations();
 
-            AppendLog(u"%d:%d = wws:'%s'|'%s',  pref:'%s'|'%s',  win32:'%s'|'%s',  full:'%s'%s wght=%d wdth=%d slnt=%d\r\n",
+            DWRITE_FONT_STYLE fontStyle = innerFont->GetStyle();
+            AppendLog(u"%d:%d = wws:'%s'|'%s',  pref:'%s'|'%s',  win32:'%s'|'%s',  full:'%s'%s wght=%d wdth=%d ital=%d slnt=%d\r\n",
                 familyIndex,
                 faceIndex,
                 familyName.c_str(),
@@ -1498,7 +1561,8 @@ HRESULT MainWindow::LoadFontFileIntoDrawableObjects(_In_z_ char16_t const* fileP
                 fontSimulations != DWRITE_FONT_SIMULATIONS_NONE ? u",  simulated" : u"",
                 innerFont->GetWeight(),
                 innerFont->GetStretch(),
-                innerFont->GetStyle()
+                (fontStyle == DWRITE_FONT_STYLE_ITALIC) ? 1 : 0,
+                (fontStyle == DWRITE_FONT_STYLE_OBLIQUE) ? 1 : 0
             );
         }
     }
@@ -2206,6 +2270,11 @@ MainWindow::DialogProcResult CALLBACK MainWindow::OnCommand(HWND hwnd, int id, H
         CreateDrawableObjectsListViewSelected();
         break;
 
+    case IdcDrawableObjectMoveUp:
+    case IdcDrawableObjectMoveDown:
+        ShiftSelectedDrawableObjects((id == IdcDrawableObjectMoveUp) ? -1 : 1);
+        break;
+
     case IdcSelectFontFamily:
         if (codeNotify != BN_CLICKED)
             return false;
@@ -2359,6 +2428,7 @@ MainWindow::DialogProcResult CALLBACK MainWindow::OnNotification(HWND hwnd, int 
                 bool isFirstIndex = true;
 
                 // Check whether the selected attributes vary in their predefined value list.
+                // Some attributes share the same list, such as colors, in which case it's fine to update them all.
                 for (auto index : selectedAttributeIndices)
                 {
                     ThrowIf(index >= countof(DrawableObject::attributeList), "Index is beyond DrawableObject::attributeList size!");
@@ -2367,10 +2437,10 @@ MainWindow::DialogProcResult CALLBACK MainWindow::OnNotification(HWND hwnd, int 
                     if (isFirstIndex)
                     {
                         isFirstIndex = false;
-                        previousPredefinedValues = attribute.predefinedValues;
+                        previousPredefinedValues = attribute.predefinedValues.data();
                         selectedAttributeIndex_ = static_cast<DrawableObjectAttribute>(index);
                     }
-                    else if (attribute.predefinedValues != previousPredefinedValues) // They vary.
+                    else if (attribute.predefinedValues.data() != previousPredefinedValues) // They vary.
                     {
                         selectedAttributeIndex_ = DrawableObjectAttributeTotal;
                         break;
@@ -2440,7 +2510,7 @@ MainWindow::DialogProcResult CALLBACK MainWindow::OnNotification(HWND hwnd, int 
                 ListViewRemapIndicesToLparam(nm.hdr.hwndFrom, IN OUT wrap_single_array_ref(attributeValueIndex));
 
                 auto const& attribute = DrawableObject::attributeList[selectedAttributeIndex_];
-                if (attributeValueIndex >= attribute.predefinedValuesCount)
+                if (attributeValueIndex >= attribute.predefinedValues.size())
                     break;
 
                 // Update the edit control.

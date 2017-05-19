@@ -127,8 +127,7 @@ struct Attribute
 
     // List of possible values, particularly useful for enums.
     _Maybenull_ char16_t const* defaultValue;
-    _Field_size_(valuesCount) Attribute::PredefinedValue const* predefinedValues; // List of possible values, useful for drop-down list.
-    size_t predefinedValuesCount;
+    array_ref<Attribute::PredefinedValue const> predefinedValues;
 
     char16_t const* description;        // Describe the attribute to the user.
 

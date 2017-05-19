@@ -23,57 +23,58 @@ const uint32_t DrawableObject::defaultCanvasColor = 0xFF6495ED;
 
 const Attribute DrawableObject::attributeList[DrawableObjectAttributeTotal] =
 {
-    {Attribute::TypeUInteger32,     Attribute::SemanticEnumExclusive,CategoryLight, DrawableObjectAttributeFunction, u"function", u"Function", u"IDWriteTextLayout", functions, countof(functions) },
-    {Attribute::TypeBool8,          Attribute::SemanticEnumExclusive,0            , DrawableObjectAttributeVisibility, u"visible", u"Visible", u"visible", visibilities, countof(visibilities) },
-    {Attribute::TypeString16,       Attribute::SemanticNone,         0            , DrawableObjectAttributeLabel, u"label", u"Label", u"", nullptr, 0},
-    {Attribute::TypeString16,       Attribute::SemanticLongText,     CategoryLight, DrawableObjectAttributeText, u"text", u"Text", u"This is a text", textDefaults, countof(textDefaults) },
-    {Attribute::TypeArrayUInteger16,Attribute::SemanticNone,         0            , DrawableObjectAttributeGlyphs, u"glyphs", u"Glyphs", u"0 1 2 3 4", glyphDefaults, countof(glyphDefaults) },
-    {Attribute::TypeArrayFloat32,   Attribute::SemanticNone,         0            , DrawableObjectAttributeAdvances, u"advances", u"Advances", u"", nullptr, 0},
-    {Attribute::TypeArrayFloat32,   Attribute::SemanticDelta,        0            , DrawableObjectAttributeOffsets, u"offsets", u"Offsets", u"", nullptr, 0},
-    {Attribute::TypeFloat32,        Attribute::SemanticNone,         CategoryLight, DrawableObjectAttributeFontSize, u"font_size", u"Font size (DIPs)", u"16", fontSizes, countof(fontSizes) },
-    {Attribute::TypeString16,       Attribute::SemanticNone,         CategoryLight, DrawableObjectAttributeFontFamily, u"font_family", u"Font family", u"Segoe UI", nullptr, 0},
-    {Attribute::TypeUInteger32,     Attribute::SemanticEnum,         CategoryLight, DrawableObjectAttributeWeight, u"weight", u"Weight", u"400", weights, countof(weights) },
-    {Attribute::TypeUInteger32,     Attribute::SemanticEnum,         CategoryLight, DrawableObjectAttributeStretch, u"stretch", u"Stretch", u"Normal", stretches, countof(stretches) },
-    {Attribute::TypeUInteger32,     Attribute::SemanticEnum,         CategoryLight, DrawableObjectAttributeSlope, u"slope", u"Slope", u"Regular", slopes, countof(slopes) },
-    {Attribute::TypeString16,       Attribute::SemanticFilePath,     0            , DrawableObjectAttributeFontFilePath, u"font_file_path", u"Font file path", u"", nullptr, 0 },
-    {Attribute::TypeUInteger32,     Attribute::SemanticNone,         0            , DrawableObjectAttributeFontFaceIndex, u"face_index", u"Face index", u"0", nullptr, 0 },
-    {Attribute::TypeUInteger32,     Attribute::SemanticEnumExclusive,0            , DrawableObjectAttributeFontSimulations, u"font_simulations", u"Font simulations", u"None", fontSimulations, countof(fontSimulations) },
-    {Attribute::TypeUInteger32,     Attribute::SemanticEnumExclusive,0            , DrawableObjectAttributeDWriteFontFaceType, u"dwrite_font_face_type", u"DWrite font face type", u"None", dwriteFontFaceTypes, countof(dwriteFontFaceTypes) },
-    {Attribute::TypeFloat32,        Attribute::SemanticNone,         0            , DrawableObjectAttributePadding, u"padding", u"Padding", u"8", nullptr, 0 },
-    {Attribute::TypeFloat32,        Attribute::SemanticNone,         CategoryLight, DrawableObjectAttributeWidth, u"width", u"Width", u"300", layoutSizes, countof(layoutSizes) },
-    {Attribute::TypeFloat32,        Attribute::SemanticNone,         CategoryLight, DrawableObjectAttributeHeight, u"height", u"Height", u"50", layoutSizes, countof(layoutSizes) },
-    {Attribute::TypeArrayFloat32,   Attribute::SemanticNone,         0            , DrawableObjectAttributePosition, u"position", u"Position X Y", u"0 0", nullptr, 0 },
-    {Attribute::TypeArrayFloat32,   Attribute::SemanticNone,         0            , DrawableObjectAttributeTransform, u"transform", u"Transform", u"1 0 0 1 0 0", transforms, countof(transforms) },
-    {Attribute::TypeUInteger32,     Attribute::SemanticNone,         0            , DrawableObjectAttributePixelZoom, u"pixel_zoom", u"Pixel zoom", u"1", pixelZooms, countof(pixelZooms) },
-    {Attribute::TypeUInteger32,     Attribute::SemanticEnumExclusive,CategoryLight, DrawableObjectAttributeReadingDirection, u"reading_direction", u"Reading direction", u"LTR TTB", readingDirections, countof(readingDirections)},
-    {Attribute::TypeUInteger32,     Attribute::SemanticEnumExclusive,0            , DrawableObjectAttributeColumnAlignment, u"column_alignment", u"Column alignment", u"leading", alignments, countof(alignments)},
-    {Attribute::TypeUInteger32,     Attribute::SemanticEnumExclusive,0            , DrawableObjectAttributeRowAlignment, u"row_alignment", u"Row alignment", u"leading", alignments, countof(alignments)},
-    {Attribute::TypeArrayUInteger32,Attribute::SemanticCharacterTags,CategoryLight, DrawableObjectAttributeTypographicFeatures, u"typographic_features", u"Typographic features", u"", typographicFeatures, countof(typographicFeatures)},
-    {Attribute::TypeUInteger32,     Attribute::SemanticEnumExclusive,CategoryLight, DrawableObjectAttributeLineWrappingMode, u"wrapping_mode", u"Wrapping mode", u"", wrappingModes, countof(wrappingModes) },
-    {Attribute::TypeUInteger32,     Attribute::SemanticEnumExclusive,0,             DrawableObjectAttributeDWriteRenderingMode, u"dwrite_rendering_mode", u"DWrite rendering mode", u"", dwriteRenderingModes, countof(dwriteRenderingModes)},
-    {Attribute::TypeUInteger32,     Attribute::SemanticEnumExclusive,0,             DrawableObjectAttributeGdiRenderingMode, u"gdi_rendering_mode", u"GDI rendering mode", u"", gdiRenderingModes, countof(gdiRenderingModes)},
-    {Attribute::TypeUInteger32,     Attribute::SemanticEnumExclusive,0,             DrawableObjectAttributeGdiPlusRenderingMode, u"gdiplus_rendering_mode", u"GDI+ rendering mode", u"", gdiPlusRenderingModes, countof(gdiPlusRenderingModes)},
-    {Attribute::TypeUInteger32,     Attribute::SemanticEnumExclusive,0            , DrawableObjectAttributeDWriteMeasuringMode, u"dwrite_measuring_mode", u"DWrite measuring mode", u"", dwriteMeasuringModes, countof(dwriteMeasuringModes) },
-    {Attribute::TypeUInteger32,     Attribute::SemanticEnumExclusive,0            , DrawableObjectAttributeDWriteVerticalGlyphOrientation, u"dwrite_vertical_glyph_orientation", u"DWrite vertical glyph orientation", u"", dwriteVerticalGlyphOrientation, countof(dwriteVerticalGlyphOrientation) },
-    {Attribute::TypeString16,       Attribute::SemanticNone,         CategoryLight, DrawableObjectAttributeLanguageList, u"language_list", u"Language list", u"", languages, countof(languages)},
-    {Attribute::TypeUInteger32,     Attribute::SemanticColor,        0            , DrawableObjectAttributeTextColor, u"text_color", u"Text color", u"000000", textColors, countof(textColors), u"Color as #FFFFFFFF, 255 128 0, or name" },
-    {Attribute::TypeUInteger32,     Attribute::SemanticColor,        0            , DrawableObjectAttributeBackColor, u"back_color", u"Back color", u"#FFFFFFFF", textColors, countof(textColors), u"Color as #FFFFFFFF, 255 128 0, or name"},
-    {Attribute::TypeUInteger32,     Attribute::SemanticColor,        0            , DrawableObjectAttributeLayoutColor, u"layout_color", u"Layout color", u"#FF7FFFD4", textColors, countof(textColors), u"Color as #FFFFFFFF, 255 128 0, or name"},
-    {Attribute::TypeUInteger32,     Attribute::SemanticNone,         CategoryLight, DrawableObjectAttributeColorPaletteIndex, u"color_palette_index", u"Color palette index", u"0xFFFFFFFF", colorPaletteIndices, countof(colorPaletteIndices)},
-    {Attribute::TypeBool8,          Attribute::SemanticEnumExclusive,CategoryLight, DrawableObjectAttributeColorFont, u"color_font", u"Color font", u"on", enabledValues, countof(enabledValues) },
-    {Attribute::TypeBool8,          Attribute::SemanticEnumExclusive,0            , DrawableObjectAttributePixelSnapping, u"pixel_snapping", u"Pixel Snapping", u"on", enabledValues, countof(enabledValues) },
-    {Attribute::TypeBool8,          Attribute::SemanticEnumExclusive,0            , DrawableObjectAttributeClipping, u"clipping", u"Clipping", u"off", enabledValues, countof(enabledValues) },
-    {Attribute::TypeBool8,          Attribute::SemanticEnumExclusive,0            , DrawableObjectAttributeUnderline, u"underline", u"Underline", u"off", enabledValues, countof(enabledValues) },
-    {Attribute::TypeBool8,          Attribute::SemanticEnumExclusive,0            , DrawableObjectAttributeStrikethrough, u"strikethrough", u"Strikethrough", u"off", enabledValues, countof(enabledValues) },
-    {Attribute::TypeBool8,          Attribute::SemanticEnumExclusive,0            , DrawableObjectAttributeFontFallback, u"font_fallback", u"Font fallback", u"on", enabledValues, countof(enabledValues) },
-    {Attribute::TypeFloat32,        Attribute::SemanticNone,         0            , DrawableObjectAttributeTabWidth, u"tab_width", u"Tab width", u"40", nullptr, 0 },
-    {Attribute::TypeUInteger32,     Attribute::SemanticEnumExclusive,0            , DrawableObjectAttributeHotkeyMode, u"hotkey_mode", u"Hotkey mode", u"None", hotkeyDisplays, countof(hotkeyDisplays) },
-    {Attribute::TypeUInteger32,     Attribute::SemanticEnumExclusive,0            , DrawableObjectAttributeTrimmingGranularity, u"trimming_granularity", u"Trimming granularity", u"40", trimmingGranularities, countof(trimmingGranularities) },
-    {Attribute::TypeBool8,          Attribute::SemanticEnumExclusive,0            , DrawableObjectAttributeTrimmingSign, u"trimming_sign", u"Trimming sign", u"enabled", enabledValues, countof(enabledValues) },
-    {Attribute::TypeCharacter32,    Attribute::SemanticNone,         0            , DrawableObjectAttributeTrimmingDelimiter, u"trimming_delimiter", u"Trimming delimiter", u"", trimmingDelimiters, countof(trimmingDelimiters) },
-    {Attribute::TypeBool8,          Attribute::SemanticNone,         0            , DrawableObjectAttributeUser32DrawTextAsEditControl, u"user32_drawtext_edit_control", u"User32 DrawText DT_EDITCONTROL", u"", enabledValues, countof(enabledValues) },
+    {Attribute::TypeUInteger32,     Attribute::SemanticEnumExclusive,CategoryLight, DrawableObjectAttributeFunction, u"function", u"Function", u"IDWriteTextLayout", functions },
+    {Attribute::TypeBool8,          Attribute::SemanticEnumExclusive,0            , DrawableObjectAttributeVisibility, u"visible", u"Visible", u"visible", visibilities },
+    {Attribute::TypeString16,       Attribute::SemanticNone,         0            , DrawableObjectAttributeLabel, u"label", u"Label", u"", {} },
+    {Attribute::TypeString16,       Attribute::SemanticLongText,     CategoryLight, DrawableObjectAttributeText, u"text", u"Text", u"This is a text", textDefaults },
+    {Attribute::TypeArrayUInteger16,Attribute::SemanticNone,         0            , DrawableObjectAttributeGlyphs, u"glyphs", u"Glyphs", u"0 1 2 3 4", glyphDefaults },
+    {Attribute::TypeArrayFloat32,   Attribute::SemanticNone,         0            , DrawableObjectAttributeAdvances, u"advances", u"Advances", u"",{} },
+    {Attribute::TypeArrayFloat32,   Attribute::SemanticDelta,        0            , DrawableObjectAttributeOffsets, u"offsets", u"Offsets", u"",{} },
+    {Attribute::TypeFloat32,        Attribute::SemanticNone,         CategoryLight, DrawableObjectAttributeFontSize, u"font_size", u"Font size (DIPs)", u"16", fontSizes },
+    {Attribute::TypeString16,       Attribute::SemanticNone,         CategoryLight, DrawableObjectAttributeFontFamily, u"font_family", u"Font family", u"Segoe UI",{} },
+    {Attribute::TypeUInteger32,     Attribute::SemanticEnum,         CategoryLight, DrawableObjectAttributeWeight, u"weight", u"Weight", u"400", weights },
+    {Attribute::TypeUInteger32,     Attribute::SemanticEnum,         CategoryLight, DrawableObjectAttributeStretch, u"stretch", u"Stretch", u"Normal", stretches },
+    {Attribute::TypeUInteger32,     Attribute::SemanticEnum,         CategoryLight, DrawableObjectAttributeSlope, u"slope", u"Slope", u"Regular", slopes },
+    {Attribute::TypeString16,       Attribute::SemanticFilePath,     0            , DrawableObjectAttributeFontFilePath, u"font_file_path", u"Font file path", u"",{} },
+    {Attribute::TypeUInteger32,     Attribute::SemanticNone,         0            , DrawableObjectAttributeFontFaceIndex, u"face_index", u"Face index", u"0",{} },
+    {Attribute::TypeUInteger32,     Attribute::SemanticEnumExclusive,0            , DrawableObjectAttributeFontSimulations, u"font_simulations", u"Font simulations", u"None", fontSimulations },
+    {Attribute::TypeUInteger32,     Attribute::SemanticEnumExclusive,0            , DrawableObjectAttributeDWriteFontFaceType, u"dwrite_font_face_type", u"DWrite font face type", u"None", dwriteFontFaceTypes },
+    {Attribute::TypeFloat32,        Attribute::SemanticNone,         0            , DrawableObjectAttributePadding, u"padding", u"Padding", u"8",{} },
+    {Attribute::TypeFloat32,        Attribute::SemanticNone,         CategoryLight, DrawableObjectAttributeWidth, u"width", u"Width", u"300", layoutSizes },
+    {Attribute::TypeFloat32,        Attribute::SemanticNone,         CategoryLight, DrawableObjectAttributeHeight, u"height", u"Height", u"50", layoutSizes },
+    {Attribute::TypeArrayFloat32,   Attribute::SemanticNone,         0            , DrawableObjectAttributePosition, u"position", u"Position X Y", u"0 0",{} },
+    {Attribute::TypeArrayFloat32,   Attribute::SemanticNone,         0            , DrawableObjectAttributeTransform, u"transform", u"Transform", u"1 0 0 1 0 0", transforms },
+    {Attribute::TypeUInteger32,     Attribute::SemanticNone,         0            , DrawableObjectAttributePixelZoom, u"pixel_zoom", u"Pixel zoom", u"1", pixelZooms },
+    {Attribute::TypeUInteger32,     Attribute::SemanticEnumExclusive,CategoryLight, DrawableObjectAttributeReadingDirection, u"reading_direction", u"Reading direction", u"LTR TTB", readingDirections },
+    {Attribute::TypeUInteger32,     Attribute::SemanticEnumExclusive,0            , DrawableObjectAttributeColumnAlignment, u"column_alignment", u"Column alignment", u"leading", alignments },
+    {Attribute::TypeUInteger32,     Attribute::SemanticEnumExclusive,0            , DrawableObjectAttributeRowAlignment, u"row_alignment", u"Row alignment", u"leading", alignments },
+    {Attribute::TypeUInteger32,     Attribute::SemanticEnumExclusive,0            , DrawableObjectAttributeJustification, u"justification", u"Justification", u"unjustified", justifications },
+    {Attribute::TypeArrayUInteger32,Attribute::SemanticCharacterTags,CategoryLight, DrawableObjectAttributeTypographicFeatures, u"typographic_features", u"Typographic features", u"", typographicFeatures },
+    {Attribute::TypeUInteger32,     Attribute::SemanticEnumExclusive,CategoryLight, DrawableObjectAttributeLineWrappingMode, u"wrapping_mode", u"Wrapping mode", u"", wrappingModes },
+    {Attribute::TypeUInteger32,     Attribute::SemanticEnumExclusive,0,             DrawableObjectAttributeDWriteRenderingMode, u"dwrite_rendering_mode", u"DWrite rendering mode", u"", dwriteRenderingModes },
+    {Attribute::TypeUInteger32,     Attribute::SemanticEnumExclusive,0,             DrawableObjectAttributeGdiRenderingMode, u"gdi_rendering_mode", u"GDI rendering mode", u"", gdiRenderingModes },
+    {Attribute::TypeUInteger32,     Attribute::SemanticEnumExclusive,0,             DrawableObjectAttributeGdiPlusRenderingMode, u"gdiplus_rendering_mode", u"GDI+ rendering mode", u"", gdiPlusRenderingModes },
+    {Attribute::TypeUInteger32,     Attribute::SemanticEnumExclusive,0            , DrawableObjectAttributeDWriteMeasuringMode, u"dwrite_measuring_mode", u"DWrite measuring mode", u"", dwriteMeasuringModes },
+    {Attribute::TypeUInteger32,     Attribute::SemanticEnumExclusive,0            , DrawableObjectAttributeDWriteVerticalGlyphOrientation, u"dwrite_vertical_glyph_orientation", u"DWrite vertical glyph orientation", u"", dwriteVerticalGlyphOrientation },
+    {Attribute::TypeString16,       Attribute::SemanticNone,         CategoryLight, DrawableObjectAttributeLanguageList, u"language_list", u"Language list", u"", languages },
+    {Attribute::TypeUInteger32,     Attribute::SemanticColor,        0            , DrawableObjectAttributeTextColor, u"text_color", u"Text color", u"000000", textColors, u"Color as #FFFFFFFF, 255 128 0, or name" },
+    {Attribute::TypeUInteger32,     Attribute::SemanticColor,        0            , DrawableObjectAttributeBackColor, u"back_color", u"Back color", u"#FFFFFFFF", textColors, u"Color as #FFFFFFFF, 255 128 0, or name"},
+    {Attribute::TypeUInteger32,     Attribute::SemanticColor,        0            , DrawableObjectAttributeLayoutColor, u"layout_color", u"Layout color", u"#FF7FFFD4", textColors, u"Color as #FFFFFFFF, 255 128 0, or name"},
+    {Attribute::TypeUInteger32,     Attribute::SemanticNone,         CategoryLight, DrawableObjectAttributeColorPaletteIndex, u"color_palette_index", u"Color palette index", u"0xFFFFFFFF", colorPaletteIndices },
+    {Attribute::TypeBool8,          Attribute::SemanticEnumExclusive,CategoryLight, DrawableObjectAttributeColorFont, u"color_font", u"Color font", u"on", enabledValues },
+    {Attribute::TypeBool8,          Attribute::SemanticEnumExclusive,0            , DrawableObjectAttributePixelSnapping, u"pixel_snapping", u"Pixel Snapping", u"on", enabledValues },
+    {Attribute::TypeBool8,          Attribute::SemanticEnumExclusive,0            , DrawableObjectAttributeClipping, u"clipping", u"Clipping", u"off", enabledValues },
+    {Attribute::TypeBool8,          Attribute::SemanticEnumExclusive,0            , DrawableObjectAttributeUnderline, u"underline", u"Underline", u"off", enabledValues },
+    {Attribute::TypeBool8,          Attribute::SemanticEnumExclusive,0            , DrawableObjectAttributeStrikethrough, u"strikethrough", u"Strikethrough", u"off", enabledValues },
+    {Attribute::TypeBool8,          Attribute::SemanticEnumExclusive,0            , DrawableObjectAttributeFontFallback, u"font_fallback", u"Font fallback", u"on", enabledValues },
+    {Attribute::TypeFloat32,        Attribute::SemanticNone,         0            , DrawableObjectAttributeTabWidth, u"tab_width", u"Tab width", u"40",{} },
+    {Attribute::TypeUInteger32,     Attribute::SemanticEnumExclusive,0            , DrawableObjectAttributeHotkeyMode, u"hotkey_mode", u"Hotkey mode", u"None", hotkeyDisplays },
+    {Attribute::TypeUInteger32,     Attribute::SemanticEnumExclusive,0            , DrawableObjectAttributeTrimmingGranularity, u"trimming_granularity", u"Trimming granularity", u"40", trimmingGranularities },
+    {Attribute::TypeBool8,          Attribute::SemanticEnumExclusive,0            , DrawableObjectAttributeTrimmingSign, u"trimming_sign", u"Trimming sign", u"enabled", enabledValues },
+    {Attribute::TypeCharacter32,    Attribute::SemanticNone,         0            , DrawableObjectAttributeTrimmingDelimiter, u"trimming_delimiter", u"Trimming delimiter", u"", trimmingDelimiters },
+    {Attribute::TypeBool8,          Attribute::SemanticNone,         0            , DrawableObjectAttributeUser32DrawTextAsEditControl, u"user32_drawtext_edit_control", u"User32 DrawText DT_EDITCONTROL", u"", enabledValues },
 };
-static_assert(DrawableObjectAttributeTotal == 49, "A new attribute enum has been added. Update this table.");
+static_assert(DrawableObjectAttributeTotal == 50, "A new attribute enum has been added. Update this table.");
 
 
 const Attribute::PredefinedValue DrawableObject::functions[] = {
@@ -732,6 +733,11 @@ const Attribute::PredefinedValue DrawableObject::alignments[] = {
     {0, u"leading" },
     {2, u"center" },
     {1, u"trailing" },
+};
+
+const Attribute::PredefinedValue DrawableObject::justifications[] = {
+    { 0, u"unjustified" },
+    { 1, u"justified" },
 };
 
 const Attribute::PredefinedValue DrawableObject::wrappingModes[] = {
@@ -2035,6 +2041,7 @@ HRESULT CachedDWriteTextFormat::EnsureCached(IAttributeSource& attributeSource, 
     DWRITE_PARAGRAPH_ALIGNMENT rowAlignment = attributeSource.GetValue(DrawableObjectAttributeRowAlignment, DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
     DrawableObjectLineWrappingMode wrappingMode = attributeSource.GetValue(DrawableObjectAttributeLineWrappingMode, LineWrappingModeWordCharacter);
     DWRITE_WORD_WRAPPING dwriteWrappingMode = static_cast<DWRITE_WORD_WRAPPING>(wrappingMode + 1);
+    DrawableObjectJustificationMode justification = attributeSource.GetValue(DrawableObjectAttributeJustification, DrawableObjectJustificationModeUnjustified);
     DrawableObjectTrimmingGranularity trimmingGranularity = attributeSource.GetValue(DrawableObjectAttributeTrimmingGranularity, DrawableObjectTrimmingGranularityNone);
     char32_t trimmingDelimiter = attributeSource.GetValue(DrawableObjectAttributeTrimmingDelimiter, '\0');
     bool hasTrimmingSign = attributeSource.GetValue(DrawableObjectAttributeTrimmingSign, true);
@@ -2071,7 +2078,7 @@ HRESULT CachedDWriteTextFormat::EnsureCached(IAttributeSource& attributeSource, 
     uint32_t readingDirection = attributeSource.GetValue(DrawableObjectAttributeReadingDirection, OUT 0ui32);
     textFormat->SetReadingDirection(g_dwriteReadingDirectionValues[readingDirection & 7]);
     textFormat->SetFlowDirection(g_dwriteFlowDirectionValues[readingDirection & 7]);
-    textFormat->SetTextAlignment(columnAlignment);
+    textFormat->SetTextAlignment((justification == DrawableObjectJustificationModeUnjustified) ? columnAlignment : DWRITE_TEXT_ALIGNMENT_JUSTIFIED);
     textFormat->SetParagraphAlignment(rowAlignment);
     if (FAILED(textFormat->SetWordWrapping(dwriteWrappingMode)))
     {

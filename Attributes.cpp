@@ -13,19 +13,19 @@ char16_t const* Attribute::PredefinedValue::GetName() const
 
 char16_t const* Attribute::GetPredefinedValueName(uint32_t valueIndex) const
 {
-    if (valueIndex >= predefinedValuesCount)
+    if (valueIndex >= this->predefinedValues.size())
         return u"";
 
-    return predefinedValues[valueIndex].GetName();
+    return this->predefinedValues[valueIndex].GetName();
 }
 
 
 char16_t const* Attribute::GetPredefinedValue(uint32_t valueIndex, GetPredefinedValueFlags flags, OUT std::u16string& buffer) const
 {
-    if (valueIndex >= predefinedValuesCount)
+    if (valueIndex >= this->predefinedValues.size())
         return u"";
 
-    auto const& predefinedValue = predefinedValues[valueIndex];
+    auto const& predefinedValue = this->predefinedValues[valueIndex];
 
     if ((flags & GetPredefinedValueFlagsString) && predefinedValue.stringValue != nullptr)
         return predefinedValue.stringValue;
@@ -219,11 +219,11 @@ HRESULT Attribute::MapValueToName(_Out_ uint32_t enumValue, _Out_ std::u16string
     stringValue.clear();
 
     // Look for enum value.
-    for (uint32_t i = 0; i < predefinedValuesCount; ++i)
+    for (uint32_t i = 0, ci = this->predefinedValues.size(); i < ci; ++i)
     {
-        if (predefinedValues[i].integerValue == enumValue)
+        if (this->predefinedValues[i].integerValue == enumValue)
         {
-            stringValue = predefinedValues[i].name;
+            stringValue = this->predefinedValues[i].name;
             return S_OK;
         }
     }
@@ -263,7 +263,7 @@ HRESULT Attribute::PredefinedValue::MapNameToValue(
 
 HRESULT Attribute::MapNameToValue(_In_z_ char16_t const* stringValue, _Out_ uint32_t& value) const
 {
-    return PredefinedValue::MapNameToValue({this->predefinedValues, this->predefinedValuesCount}, stringValue, OUT value);
+    return PredefinedValue::MapNameToValue(this->predefinedValues, stringValue, OUT value);
 }
 
 
@@ -293,9 +293,9 @@ HRESULT Attribute::ParseEnum(_In_z_ char16_t const* stringValue, _Out_ uint32_t&
     // Check whether there is a match in the value list.
     if (semantic == SemanticEnumExclusive)
     {
-        for (uint32_t i = 0; i < this->predefinedValuesCount; ++i)
+        for (auto& predefinedValue : this->predefinedValues)
         {
-            if (this->predefinedValues[i].integerValue == enumValue)
+            if (predefinedValue.integerValue == enumValue)
             {
                 return S_OK;
             }
@@ -593,17 +593,18 @@ HRESULT Attribute::GetPredefinedValueIndices(
     if (stringValue == nullptr)
         return E_INVALIDARG;
 
-    if (orderedIndices.size() < predefinedValuesCount)
+    auto predefinedValuesCount = static_cast<uint32_t>(predefinedValues.size());
+    if (static_cast<uint32_t>(orderedIndices.size()) < predefinedValuesCount)
         return E_NOT_SUFFICIENT_BUFFER;
 
     if (predefinedValuesCount == 0)
         return S_OK;
 
-    ListSubstringPrioritizer substringPrioritizer(ToChar16ArrayRef(stringValue), static_cast<uint32_t>(predefinedValuesCount));
+    ListSubstringPrioritizer substringPrioritizer(ToChar16ArrayRef(stringValue), predefinedValuesCount);
 
     for (uint32_t i = 0; i < predefinedValuesCount; ++i)
     {
-        auto& valueMapping = predefinedValues[i];
+        auto& valueMapping = this->predefinedValues[i];
         auto* name = valueMapping.GetName();
         auto weight = substringPrioritizer.GetStringWeight(ToChar16ArrayRef(name));
         substringPrioritizer.SetItemWeight(i, weight);

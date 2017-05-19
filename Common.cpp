@@ -65,3 +65,8 @@ void GetCommandLineArguments(_Inout_ std::u16string& commandLine)
     commandLine.assign(initialCommandLine, &initialCommandLine[commandLineLength]);
     TrimSpaces(IN OUT commandLine);
 }
+
+
+static constexpr uint32_t g_endiannessSignature = 0x01020304;
+static constexpr uint8_t g_lowByteOfEndiannessSignature = (const uint8_t&)(g_endiannessSignature);
+static_assert(g_lowByteOfEndiannessSignature & 4, "Must be logical endian");

@@ -62,6 +62,8 @@ enum DrawableObjectAttribute : uint32_t
     DrawableObjectAttributeTrimmingSign,
     DrawableObjectAttributeTrimmingDelimiter,
     DrawableObjectAttributeUser32DrawTextAsEditControl,
+    DrawableObjectAttributeAxisTags,
+    DrawableObjectAttributeAxisValues,
     DrawableObjectAttributeTotal,
 };
 
@@ -209,6 +211,7 @@ public:
     static const Attribute::PredefinedValue hotkeyDisplays[3];
     static const Attribute::PredefinedValue trimmingGranularities[4];
     static const Attribute::PredefinedValue trimmingDelimiters[2];
+    static const Attribute::PredefinedValue axisValues[3];
 
     static const D2D_RECT_F emptyRect;
     static const DX_MATRIX_3X2F identityTransform;
@@ -251,6 +254,8 @@ struct CachedDWriteFontFace
     uint32_t cookieFontSimulations = ~0u;
     uint32_t cookieFontFaceIndex = ~0u;
     uint32_t cookieDWriteFontFaceType = ~0u;
+    uint32_t cookieAxisTags = ~0u;
+    uint32_t cookieAxisValues = ~0u;
 
     HRESULT Update(IAttributeSource& attributeSource, DrawingCanvas& drawingCanvas);
     void Invalidate() { fontFace.clear(); }

@@ -40,11 +40,11 @@ public:
     using difference_type = ptrdiff_t;
 
     // construct/copy
-    array_ref() = default;
-    array_ref(array_ref<typename T> const& other) = default;
+    constexpr array_ref() = default;
+    constexpr array_ref(array_ref<typename T> const& other) = default;
 
-    array_ref(pointer array, size_t elementCount) : begin_(array), end_(array + elementCount) {}
-    array_ref(pointer begin, pointer end) : begin_(begin), end_(end) {}
+    constexpr array_ref(pointer array, size_t elementCount) : begin_(array), end_(array + elementCount) {}
+    constexpr array_ref(pointer begin, pointer end) : begin_(begin), end_(end) {}
 
     using NonConstArrayRefType = array_ref<typename std::remove_const<T>::type>;
 
@@ -68,7 +68,7 @@ public:
             int
         >::type = 0
     >
-    array_ref(ContiguousContainer& container)
+    constexpr array_ref(ContiguousContainer& container)
     :   begin_(get_container_pointer(container)),
         end_(begin_ + std::size(container))
     {

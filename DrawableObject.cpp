@@ -73,8 +73,10 @@ const Attribute DrawableObject::attributeList[DrawableObjectAttributeTotal] =
     {Attribute::TypeBool8,          Attribute::SemanticEnumExclusive,0            , DrawableObjectAttributeTrimmingSign, u"trimming_sign", u"Trimming sign", u"enabled", enabledValues },
     {Attribute::TypeCharacter32,    Attribute::SemanticNone,         0            , DrawableObjectAttributeTrimmingDelimiter, u"trimming_delimiter", u"Trimming delimiter", u"", trimmingDelimiters },
     {Attribute::TypeBool8,          Attribute::SemanticNone,         0            , DrawableObjectAttributeUser32DrawTextAsEditControl, u"user32_drawtext_edit_control", u"User32 DrawText DT_EDITCONTROL", u"", enabledValues },
+    {Attribute::TypeArrayUInteger32,Attribute::SemanticCharacterTags,0            , DrawableObjectAttributeAxisTags, u"axis_tags", u"Axis tags", u"", axisValues },
+    {Attribute::TypeArrayFloat32,   Attribute::SemanticNone,         0            , DrawableObjectAttributeAxisValues, u"axis_values", u"Axis values", u"", {} },
 };
-static_assert(DrawableObjectAttributeTotal == 50, "A new attribute enum has been added. Update this table.");
+static_assert(DrawableObjectAttributeTotal == 52, "A new attribute enum has been added. Update this table.");
 
 
 const Attribute::PredefinedValue DrawableObject::functions[] = {
@@ -92,8 +94,6 @@ const Attribute::PredefinedValue DrawableObject::functions[] = {
     { DrawableObjectFunctionDrawSvgGlyphRun, u"D2D DrawSvgGlyphRun"},
     #if 0
     { , u"Uniscribe ScriptStringOut"},
-    { , u"GDI+ DrawString"},
-    { , u"GDI+ DrawDriverString"},
     { , u"GDI GetCharacterPlacement"},
     { , u"GDI GetGlyphIndices"},
     { , u"User32 EDIT"},
@@ -754,6 +754,12 @@ const Attribute::PredefinedValue DrawableObject::typographicFeatures[] = {
     {0, u"Required", u"rlig rclt ccmp mark mkmk dist" },
     {0, u"Vertical", u"vert vkrn vpal" },
     {0, u"Stylistic variant", u"ss07" },
+};
+
+const Attribute::PredefinedValue DrawableObject::axisValues[] = {
+    { 0, u"None", u"" },
+    { 0, u"Standard", u"wght wdth ital slnt opsz" },
+    { 0, u"Decovar", u"bldA bldB sklA sklB sklD trmA trmB trmC  trmD trmE trmF trmG  trmK trmL wmx2" },
 };
 
 const Attribute::PredefinedValue DrawableObject::languages[] = {
@@ -1743,6 +1749,33 @@ HRESULT DrawableObjectUser32DrawText::DrawInternal(
 }
 
 
+#if 0 // RS3
+void GetFontAxisValues(
+    IAttributeSource& attributeSource,
+    _Out_ std::vector<DWRITE_FONT_AXIS_VALUE>& fontAxisValues
+)
+{
+    array_ref<uint32_t const> axisTags;
+    array_ref<float const> axisCoordinates;
+    attributeSource.GetValues(DrawableObjectAttributeAxisTags, OUT axisTags);
+    attributeSource.GetValues(DrawableObjectAttributeAxisValues, OUT axisCoordinates);
+
+    // Clamp size to the smaller one of the two.
+    auto const tagCount = std::min(axisCoordinates.size(), axisTags.size());
+    axisCoordinates.reset(axisCoordinates.begin(), tagCount);
+    axisTags.reset(axisTags.begin(), tagCount);
+    fontAxisValues.resize(axisCoordinates.size());
+
+    for (uint32_t i = 0; i < tagCount; ++i)
+    {
+        auto& entry = fontAxisValues[i];
+        entry.axisTag = DWRITE_FONT_AXIS_TAG(axisTags[i]);
+        entry.value = axisCoordinates[i];
+    }
+}
+#endif
+
+
 HRESULT CachedDWriteFontFace::Update(
     IAttributeSource& attributeSource,
     DrawingCanvas& drawingCanvas
@@ -1750,14 +1783,16 @@ HRESULT CachedDWriteFontFace::Update(
 {
     // Invalidate the cached face.
     if (attributeSource.IsCookieSame(DrawableObjectAttributeFontFilePath, IN OUT cookieFontFilePath)
-    &&  attributeSource.IsCookieSame(DrawableObjectAttributeFontFamily, IN OUT cookieFamilyName)
-    &&  attributeSource.IsCookieSame(DrawableObjectAttributeWeight, IN OUT cookieWeight)
-    &&  attributeSource.IsCookieSame(DrawableObjectAttributeStretch, IN OUT cookieStretch)
-    &&  attributeSource.IsCookieSame(DrawableObjectAttributeSlope, IN OUT cookieSlope)
-    &&  attributeSource.IsCookieSame(DrawableObjectAttributeFontSimulations, IN OUT cookieFontSimulations)
-    &&  attributeSource.IsCookieSame(DrawableObjectAttributeFontFaceIndex, IN OUT cookieFontFaceIndex)
-    &&  attributeSource.IsCookieSame(DrawableObjectAttributeDWriteFontFaceType, IN OUT cookieDWriteFontFaceType)
-    &&  fontFace != nullptr
+    &   attributeSource.IsCookieSame(DrawableObjectAttributeFontFamily, IN OUT cookieFamilyName)
+    &   attributeSource.IsCookieSame(DrawableObjectAttributeWeight, IN OUT cookieWeight)
+    &   attributeSource.IsCookieSame(DrawableObjectAttributeStretch, IN OUT cookieStretch)
+    &   attributeSource.IsCookieSame(DrawableObjectAttributeSlope, IN OUT cookieSlope)
+    &   attributeSource.IsCookieSame(DrawableObjectAttributeFontSimulations, IN OUT cookieFontSimulations)
+    &   attributeSource.IsCookieSame(DrawableObjectAttributeFontFaceIndex, IN OUT cookieFontFaceIndex)
+    &   attributeSource.IsCookieSame(DrawableObjectAttributeDWriteFontFaceType, IN OUT cookieDWriteFontFaceType)
+    &   attributeSource.IsCookieSame(DrawableObjectAttributeAxisTags, IN OUT cookieAxisTags)
+    &   attributeSource.IsCookieSame(DrawableObjectAttributeAxisValues, IN OUT cookieAxisValues)
+    &   (fontFace != nullptr)
         )
     {
         return S_OK;
@@ -1777,6 +1812,35 @@ HRESULT CachedDWriteFontFace::Update(
     {
         if (GetFileAttributes(ToWChar(customFontFilePath.data())) == -1)
             return DWRITE_E_FILENOTFOUND;
+
+#if 0 // RS3
+        std::vector<DWRITE_FONT_AXIS_VALUE> fontAxisValues;
+        GetFontAxisValues(attributeSource, OUT fontAxisValues);
+
+        ComPtr<IDWriteFactory6> dwriteFactory6;
+        ComPtr<IDWriteFontFaceReference1> fontFaceReference;
+        ComPtr<IDWriteFontFile> fontFile;
+        auto* factory = drawingCanvas.GetDWriteFactoryWeakRef();
+        factory->QueryInterface(OUT &dwriteFactory6);
+
+        if (dwriteFactory6 != nullptr)
+        {
+            dwriteFactory6->CreateFontFileReference(
+                ToWChar(customFontFilePath.data()),
+                nullptr, // lastWriteTime
+                OUT &fontFile
+            );
+            dwriteFactory6->CreateFontFaceReference(
+                fontFile,
+                fontFaceIndex,
+                DWRITE_FONT_SIMULATIONS_NONE,
+                fontAxisValues.data(),
+                static_cast<uint32_t>(fontAxisValues.size()), // variationAxisCount
+                OUT &fontFaceReference
+            );
+            fontFaceReference->CreateFontFace(OUT reinterpret_cast<IDWriteFontFace5**>(&this->fontFace));
+        }
+#endif
 
         auto fontSimulations = attributeSource.GetValue(DrawableObjectAttributeFontSimulations, DWRITE_FONT_SIMULATIONS_NONE);
         auto fontFaceIndex = attributeSource.GetValue(DrawableObjectAttributeFontFaceIndex, 0ui32);
@@ -1833,7 +1897,7 @@ HRESULT CachedDWriteRenderingParams::Update(IAttributeSource& attributeSource, D
 {
     // Invalidate the cached rendering params.
     if (attributeSource.IsCookieSame(DrawableObjectAttributeDWriteRenderingMode, IN OUT cookieRenderingMode)
-    &&  renderingParams != nullptr)
+    &   (renderingParams != nullptr))
     {
         return S_OK;
     }
@@ -2094,7 +2158,7 @@ HRESULT CachedDWriteTextFormat::EnsureCached(IAttributeSource& attributeSource, 
     {
         trimming.granularity = DWRITE_TRIMMING_GRANULARITY_CHARACTER;
     }
-    if (hasTrimmingSign)
+    if (hasTrimmingSign && trimming.granularity != DWRITE_TRIMMING_GRANULARITY_NONE)
     {
         factory->CreateEllipsisTrimmingSign(textFormat, OUT &trimmingSign);
     }
@@ -2201,6 +2265,19 @@ HRESULT CachedDWriteTextLayout::EnsureCached(
     {
         textLayout->SetStrikethrough(true, { 0, UINT32_MAX });
     }
+
+#if 0 // RS3
+    std::vector<DWRITE_FONT_AXIS_VALUE> fontAxisValues;
+    GetFontAxisValues(attributeSource, OUT fontAxisValues);
+
+    ComPtr<IDWriteTextLayout4> textLayout4;
+    textLayout->QueryInterface(OUT &textLayout4);
+
+    if (textLayout4 != nullptr)
+    {
+        textLayout4->SetFontAxisValues(fontAxisValues.data(), uint32_t(fontAxisValues.size()), DWRITE_TEXT_RANGE{ 0, UINT32_MAX });
+    }
+#endif
 
     return S_OK;
 };

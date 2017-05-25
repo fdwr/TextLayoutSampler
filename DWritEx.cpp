@@ -269,7 +269,6 @@ public:
 };
 
 
-#if 1
 class CustomCollectionLocalFontFileEnumerator : public ComBase<IDWriteFontFileEnumerator>
 {
 protected:
@@ -402,7 +401,6 @@ private:
     WIN32_FIND_DATA findData_;
     std::u16string fullPath_;
 };
-#endif
 
 
 class CustomCollectionFontFileEnumerator : public ComBase<IDWriteFontFileEnumerator>
@@ -498,13 +496,54 @@ public:
 private:  
     static CustomFontCollectionLoader singleton_;
 };
-  
+
 CustomFontCollectionLoader CustomFontCollectionLoader::singleton_;
-  
- 
-#if 1
+
+
 HRESULT CreateFontCollection(
     _In_ IDWriteFactory* factory,
+    DWRITE_FONT_FAMILY_MODEL fontFamilyModel,
+    IDWriteFontFileEnumerator* fontFileEnumerator,
+    _COM_Outptr_ IDWriteFontCollection** fontCollection
+    ) throw()
+{
+    RETURN_ON_ZERO(CustomFontCollectionLoader::GetInstance(), E_FAIL);
+
+    HRESULT hr = S_OK;
+
+    ComPtr<IDWriteFactory6> factory6;
+    factory->QueryInterface(OUT &factory6);
+    if (factory6 != nullptr)
+    {
+        ComPtr<IDWriteFontSet> fontSet;
+        ComPtr<IDWriteFontSetBuilder1> fontSetBuilder;
+        IFR(factory6->CreateFontSetBuilder(OUT &fontSetBuilder));
+        BOOL hasCurrentFile = false;
+        while (SUCCEEDED(fontFileEnumerator->MoveNext(OUT &hasCurrentFile)) && hasCurrentFile)
+        {
+            ComPtr<IDWriteFontFile> fontFile;
+            IFR(fontFileEnumerator->GetCurrentFontFile(OUT &fontFile));
+            IFR(fontSetBuilder->AddFontFile(fontFile));
+        }
+        IFR(fontSetBuilder->CreateFontSet(OUT &fontSet));
+        IFR(factory6->CreateFontCollectionFromFontSet(fontSet, fontFamilyModel, OUT reinterpret_cast<IDWriteFontCollection2**>(fontCollection)));
+    }
+    else
+    {
+        // Pass the address of the enumerator as the unique key.
+        IFR(factory->RegisterFontCollectionLoader(CustomFontCollectionLoader::GetInstance()));
+        hr = factory->CreateCustomFontCollection(CustomFontCollectionLoader::GetInstance(), fontFileEnumerator, sizeof(fontFileEnumerator), OUT fontCollection);
+        IFR(factory->UnregisterFontCollectionLoader(CustomFontCollectionLoader::GetInstance()));
+    }
+
+    return hr;
+}
+
+
+
+HRESULT CreateFontCollection(
+    _In_ IDWriteFactory* factory,
+    DWRITE_FONT_FAMILY_MODEL fontFamilyModel,
     _In_reads_(fontFileNamesSize) const wchar_t* fontFileNames,
     _In_ uint32_t fontFileNamesSize,
     _COM_Outptr_ IDWriteFontCollection** fontCollection
@@ -512,25 +551,18 @@ HRESULT CreateFontCollection(
 {  
     RETURN_ON_ZERO(CustomFontCollectionLoader::GetInstance(), E_FAIL);
 
-    HRESULT hr = S_OK;
-
     CustomCollectionLocalFontFileEnumerator enumerator;
     IFR(enumerator.Initialize(factory, fontFileNames, fontFileNamesSize));
     auto* enumeratorAddress = static_cast<IDWriteFontFileEnumerator*>(&enumerator);
     enumeratorAddress->AddRef();
 
-    // Pass the address of the enumerator as the unique key.
-    IFR(factory->RegisterFontCollectionLoader(CustomFontCollectionLoader::GetInstance()));
-    hr = factory->CreateCustomFontCollection(CustomFontCollectionLoader::GetInstance(), &enumeratorAddress, sizeof(&enumeratorAddress), OUT fontCollection);
-    IFR(factory->UnregisterFontCollectionLoader(CustomFontCollectionLoader::GetInstance()));
-
-    return hr;
+    return CreateFontCollection(factory, fontFamilyModel, enumeratorAddress, OUT fontCollection);
 }
-#endif
 
 
 HRESULT CreateFontCollection(
     _In_ IDWriteFactory* factory,
+    DWRITE_FONT_FAMILY_MODEL fontFamilyModel,
     _In_reads_(fontFilesCount) IDWriteFontFile* const* fontFiles,
     uint32_t fontFilesCount,
     _COM_Outptr_ IDWriteFontCollection** fontCollection
@@ -538,35 +570,11 @@ HRESULT CreateFontCollection(
 {  
     RETURN_ON_ZERO(CustomFontCollectionLoader::GetInstance(), E_FAIL);
 
-    HRESULT hr = S_OK;
-        
     CustomCollectionFontFileEnumerator enumerator;
     IFR(enumerator.Initialize(factory, fontFiles, fontFilesCount));
     auto* enumeratorAddress = static_cast<IDWriteFontFileEnumerator*>(&enumerator);
 
-    IFR(factory->RegisterFontCollectionLoader(CustomFontCollectionLoader::GetInstance()));
-    hr = factory->CreateCustomFontCollection(CustomFontCollectionLoader::GetInstance(), &enumeratorAddress, sizeof(&enumeratorAddress), OUT fontCollection);
-    IFR(factory->UnregisterFontCollectionLoader(CustomFontCollectionLoader::GetInstance()));
-
-#if 0 // On Windows 10, use this shorter code, once a new IDWriteFontSetBuilder1::AddFile overload is added.
-
-    // Get the system font collection.
-    TestComPtr<IDWriteFactory3> factory3;
-    TestComPtr<IDWriteFontSet> fontSet;
-    TestComPtr<IDWriteFontSetBuilder> fontSetBuilder;
-
-    IFR(factory3->CreateFontSetBuilder(OUT &fontSetBuilder));
-
-    TestComPtr<IDWriteFontFaceReference> fontFaceReference;
-    fontSet->GetFontFaceReference(fontIndex, OUT &fontFaceReference);
-    fontSetBuilder->AddFontFaceReference(fontFaceReference);
-
-    IFR(fontSetBuilder->CreateFontSet(OUT &fontSet));
-    IFR(factory3->CreateFontCollectionFromFontSet(fontSet, OUT reinterpret_cast<IDWriteFontCollection1**>(&fontCollection)));
-
-#endif
-
-    return hr;
+    return CreateFontCollection(factory, fontFamilyModel, enumeratorAddress, OUT fontCollection);
 }
 
 
@@ -736,6 +744,7 @@ HRESULT CreateFontFaceFromFile(
     uint32_t fontFaceIndex,
     DWRITE_FONT_FACE_TYPE fontFaceType,
     DWRITE_FONT_SIMULATIONS fontSimulations,
+    array_ref<DWRITE_FONT_AXIS_VALUE> fontAxisValues,
     _COM_Outptr_ IDWriteFontFace** fontFace
     ) throw()
 {
@@ -766,6 +775,26 @@ HRESULT CreateFontFaceFromFile(
             nullptr, 
             OUT &fontFile
             ));
+    }
+
+    // Call the newer overload font axis values.
+    if (!fontAxisValues.empty())
+    {
+        ComPtr<IDWriteFactory6> dwriteFactory6;
+        ComPtr<IDWriteFontFaceReference1> fontFaceReference;
+        factory->QueryInterface(OUT &dwriteFactory6);
+        if (dwriteFactory6 != nullptr)
+        {
+            dwriteFactory6->CreateFontFaceReference(
+                fontFile,
+                fontFaceIndex,
+                DWRITE_FONT_SIMULATIONS_NONE,
+                fontAxisValues.data(),
+                static_cast<uint32_t>(fontAxisValues.size()), // variationAxisCount
+                OUT &fontFaceReference
+            );
+            fontFaceReference->CreateFontFace(OUT reinterpret_cast<IDWriteFontFace5**>(fontFace));
+        }
     }
 
     // If unknown file type, analyze it.

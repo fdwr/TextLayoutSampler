@@ -43,6 +43,7 @@ HRESULT CreateFontFaceFromFile(
     uint32_t fontFaceIndex,
     DWRITE_FONT_FACE_TYPE fontFaceType, // pass DWRITE_FONT_FACE_TYPE_UNKNOWN to analyze
     DWRITE_FONT_SIMULATIONS fontSimulations,  // usually just DWRITE_FONT_SIMULATIONS_NONE
+    array_ref<DWRITE_FONT_AXIS_VALUE> fontAxisValues,
     _COM_Outptr_ IDWriteFontFace** fontFace
     ) throw();
 
@@ -69,6 +70,7 @@ HRESULT RecreateFontFace(
 
 HRESULT CreateFontCollection(
     _In_ IDWriteFactory* factory,
+    DWRITE_FONT_FAMILY_MODEL fontFamilyModel,
     _In_bytecount_(fontFileNamesSize) const wchar_t* fontFileNames,
     _In_ uint32_t fontFileNamesSize, // Number of wchar_t's, not number file name count
     _COM_Outptr_ IDWriteFontCollection** fontCollection
@@ -76,6 +78,7 @@ HRESULT CreateFontCollection(
 
 HRESULT CreateFontCollection(
     _In_ IDWriteFactory* factory,
+    DWRITE_FONT_FAMILY_MODEL fontFamilyModel,
     _In_reads_(fontFilesCount) IDWriteFontFile* const* fontFiles,
     uint32_t fontFilesCount,
     _COM_Outptr_ IDWriteFontCollection** fontCollection

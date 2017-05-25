@@ -64,6 +64,7 @@ enum DrawableObjectAttribute : uint32_t
     DrawableObjectAttributeUser32DrawTextAsEditControl,
     DrawableObjectAttributeAxisTags,
     DrawableObjectAttributeAxisValues,
+    DrawableObjectAttributeDWriteFontFamilyModel,
     DrawableObjectAttributeTotal,
 };
 
@@ -212,6 +213,7 @@ public:
     static const Attribute::PredefinedValue trimmingGranularities[4];
     static const Attribute::PredefinedValue trimmingDelimiters[2];
     static const Attribute::PredefinedValue axisValues[3];
+    static const Attribute::PredefinedValue dwriteFontFamilyModels[2];
 
     static const D2D_RECT_F emptyRect;
     static const DX_MATRIX_3X2F identityTransform;

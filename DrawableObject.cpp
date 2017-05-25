@@ -75,8 +75,9 @@ const Attribute DrawableObject::attributeList[DrawableObjectAttributeTotal] =
     {Attribute::TypeBool8,          Attribute::SemanticNone,         0            , DrawableObjectAttributeUser32DrawTextAsEditControl, u"user32_drawtext_edit_control", u"User32 DrawText DT_EDITCONTROL", u"", enabledValues },
     {Attribute::TypeArrayUInteger32,Attribute::SemanticCharacterTags,0            , DrawableObjectAttributeAxisTags, u"axis_tags", u"Axis tags", u"", axisValues },
     {Attribute::TypeArrayFloat32,   Attribute::SemanticNone,         0            , DrawableObjectAttributeAxisValues, u"axis_values", u"Axis values", u"", {} },
+    {Attribute::TypeUInteger32,     Attribute::SemanticEnumExclusive,0            , DrawableObjectAttributeDWriteFontFamilyModel, u"dwrite_font_family_model", u"DWrite font family model", u"Weight Style Stretch", dwriteFontFamilyModels },
 };
-static_assert(DrawableObjectAttributeTotal == 52, "A new attribute enum has been added. Update this table.");
+static_assert(DrawableObjectAttributeTotal == 53, "A new attribute enum has been added. Update this table.");
 
 
 const Attribute::PredefinedValue DrawableObject::functions[] = {
@@ -760,6 +761,11 @@ const Attribute::PredefinedValue DrawableObject::axisValues[] = {
     { 0, u"None", u"" },
     { 0, u"Standard", u"wght wdth ital slnt opsz" },
     { 0, u"Decovar", u"bldA bldB sklA sklB sklD trmA trmB trmC  trmD trmE trmF trmG  trmK trmL wmx2" },
+};
+
+const Attribute::PredefinedValue DrawableObject::dwriteFontFamilyModels[] = {
+    { uint32_t(DWRITE_FONT_FAMILY_MODEL_TYPOGRAPHIC), u"Typographic" },
+    { uint32_t(DWRITE_FONT_FAMILY_MODEL_WEIGHT_STRETCH_STYLE), u"Weight Style Stretch" },
 };
 
 const Attribute::PredefinedValue DrawableObject::languages[] = {
@@ -1749,11 +1755,10 @@ HRESULT DrawableObjectUser32DrawText::DrawInternal(
 }
 
 
-#if 0 // RS3
 void GetFontAxisValues(
     IAttributeSource& attributeSource,
     _Out_ std::vector<DWRITE_FONT_AXIS_VALUE>& fontAxisValues
-)
+    )
 {
     array_ref<uint32_t const> axisTags;
     array_ref<float const> axisCoordinates;
@@ -1773,7 +1778,6 @@ void GetFontAxisValues(
         entry.value = axisCoordinates[i];
     }
 }
-#endif
 
 
 HRESULT CachedDWriteFontFace::Update(
@@ -1813,35 +1817,8 @@ HRESULT CachedDWriteFontFace::Update(
         if (GetFileAttributes(ToWChar(customFontFilePath.data())) == -1)
             return DWRITE_E_FILENOTFOUND;
 
-#if 0 // RS3
         std::vector<DWRITE_FONT_AXIS_VALUE> fontAxisValues;
         GetFontAxisValues(attributeSource, OUT fontAxisValues);
-
-        ComPtr<IDWriteFactory6> dwriteFactory6;
-        ComPtr<IDWriteFontFaceReference1> fontFaceReference;
-        ComPtr<IDWriteFontFile> fontFile;
-        auto* factory = drawingCanvas.GetDWriteFactoryWeakRef();
-        factory->QueryInterface(OUT &dwriteFactory6);
-
-        if (dwriteFactory6 != nullptr)
-        {
-            dwriteFactory6->CreateFontFileReference(
-                ToWChar(customFontFilePath.data()),
-                nullptr, // lastWriteTime
-                OUT &fontFile
-            );
-            dwriteFactory6->CreateFontFaceReference(
-                fontFile,
-                fontFaceIndex,
-                DWRITE_FONT_SIMULATIONS_NONE,
-                fontAxisValues.data(),
-                static_cast<uint32_t>(fontAxisValues.size()), // variationAxisCount
-                OUT &fontFaceReference
-            );
-            fontFaceReference->CreateFontFace(OUT reinterpret_cast<IDWriteFontFace5**>(&this->fontFace));
-        }
-#endif
-
         auto fontSimulations = attributeSource.GetValue(DrawableObjectAttributeFontSimulations, DWRITE_FONT_SIMULATIONS_NONE);
         auto fontFaceIndex = attributeSource.GetValue(DrawableObjectAttributeFontFaceIndex, 0ui32);
         auto fontFaceType = attributeSource.GetValue(DrawableObjectAttributeDWriteFontFaceType, DWRITE_FONT_FACE_TYPE_UNKNOWN);
@@ -1851,6 +1828,7 @@ HRESULT CachedDWriteFontFace::Update(
             fontFaceIndex,
             fontFaceType,
             fontSimulations,
+            fontAxisValues,
             OUT &this->fontFace
             );
     }
@@ -2107,6 +2085,7 @@ HRESULT CachedDWriteTextFormat::EnsureCached(IAttributeSource& attributeSource, 
     DWRITE_WORD_WRAPPING dwriteWrappingMode = static_cast<DWRITE_WORD_WRAPPING>(wrappingMode + 1);
     DrawableObjectJustificationMode justification = attributeSource.GetValue(DrawableObjectAttributeJustification, DrawableObjectJustificationModeUnjustified);
     DrawableObjectTrimmingGranularity trimmingGranularity = attributeSource.GetValue(DrawableObjectAttributeTrimmingGranularity, DrawableObjectTrimmingGranularityNone);
+    DWRITE_FONT_FAMILY_MODEL fontFamilyModel = attributeSource.GetValue(DrawableObjectAttributeDWriteFontFamilyModel, DWRITE_FONT_FAMILY_MODEL_WEIGHT_STRETCH_STYLE);
     char32_t trimmingDelimiter = attributeSource.GetValue(DrawableObjectAttributeTrimmingDelimiter, '\0');
     bool hasTrimmingSign = attributeSource.GetValue(DrawableObjectAttributeTrimmingSign, true);
 
@@ -2119,12 +2098,27 @@ HRESULT CachedDWriteTextFormat::EnsureCached(IAttributeSource& attributeSource, 
 
         CreateFontCollection(
             factory,
+            fontFamilyModel,
             ToWChar(customFontFilePath.data()),
             static_cast<uint32_t>(customFontFilePath.size()),
             OUT &fontCollection
             );
 
         drawingCanvas.SetSharedResource(customFontFilePath.data(), fontCollection.Get());
+    }
+
+    if (fontCollection == nullptr && fontFamilyModel != DWRITE_FONT_FAMILY_MODEL_WEIGHT_STRETCH_STYLE)
+    {
+        ComPtr<IDWriteFactory6> factory6;
+        factory->QueryInterface(OUT &factory6);
+        if (factory6 != nullptr)
+        {
+            IFR(factory6->GetSystemFontCollection(
+                /*includeDownloadableFonts*/ false,
+                fontFamilyModel,
+                OUT reinterpret_cast<IDWriteFontCollection2**>(&fontCollection)
+            ));
+        }
     }
 
     textFormat.clear();
@@ -2266,18 +2260,15 @@ HRESULT CachedDWriteTextLayout::EnsureCached(
         textLayout->SetStrikethrough(true, { 0, UINT32_MAX });
     }
 
-#if 0 // RS3
     std::vector<DWRITE_FONT_AXIS_VALUE> fontAxisValues;
     GetFontAxisValues(attributeSource, OUT fontAxisValues);
 
     ComPtr<IDWriteTextLayout4> textLayout4;
     textLayout->QueryInterface(OUT &textLayout4);
-
     if (textLayout4 != nullptr)
     {
         textLayout4->SetFontAxisValues(fontAxisValues.data(), uint32_t(fontAxisValues.size()), DWRITE_TEXT_RANGE{ 0, UINT32_MAX });
     }
-#endif
 
     return S_OK;
 };

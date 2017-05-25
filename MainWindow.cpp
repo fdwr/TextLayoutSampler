@@ -1520,7 +1520,7 @@ HRESULT MainWindow::LoadFontFileIntoDrawableObjects(_In_z_ char16_t const* fileP
 
     // Get the name of the first font in the collection.
 
-    IFR(CreateFontCollection(dwriteFactory, ToWChar(filePath), IntLen(filePath), OUT &fontCollection));
+    IFR(CreateFontCollection(dwriteFactory, DWRITE_FONT_FAMILY_MODEL_WEIGHT_STRETCH_STYLE, ToWChar(filePath), IntLen(filePath), OUT &fontCollection));
 
     std::u16string familyName, faceName, win32FamilyName, win32FaceName, preferredFamilyName, preferredFaceName, fullName;
 

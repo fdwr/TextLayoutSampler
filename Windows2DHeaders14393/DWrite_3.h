@@ -17,7 +17,6 @@
 interface IDWriteFontFaceReference;
 interface IDWriteFont3;
 interface IDWriteFontFace3;
-interface IDWriteFontFaceReference;
 interface IDWriteFontSet;
 interface IDWriteFontSetBuilder;
 interface IDWriteFontCollection1;
@@ -70,20 +69,20 @@ enum DWRITE_FONT_PROPERTY_ID
     DWRITE_FONT_PROPERTY_ID_NONE,
 
     /// <summary>
-    /// Family name for the weight-width-slope model.
+    /// Family name for the weight-stretch-style model.
     /// </summary>
-    DWRITE_FONT_PROPERTY_ID_FAMILY_NAME,
+    DWRITE_FONT_PROPERTY_ID_WEIGHT_STRETCH_STYLE_FAMILY_NAME,
 
     /// <summary>
     /// Family name preferred by the designer. This enables font designers to group more than four fonts in a single family without losing compatibility with
     /// GDI. This name is typically only present if it differs from the GDI-compatible family name.
     /// </summary>
-    DWRITE_FONT_PROPERTY_ID_PREFERRED_FAMILY_NAME,
+    DWRITE_FONT_PROPERTY_ID_TYPOGRAPHIC_FAMILY_NAME,
 
     /// <summary>
-    /// Face name of the (e.g., Regular or Bold).
+    /// Face name of the for the weight-stretch-style (e.g., Regular or Bold).
     /// </summary>
-    DWRITE_FONT_PROPERTY_ID_FACE_NAME,
+    DWRITE_FONT_PROPERTY_ID_WEIGHT_STRETCH_STYLE_FACE_NAME,
 
     /// <summary>
     /// The full name of the font, e.g. "Arial Bold", from name id 4 in the name table.
@@ -170,25 +169,53 @@ enum DWRITE_FONT_PROPERTY_ID
     /// <summary>
     /// Weight of the font represented as a decimal string in the range 1-999.
     /// </summary>
+    /// <remark>
+    /// This enum is discouraged for use with IDWriteFontSetBuilder2 in favor of the more generic font axis
+    /// DWRITE_FONT_AXIS_TAG_WEIGHT which supports higher precision and range.
+    /// </remark>
     DWRITE_FONT_PROPERTY_ID_WEIGHT,
 
     /// <summary>
     /// Stretch of the font represented as a decimal string in the range 1-9.
     /// </summary>
+    /// <remark>
+    /// This enum is discouraged for use with IDWriteFontSetBuilder2 in favor of the more generic font axis
+    /// DWRITE_FONT_AXIS_TAG_WIDTH which supports higher precision and range.
+    /// </remark>
     DWRITE_FONT_PROPERTY_ID_STRETCH,
 
     /// <summary>
-    /// Stretch of the font represented as a decimal string in the range 0-2.
+    /// Style of the font represented as a decimal string in the range 0-2.
     /// </summary>
+    /// <remark>
+    /// This enum is discouraged for use with IDWriteFontSetBuilder2 in favor of the more generic font axes
+    /// DWRITE_FONT_AXIS_TAG_SLANT and DWRITE_FONT_AXIS_TAG_ITAL.
+    /// </remark>
     DWRITE_FONT_PROPERTY_ID_STYLE,
 
     /// <summary>
-    /// Total number of properties.
+    /// Face name preferred by the designer. This enables font designers to group more than four fonts in a single
+    /// family without losing compatibility with GDI.
+    /// </summary>
+    DWRITE_FONT_PROPERTY_ID_TYPOGRAPHIC_FACE_NAME,
+
+    /// <summary>
+    /// Total number of properties for NTDDI_WIN10 (IDWriteFontSet).
     /// </summary>
     /// <remarks>
     /// DWRITE_FONT_PROPERTY_ID_TOTAL cannot be used as a property ID.
     /// </remarks>
-    DWRITE_FONT_PROPERTY_ID_TOTAL,
+    DWRITE_FONT_PROPERTY_ID_TOTAL = DWRITE_FONT_PROPERTY_ID_STYLE + 1,
+
+    /// <summary>
+    /// Total number of properties for NTDDI_WIN10_RS3 (IDWriteFontSet1).
+    /// </summary>
+    DWRITE_FONT_PROPERTY_ID_TOTAL_RS3 = DWRITE_FONT_PROPERTY_ID_TYPOGRAPHIC_FACE_NAME + 1,
+
+    // Obsolete aliases kept to avoid breaking existing code.
+    DWRITE_FONT_PROPERTY_ID_PREFERRED_FAMILY_NAME = DWRITE_FONT_PROPERTY_ID_TYPOGRAPHIC_FAMILY_NAME,
+    DWRITE_FONT_PROPERTY_ID_FAMILY_NAME = DWRITE_FONT_PROPERTY_ID_WEIGHT_STRETCH_STYLE_FAMILY_NAME,
+    DWRITE_FONT_PROPERTY_ID_FACE_NAME = DWRITE_FONT_PROPERTY_ID_WEIGHT_STRETCH_STYLE_FACE_NAME,
 };
 
 
@@ -371,7 +398,7 @@ interface DWRITE_DECLARE_INTERFACE("9a1b41c3-d3bb-466a-87fc-fe67556a3b65") IDWri
     /// <param name="pixelGeometry">The geometry of a device pixel.</param>
     /// <param name="renderingMode">Method of rendering glyphs. In most cases, this should be DWRITE_RENDERING_MODE_DEFAULT to automatically use an appropriate mode.</param>
     /// <param name="gridFitMode">How to grid fit glyph outlines. In most cases, this should be DWRITE_GRID_FIT_DEFAULT to automatically choose an appropriate mode.</param>
-    /// <param name="renderingParams">Holds the newly created rendering parameters object, or NULL in case of failure.</param>
+    /// <param name="renderingParams">Receives a pointer to the newly created rendering parameters object, or NULL in case of failure.</param>
     /// <returns>
     /// Standard HRESULT error code.
     /// </returns>
@@ -401,8 +428,8 @@ interface DWRITE_DECLARE_INTERFACE("9a1b41c3-d3bb-466a-87fc-fe67556a3b65") IDWri
     ///     if the user provided lastWriteTime doesn't match the file on the disk.</param>
     /// <param name="faceIndex">The zero based index of a font face in cases when the font files contain a collection of font faces.
     ///     If the font files contain a single face, this value should be zero.</param>
-    /// <param name="fontFaceSimulationFlags">Font face simulation flags for algorithmic emboldening and italicization.</param>
-    /// <param name="fontFaceReference">Contains newly created font face reference object, or nullptr in case of failure.</param>
+    /// <param name="fontSimulations">Font face simulation flags for algorithmic emboldening and italicization.</param>
+    /// <param name="fontFaceReference">Receives a pointer to the newly created font face reference object, or nullptr in case of failure.</param>
     /// <returns>
     /// Standard HRESULT error code.
     /// </returns>
@@ -417,11 +444,11 @@ interface DWRITE_DECLARE_INTERFACE("9a1b41c3-d3bb-466a-87fc-fe67556a3b65") IDWri
     /// <summary>
     /// Creates a reference to a font given a file.
     /// </summary>
-    /// <param name="fontFiles">User provided font file representing the font face.</param>
+    /// <param name="fontFile">User provided font file representing the font face.</param>
     /// <param name="faceIndex">The zero based index of a font face in cases when the font files contain a collection of font faces.
     ///     If the font files contain a single face, this value should be zero.</param>
-    /// <param name="fontFaceSimulationFlags">Font face simulation flags for algorithmic emboldening and italicization.</param>
-    /// <param name="fontFaceReference">Contains newly created font face reference object, or nullptr in case of failure.</param>
+    /// <param name="fontSimulations">Font face simulation flags for algorithmic emboldening and italicization.</param>
+    /// <param name="fontFaceReference">Receives a pointer to the newly created font face reference object, or nullptr in case of failure.</param>
     /// <returns>
     /// Standard HRESULT error code.
     /// </returns>
@@ -435,7 +462,7 @@ interface DWRITE_DECLARE_INTERFACE("9a1b41c3-d3bb-466a-87fc-fe67556a3b65") IDWri
     /// <summary>
     /// Retrieves the list of system fonts.
     /// </summary>
-    /// <param name="fontSet">Holds the newly created font set object, or NULL in case of failure.</param>
+    /// <param name="fontSet">Receives a pointer to the font set object, or nullptr in case of failure.</param>
     /// <returns>
     /// Standard HRESULT error code.
     /// </returns>
@@ -447,7 +474,7 @@ interface DWRITE_DECLARE_INTERFACE("9a1b41c3-d3bb-466a-87fc-fe67556a3b65") IDWri
     /// Creates an empty font set builder to add font face references
     /// and create a custom font set.
     /// </summary>
-    /// <param name="fontSetBuilder">Holds the newly created font set builder object, or NULL in case of failure.</param>
+    /// <param name="fontSetBuilder">Receives a pointer to the newly created font set builder object, or nullptr in case of failure.</param>
     /// <returns>
     /// Standard HRESULT error code.
     /// </returns>
@@ -456,10 +483,10 @@ interface DWRITE_DECLARE_INTERFACE("9a1b41c3-d3bb-466a-87fc-fe67556a3b65") IDWri
         ) PURE;
 
     /// <summary>
-    /// Create a weight/width/slope tree from a set of fonts.
+    /// Create a weight-stretch-style based collection of font families from a set of fonts.
     /// </summary>
     /// <param name="fontSet">A set of fonts to use to build the collection.</param>
-    /// <param name="fontCollection">Holds the newly created font collection object, or NULL in case of failure.</param>
+    /// <param name="fontCollection">Receives a pointer to the newly created font collection object, or nullptr in case of failure.</param>
     /// <returns>
     /// Standard HRESULT error code.
     /// </returns>
@@ -469,10 +496,10 @@ interface DWRITE_DECLARE_INTERFACE("9a1b41c3-d3bb-466a-87fc-fe67556a3b65") IDWri
         ) PURE;
 
     /// <summary>
-    /// Retrieves a weight/width/slope tree of system fonts.
+    /// Retrieves a weight-stretch-style based collection of font families.
     /// </summary>
     /// <param name="includeDownloadableFonts">Include cloud fonts or only locally installed ones.</param>
-    /// <param name="fontCollection">Holds the newly created font collection object, or NULL in
+    /// <param name="fontCollection">Receives a pointer to the newly created font collection object, or nullptr in
     ///     case of failure.</param>
     /// <param name="checkForUpdates">If this parameter is nonzero, the function performs an immediate check for changes 
     ///     to the set of system fonts. If this parameter is FALSE, the function will still detect changes if the font
@@ -487,7 +514,7 @@ interface DWRITE_DECLARE_INTERFACE("9a1b41c3-d3bb-466a-87fc-fe67556a3b65") IDWri
         BOOL checkForUpdates = FALSE
         ) PURE;
 
-    using IDWriteFactory2::GetSystemFontCollection;
+    using IDWriteFactory::GetSystemFontCollection;
 
     /// <summary>
     /// Gets the font download queue associated with this factory object.
@@ -502,6 +529,11 @@ interface DWRITE_DECLARE_INTERFACE("9a1b41c3-d3bb-466a-87fc-fe67556a3b65") IDWri
 };
 
 
+/// <summary>
+/// Set of fonts used for creating font faces, selecting nearest matching fonts, and filtering.
+/// Unlike IDWriteFontFamily and IDWriteFontList, which are part of the IDWriteFontCollection heirarchy, font sets
+/// are unordered flat lists.
+/// </summary>
 interface DWRITE_DECLARE_INTERFACE("53585141-D9F8-4095-8321-D73CF6BD116B") IDWriteFontSet : public IUnknown
 {
     /// <summary>
@@ -682,6 +714,9 @@ interface DWRITE_DECLARE_INTERFACE("53585141-D9F8-4095-8321-D73CF6BD116B") IDWri
 };
 
 
+/// <summary>
+/// Builder interface to add font face references and create a font set.
+/// </summary>
 interface DWRITE_DECLARE_INTERFACE("2F642AFE-9C68-4F40-B8BE-457401AFCB3D") IDWriteFontSetBuilder : public IUnknown
 {
     /// <summary>
@@ -737,8 +772,7 @@ interface DWRITE_DECLARE_INTERFACE("2F642AFE-9C68-4F40-B8BE-457401AFCB3D") IDWri
     /// Creates a font set from all the font face references added so
     /// far via AddFontFaceReference.
     /// </summary>
-    /// <param name="fontSet">Contains newly created font set object,
-    ///     or nullptr in case of failure.</param>
+    /// <param name="fontSet">Receives a pointer to the newly created font set object, or nullptr in case of failure.</param>
     /// <returns>
     /// Standard HRESULT error code.
     /// </returns>
@@ -934,7 +968,7 @@ interface DWRITE_DECLARE_INTERFACE("5E7FA7CA-DDE3-424C-89F0-9FCD6FED58CD") IDWri
     STDMETHOD_(BOOL, Equals)(IDWriteFontFaceReference* fontFaceReference) PURE;
 
     /// <summary>
-    /// Obtains the zero-based index of the font face in its font file or files. If the font files contain a single face,
+    /// Obtains the zero-based index of the font face in its font file. If the font files contain a single face,
     /// the return value is zero.
     /// </summary>
     STDMETHOD_(UINT32, GetFontFaceIndex)() PURE;
@@ -1159,7 +1193,7 @@ interface DWRITE_DECLARE_INTERFACE("D37D7598-09BE-4222-A236-2081341CC1F2") IDWri
     STDMETHOD_(DWRITE_FONT_STYLE, GetStyle)() PURE;
 
     /// <summary>
-    /// Creates an localized strings object that contains the family names for the font family, indexed by locale name.
+    /// Creates an localized strings object that contains the weight-stretch-style family names for the font family, indexed by locale name.
     /// </summary>
     /// <param name="names">Receives a pointer to the newly created localized strings object.</param>
     /// <returns>
@@ -1170,7 +1204,7 @@ interface DWRITE_DECLARE_INTERFACE("D37D7598-09BE-4222-A236-2081341CC1F2") IDWri
         ) PURE;
 
     /// <summary>
-    /// Gets a localized strings collection containing the face names for the font (e.g., Regular or Bold), indexed by locale name.
+    /// Gets a localized strings collection containing the weight-stretch-style face names for the font (e.g., Regular or Bold), indexed by locale name.
     /// </summary>
     /// <param name="names">Receives a pointer to the newly created localized strings object.</param>
     /// <returns>
@@ -2083,7 +2117,7 @@ interface DWRITE_DECLARE_INTERFACE("3FF7715F-3CDC-4DC6-9B72-EC5621DCCAFD") IDWri
     /// </returns>
     STDMETHOD(AddFontFile)(
         _In_ IDWriteFontFile* fontFile
-        ) throw();
+        ) PURE;
 };
 
 /// <summary>
@@ -2342,7 +2376,7 @@ interface DWRITE_DECLARE_INTERFACE("958DB99A-BE2A-4F09-AF7D-65189803D1D3") IDWri
     /// Creates an empty font set builder to add font face references
     /// and create a custom font set.
     /// </summary>
-    /// <param name="fontSetBuilder">Holds the newly created font set builder object, or NULL in case of failure.</param>
+    /// <param name="fontSetBuilder">Receives a pointer to the newly created font set builder object, or nullptr in case of failure.</param>
     /// <returns>
     /// Standard HRESULT error code.
     /// </returns>
@@ -2420,5 +2454,1083 @@ interface DWRITE_DECLARE_INTERFACE("958DB99A-BE2A-4F09-AF7D-65189803D1D3") IDWri
 };
 
 #endif // NTDDI_VERSION >= NTDDI_WIN10_RS2
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+// TODO: Restore to NTDDI_WIN10_RS3 once the DDI version propagates down.
+// https://microsoft.visualstudio.com/OS/ft_2dx/_workitems?id=12063098
+#if NTDDI_VERSION >= NTDDI_WIN10_RS2
+
+
+interface IDWriteFontResource;
+interface IDWriteFontFace5;
+interface IDWriteFontFaceReference1;
+interface IDWriteFontSet1;
+interface IDWriteFontCollection2;
+interface IDWriteTextFormat3;
+interface IDWriteFontSetBuilder2;
+
+
+/// <summary>
+/// Creates an OpenType tag for a font axis.
+/// </summary>
+#define DWRITE_MAKE_FONT_AXIS_TAG(a,b,c,d) (static_cast<DWRITE_FONT_AXIS_TAG>(DWRITE_MAKE_OPENTYPE_TAG(a,b,c,d)))
+
+
+/// <summary>
+/// Four character identifier for a font axis.
+/// </summary>
+/// <remarks>
+/// Use DWRITE_MAKE_FONT_AXIS_TAG() to create a custom one.
+/// <remarks>
+enum DWRITE_FONT_AXIS_TAG : UINT32
+{
+    DWRITE_FONT_AXIS_TAG_WEIGHT         = DWRITE_MAKE_FONT_AXIS_TAG('w','g','h','t'),
+    DWRITE_FONT_AXIS_TAG_WIDTH          = DWRITE_MAKE_FONT_AXIS_TAG('w','d','t','h'),
+    DWRITE_FONT_AXIS_TAG_SLANT          = DWRITE_MAKE_FONT_AXIS_TAG('s','l','n','t'),
+    DWRITE_FONT_AXIS_TAG_OPTICAL_SIZE   = DWRITE_MAKE_FONT_AXIS_TAG('o','p','s','z'),
+    DWRITE_FONT_AXIS_TAG_ITALIC         = DWRITE_MAKE_FONT_AXIS_TAG('i','t','a','l'),
+};
+
+
+/// <summary>
+/// Value for a font axis, used when querying and creating font instances.
+/// </summary>
+struct DWRITE_FONT_AXIS_VALUE
+{
+    /// <summary>
+    /// Four character identifier of the font axis (weight, width, slant, italic...).
+    /// </summary>
+    DWRITE_FONT_AXIS_TAG axisTag;
+
+    /// <summary>
+    /// Value for the given axis, with the meaning and range depending on the axis semantics.
+    /// Certain well known axes have standard ranges and defaults, such as weight (1..1000, default=400),
+    /// width (>0, default=100), slant (-90..90, default=-20), and italic (0 or 1).
+    /// </summary>
+    FLOAT value;
+};
+
+
+/// <summary>
+/// Minimum and maximum range of a font axis.
+/// </summary>
+struct DWRITE_FONT_AXIS_RANGE
+{
+    /// <summary>
+    /// Four character identifier of the font axis (weight, width, slant, italic...).
+    /// </summary>
+    DWRITE_FONT_AXIS_TAG axisTag;
+
+    /// <summary>
+    /// Minimum value supported by this axis.
+    /// </summary>
+    FLOAT minValue;
+
+    /// <summary>
+    /// Maximum value supported by this axis. The maximum can equal the minimum.
+    /// </summary>
+    FLOAT maxValue;
+};
+
+
+/// <summary>
+/// How font families are grouped together, used by IDWriteFontCollection.
+/// </summary>
+enum DWRITE_FONT_FAMILY_MODEL
+{
+    /// <summary>
+    /// Families are grouped by the typographic family name preferred by the font author. The family can contain as
+    /// many face as the font author wants.
+    /// This corresponds to the DWRITE_FONT_PROPERTY_ID_TYPOGRAPHIC_FAMILY_NAME.
+    /// </summary>
+    DWRITE_FONT_FAMILY_MODEL_TYPOGRAPHIC,
+
+    /// <summary>
+    /// Families are grouped by the weight-stretch-style family name, where all faces that differ only by those three
+    /// axes are grouped into the same family, but any other axes go into a distinct family. For example, the Sitka
+    /// family with six different optical sizes yields six separate families (Sitka Caption, Display, Text, Subheading,
+    /// Heading, Banner...). This corresponds to the DWRITE_FONT_PROPERTY_ID_WEIGHT_STRETCH_STYLE_FAMILY_NAME.
+    /// </summary>
+    DWRITE_FONT_FAMILY_MODEL_WEIGHT_STRETCH_STYLE,
+};
+
+
+/// <summary>
+/// Apply certain axes automatically in layout during font selection.
+/// </summary>
+enum DWRITE_AUTOMATIC_FONT_AXES
+{
+    /// <summary>
+    /// No axes are automatically applied.
+    /// </summary>
+    DWRITE_AUTOMATIC_FONT_AXES_NONE         = 0x0000,
+
+    /// <summary>
+    /// Automatically pick an appropriate optical value based on the font size (via SetFontSize) when no value is
+    /// specified via DWRITE_FONT_AXIS_TAG_OPTICAL_SIZE. Callers can still explicitly apply the 'opsz' value over
+    /// text ranges via SetFontAxisValues, which take priority.
+    /// </summary>
+    DWRITE_AUTOMATIC_FONT_AXES_OPTICAL_SIZE = 0x0001,
+};
+
+#ifdef DEFINE_ENUM_FLAG_OPERATORS
+DEFINE_ENUM_FLAG_OPERATORS(DWRITE_AUTOMATIC_FONT_AXES);
+#endif
+
+
+/// <summary>
+/// Attributes for a font axis.
+/// </summary>
+enum DWRITE_FONT_AXIS_ATTRIBUTES
+{
+    /// <summary>
+    /// No attributes.
+    /// </summary>
+    DWRITE_FONT_AXIS_ATTRIBUTES_NONE     = 0x0000,
+
+    /// <summary>
+    /// This axis is implemented as a variation axis in a variable font, with a continuous range of
+    /// values, such as a range of weights from 100..900. Otherwise it is either a static axis that
+    /// holds a single point, or it has a range but doesn't vary, such as optical size in the Skia
+    /// Heading font which covers a range of points but doesn't interpolate any new glyph outlines.
+    /// </summary>
+    DWRITE_FONT_AXIS_ATTRIBUTES_VARIABLE = 0x0001,
+
+    /// <summary>
+    /// This axis is recommended to be remain hidden in user interfaces. The font developer may
+    /// recommend this if an axis is intended to be accessed only programmatically, or is meant for
+    /// font-internal or font-developer use only. The axis may be exposed in lower-level font
+    /// inspection utilities, but should not be exposed in common or even advanced-mode user
+    /// interfaces in content-authoring apps.
+    /// </summary>
+    DWRITE_FONT_AXIS_ATTRIBUTES_HIDDEN   = 0x0002,
+};
+
+#ifdef DEFINE_ENUM_FLAG_OPERATORS
+DEFINE_ENUM_FLAG_OPERATORS(enum DWRITE_FONT_AXIS_ATTRIBUTES
+);
+#endif
+
+
+interface DWRITE_DECLARE_INTERFACE("F3744D80-21F7-42EB-B35D-995BC72FC223") IDWriteFactory6 : public IDWriteFactory5
+{
+    /// <summary>
+    /// Creates a reference to a specific font instance within a file.
+    /// </summary>
+    /// <param name="fontFile">User provided font file representing the font face.</param>
+    /// <param name="faceIndex">The zero based index of a font face in cases when the font files contain a collection of font faces.
+    /// If the font files contain a single face, this value should be zero.</param>
+    /// <param name="fontSimulations">Font face simulation flags for algorithmic emboldening and italicization.</param>
+    /// <param name="fontAxisValues">List of font axis values.</param>
+    /// <param name="fontAxisValueCount">Number of font axis values.</param>
+    /// <param name="fontFaceReference">Receives a pointer to the newly created font face reference object, or nullptr in case of failure.</param>
+    /// <returns>
+    /// Standard HRESULT error code.
+    /// </returns>
+    STDMETHOD(CreateFontFaceReference)(
+        _In_ IDWriteFontFile* fontFile,
+        UINT32 faceIndex,
+        DWRITE_FONT_SIMULATIONS fontSimulations,
+        _In_reads_(fontAxisValueCount) DWRITE_FONT_AXIS_VALUE const* fontAxisValues,
+        UINT32 fontAxisValueCount,
+        _COM_Outptr_ IDWriteFontFaceReference1** fontFaceReference
+        ) PURE;
+
+    using IDWriteFactory5::CreateFontFaceReference;
+
+    /// <summary>
+    /// Creates a font resource given a font file and face index.
+    /// </summary>
+    /// <param name="fontFile">User provided font file representing the font face.</param>
+    /// <param name="faceIndex">The zero based index of a font face in cases when the font files contain a collection of font faces.
+    /// If the font files contain a single face, this value should be zero.</param>
+    /// <param name="fontResource">Receives a pointer to the newly created font resource object, or nullptr in case of failure.</param>
+    /// <returns>
+    /// Standard HRESULT error code.
+    /// </returns>
+    STDMETHOD(CreateFontResource)(
+        _In_ IDWriteFontFile* fontFile,
+        UINT32 faceIndex,
+        _COM_Outptr_ IDWriteFontResource** fontResource
+        ) PURE;
+
+    /// <summary>
+    /// Retrieves the set of system fonts.
+    /// </summary>
+    /// <param name="includeDownloadableFonts">Include cloud fonts or only locally installed ones.</param>
+    /// <param name="fontSet">Receives a pointer to the font set object, or nullptr in case of failure.</param>
+    /// <returns>
+    /// Standard HRESULT error code.
+    /// </returns>
+    STDMETHOD(GetSystemFontSet)(
+        BOOL includeDownloadableFonts,
+        _COM_Outptr_ IDWriteFontSet1** fontSet
+        ) PURE;
+
+    using IDWriteFactory3::GetSystemFontSet;
+
+    /// <summary>
+    /// Retrieves a collection of fonts grouped into families.
+    /// </summary>
+    /// <param name="includeDownloadableFonts">Include cloud fonts or only locally installed ones.</param>
+    /// <param name="fontFamilyModel">How to group families in the collection.</param>
+    /// <param name="fontCollection">Receives a pointer to the font collection object, or nullptr in case of failure.</param>
+    /// <returns>
+    /// Standard HRESULT error code.
+    /// </returns>
+    STDMETHOD(GetSystemFontCollection)(
+        BOOL includeDownloadableFonts,
+        DWRITE_FONT_FAMILY_MODEL fontFamilyModel,
+        _COM_Outptr_ IDWriteFontCollection2** fontCollection
+        ) PURE;
+
+    using IDWriteFactory::GetSystemFontCollection;
+    using IDWriteFactory3::GetSystemFontCollection;
+
+    /// <summary>
+    /// Create a collection of fonts grouped into families from a font set.
+    /// </summary>
+    /// <param name="fontSet">A set of fonts to use to build the collection.</param>
+    /// <param name="fontFamilyModel">How to group families in the collection.</param>
+    /// <param name="fontCollection">Receives a pointer to the newly created font collection object, or nullptr in case of failure.</param>
+    /// <returns>
+    /// Standard HRESULT error code.
+    /// </returns>
+    STDMETHOD(CreateFontCollectionFromFontSet)(
+        IDWriteFontSet* fontSet,
+        DWRITE_FONT_FAMILY_MODEL fontFamilyModel,
+        _COM_Outptr_ IDWriteFontCollection2** fontCollection
+        ) PURE;
+
+    /// <summary>
+    /// Creates an empty font set builder to add font instances and and create a custom font set.
+    /// </summary>
+    /// <param name="fontSetBuilder">Receives a pointer to the newly created font set builder object, or nullptr in case of failure.</param>
+    /// <returns>
+    /// Standard HRESULT error code.
+    /// </returns>
+    STDMETHOD(CreateFontSetBuilder)(
+        _COM_Outptr_ IDWriteFontSetBuilder2** fontSetBuilder
+        ) PURE;
+
+    using IDWriteFactory3::CreateFontSetBuilder;
+    using IDWriteFactory5::CreateFontSetBuilder;
+
+    /// <summary>
+    /// Create a text format object used for text layout.
+    /// </summary>
+    /// <param name="fontFamilyName">Name of the font family from the collection.</param>
+    /// <param name="fontCollection">Font collection, with nullptr indicating the system font collection.</param>
+    /// <param name="fontAxisValues">List of font axis values.</param>
+    /// <param name="fontAxisValueCount">Number of font axis values.</param>
+    /// <param name="fontSize">Logical size of the font in DIP units.</param>
+    /// <param name="localeName">Locale name (e.g. "ja-JP", "en-US", "ar-EG").</param>
+    /// <param name="textFormat">Receives a pointer to the newly created text format object, or nullptr in case of failure.</param>
+    /// <returns>
+    /// Standard HRESULT error code.
+    /// </returns>
+    /// <remarks>
+    /// If fontCollection is nullptr, a system font collection is used grouped by typographic family name and without
+    /// downloadable fonts.
+    /// </remarks>
+    STDMETHOD(CreateTextFormat)(
+        _In_z_ WCHAR const* fontFamilyName,
+        _In_opt_ IDWriteFontCollection* fontCollection,
+        _In_reads_(fontAxisValueCount) DWRITE_FONT_AXIS_VALUE const* fontAxisValues,
+        UINT32 fontAxisValueCount,
+        FLOAT fontSize,
+        _In_z_ WCHAR const* localeName,
+        _COM_Outptr_ IDWriteTextFormat3** textFormat
+        ) PURE;
+
+    using IDWriteFactory::CreateTextFormat;
+};
+
+
+interface DWRITE_DECLARE_INTERFACE("98EFF3A5-B667-479A-B145-E2FA5B9FDC29") IDWriteFontFace5 : public IDWriteFontFace4
+{
+    /// <summary>
+    /// Get the number of axes defined by the font. This includes both static and variable axes.
+    /// </summary>
+    STDMETHOD_(UINT32, GetFontAxisValueCount)() PURE;
+
+    /// <summary>
+    /// Get the list of axis values used by the font.
+    /// </summary>
+    /// <param name="fontAxisValues">List of font axis values.</param>
+    /// <param name="fontAxisValueCount">Maximum number of font axis values to write.</param>
+    /// <returns>
+    /// Standard HRESULT error code, or E_INVALIDARG if fontAxisValueCount doesn't match GetFontAxisValueCount.
+    /// </returns>
+    /// <remarks>
+    /// The values are returned in the canonical order defined by the font, clamped to the actual range supported,
+    /// not specifically the same axis value array passed to CreateFontFace.
+    /// </remarks>
+    STDMETHOD(GetFontAxisValues)(
+        _Out_writes_(fontAxisValueCount) DWRITE_FONT_AXIS_VALUE* fontAxisValues,
+        UINT32 fontAxisValueCount
+        ) PURE;
+
+    /// <summary>
+    /// Whether this font's resource supports any variable axes. When true, at least one DWRITE_FONT_AXIS_RANGE
+    /// in the font resource has a non-empty range (maximum > minimum).
+    /// </summary>
+    STDMETHOD_(BOOL, HasVariations)() PURE;
+
+    /// <summary>
+    /// Get the underlying font resource for this font face. A caller can use that to query information on the resource
+    /// or recreate a new font face instance with different axis values.
+    /// </summary>
+    /// <param name="fontResource">Newly created font resource object.</param>
+    /// <returns>
+    /// Standard HRESULT error code.
+    /// </returns>
+    STDMETHOD(GetFontResource)(
+        _COM_Outptr_ IDWriteFontResource** fontResource
+        ) PURE;
+
+    /// <summary>
+    /// Compares two instances of a font face for equality.
+    /// </summary>
+    STDMETHOD_(BOOL, Equals)(IDWriteFontFace* fontFace) PURE;
+};
+
+
+/// <summary>
+/// Interface to return axis information for a font resource and create specific font face instances.
+/// </summary>
+interface DWRITE_DECLARE_INTERFACE("1F803A76-6871-48E8-987F-B975551C50F2") IDWriteFontResource : public IUnknown
+{
+    /// <summary>
+    /// Get the font file of the resource.
+    /// </summary>
+    /// <param name="fontFile">Receives a pointer to the font file.</param>
+    /// <returns>
+    /// Standard HRESULT error code.
+    /// </returns>
+    STDMETHOD(GetFontFile)(
+        _COM_Outptr_ IDWriteFontFile** fontFile
+        ) PURE;
+
+    /// <summary>
+    /// Obtains the zero-based index of the font face in its font file. If the font files contain a single face,
+    /// the return value is zero.
+    /// </summary>
+    STDMETHOD_(UINT32, GetFontFaceIndex)() PURE;
+
+    /// <summary>
+    /// Get the number of axes supported by the font resource. This includes both static and variable axes.
+    /// </summary>
+    STDMETHOD_(UINT32, GetFontAxisCount)() PURE;
+
+    /// <summary>
+    /// Get the default values for all axes supported by the font resource.
+    /// </summary>
+    /// <param name="fontAxisValues">List of font axis values.</param>
+    /// <param name="fontAxisValueCount">Maximum number of font axis values to write.</param>
+    /// <remarks>
+    /// Different font resources may have different defaults.
+    /// For OpenType 1.8 fonts, thes values come from the STAT and fvar tables.
+    /// For older fonts without a STAT table, weight-width-slant-italic are read from the OS/2 table.
+    /// </remarks>
+    /// <returns>
+    /// Standard HRESULT error code, or E_INVALIDARG if fontAxisValueCount doesn't match GetFontAxisValueCount.
+    /// </returns>
+    STDMETHOD(GetDefaultFontAxisValues)(
+        _Out_writes_(fontAxisValueCount) DWRITE_FONT_AXIS_VALUE* fontAxisValues,
+        UINT32 fontAxisValueCount
+        ) PURE;
+
+    /// <summary>
+    /// Get ranges of each axis.
+    /// </summary>
+    /// <param name="fontAxisRanges"></param>
+    /// <param name="fontAxisRangeCount">Total number of axis ranges</param>
+    /// <returns>
+    /// Standard HRESULT error code, or E_INVALIDARG if fontAxisValueCount doesn't match GetFontAxisValueCount.
+    /// </returns>
+    /// <remarks>
+    /// Non-varying axes will have empty ranges (minimum==maximum).
+    /// </remarks>
+    STDMETHOD(GetFontAxisRanges)(
+        _Out_writes_(fontAxisRangeCount) DWRITE_FONT_AXIS_RANGE* fontAxisRanges,
+        UINT32 fontAxisRangeCount
+        ) PURE;
+
+    /// <summary>
+    /// Gets attributes about the given axis, such as whether the font author recommends to hide the axis
+    /// in user interfaces.
+    /// </summary>
+    /// <param name="axisIndex">Font axis, from 0 GetFontAxisValueCount - 1.</param>
+    /// <param name="axisAttributes">Receives the attributes for the given axis.</param>
+    /// <returns>
+    /// Attributes for a font axis, or NONE if axisIndex is beyond the font count.
+    /// </returns>
+    STDMETHOD_(DWRITE_FONT_AXIS_ATTRIBUTES, GetFontAxisAttributes)(
+        UINT32 axisIndex
+        ) PURE;
+
+    /// <summary>
+    /// Gets the localized names of a font axis.
+    /// </summary>
+    /// <param name="axisIndex">Font axis, from 0 GetFontAxisValueCount - 1.</param>
+    /// <param name="names">Receives a pointer to the newly created localized strings object.</param>
+    /// <remarks>
+    /// The font author may not have supplied names for some font axes. The localized strings
+    /// will be empty in that case.
+    /// </remarks>
+    /// <returns>
+    /// Standard HRESULT error code.
+    /// </returns>
+    STDMETHOD(GetAxisNames)(
+        UINT32 axisIndex,
+        _COM_Outptr_ IDWriteLocalizedStrings** names
+        ) PURE;
+
+    /// <summary>
+    /// Get the number of named values for a specific axis.
+    /// </summary>
+    /// <param name="axisIndex">Font axis, from 0 GetFontAxisValueCount - 1.</param>
+    /// <returns>
+    /// Number of named values.
+    /// </returns>
+    STDMETHOD_(UINT32, GetAxisValueNameCount)(
+        UINT32 axisIndex
+        ) PURE;
+
+    /// <summary>
+    /// Gets the localized names of specific values for a font axis.
+    /// </summary>
+    /// <param name="axisIndex">Font axis, from 0 GetFontAxisValueCount - 1.</param>
+    /// <param name="axisValueIndex">Value index, from 0 GetAxisValueNameCount - 1.</param>
+    /// <param name="fontAxisRange">Range of the named value.</param>
+    /// <param name="names">Receives a pointer to the newly created localized strings object.</param>
+    /// <remarks>
+    /// The font author may not have supplied names for some font axis values. The localized strings
+    /// will be empty in that case. The range may be a single point, where minimum == maximum.
+    /// All ranges are in ascending order by axisValueIndex.
+    /// </remarks>
+    /// <returns>
+    /// Standard HRESULT error code.
+    /// </returns>
+    STDMETHOD(GetAxisValueNames)(
+        UINT32 axisIndex,
+        UINT32 axisValueIndex,
+        _Out_ DWRITE_FONT_AXIS_RANGE* fontAxisRange,
+        _COM_Outptr_ IDWriteLocalizedStrings** names
+        ) PURE;
+
+    /// <summary>
+    /// Whether this font's resource supports any variable axes. When true, at least one DWRITE_FONT_AXIS_RANGE
+    /// in the font resource has a non-empty range (maximum > minimum).
+    /// </summary>
+    STDMETHOD_(BOOL, HasVariations)() PURE;
+
+    /// <summary>
+    /// Creates a font face instance with specific axis values.
+    /// </summary>
+    /// <param name="fontSimulations">Font face simulation flags for algorithmic emboldening and italicization.</param>
+    /// <param name="fontAxisValues">List of font axis values.</param>
+    /// <param name="fontAxisValueCount">Number of font axis values.</param>
+    /// <param name="fontFace">Receives a pointer to the newly created font face object, or nullptr on failure.</param>
+    /// <remarks>
+    /// The passed input axis values are permitted to be a subset or superset of all the ones actually supported by
+    /// the font. Any unspecified axes use their default values, values beyond the ranges are clamped, and any
+    /// non-varying axes have no effect.
+    /// </remarks>
+    /// <returns>
+    /// Standard HRESULT error code, or DWRITE_E_REMOTEFONT if the face is not local.
+    /// </returns>
+    STDMETHOD(CreateFontFace)(
+        DWRITE_FONT_SIMULATIONS fontSimulations,
+        _In_reads_(fontAxisValueCount) DWRITE_FONT_AXIS_VALUE const* fontAxisValues,
+        UINT32 fontAxisValueCount,
+        _COM_Outptr_ IDWriteFontFace5** fontFace
+        ) PURE;
+
+    /// <summary>
+    /// Creates a font face reference with specific axis values.
+    /// </summary>
+    /// <param name="fontSimulations">Font face simulation flags for algorithmic emboldening and italicization.</param>
+    /// <param name="fontAxisValues">List of font axis values.</param>
+    /// <param name="fontAxisValueCount">Number of font axis values.</param>
+    /// <param name="fontFaceReference">Receives a pointer to the newly created font face reference object, or nullptr on failure.</param>
+    /// <remarks>
+    /// The passed input axis values are permitted to be a subset or superset of all the ones actually supported by
+    /// the font. Any unspecified axes use their default values, values beyond the ranges are clamped, and any
+    /// non-varying axes have no effect.
+    /// </remarks>
+    /// <returns>
+    /// Standard HRESULT error code.
+    /// </returns>
+    STDMETHOD(CreateFontFaceReference)(
+        DWRITE_FONT_SIMULATIONS fontSimulations,
+        _In_reads_(fontAxisValueCount) DWRITE_FONT_AXIS_VALUE const* fontAxisValues,
+        UINT32 fontAxisValueCount,
+        _COM_Outptr_ IDWriteFontFaceReference1** fontFaceReference
+        ) PURE;
+};
+
+
+interface DWRITE_DECLARE_INTERFACE("C081FE77-2FD1-41AC-A5A3-34983C4BA61A") IDWriteFontFaceReference1 : public IDWriteFontFaceReference
+{
+    /// <summary>
+    /// Creates a font face from the reference for use with layout, shaping, or rendering.
+    /// </summary>
+    /// <param name="fontFace">Newly created font face object, or nullptr in the case of failure.</param>
+    /// <returns>
+    /// Standard HRESULT error code.
+    /// </returns>
+    /// <remarks>
+    /// This function can fail with DWRITE_E_REMOTEFONT if the font is not local.
+    /// </remarks>
+    STDMETHOD(CreateFontFace)(
+        _COM_Outptr_ IDWriteFontFace5** fontFace
+        ) PURE;
+
+    using IDWriteFontFaceReference::CreateFontFace;
+
+    /// <summary>
+    /// Get the number of axes specified by the reference.
+    /// </summary>
+    STDMETHOD_(UINT32, GetFontAxisValueCount)() PURE;
+
+    /// <summary>
+    /// Get the list of font axis values specified by the reference.
+    /// </summary>
+    /// <param name="fontAxisValues">List of font axis values.</param>
+    /// <param name="fontAxisValueCount">Number of font axis values.</param>
+    /// <returns>
+    /// Standard HRESULT error code, or E_INVALIDARG if fontAxisValueCount doesn't match GetFontAxisValueCount.
+    /// </returns>
+    STDMETHOD(GetFontAxisValues)(
+        _Out_writes_(fontAxisValueCount) DWRITE_FONT_AXIS_VALUE* fontAxisValues,
+        UINT32 fontAxisValueCount
+        ) PURE;
+};
+
+
+interface DWRITE_DECLARE_INTERFACE("EE5BA612-B131-463C-8F4F-3189B9401E45") IDWriteFontSetBuilder2 : public IDWriteFontSetBuilder1
+{
+    /// <summary>
+    /// Adds a reference to a font to the set being built, with the caller supplying enough information to search on
+    /// and determine axis ranges, avoiding the need to open the potentially non-local font.
+    /// </summary>
+    /// <param name="fontFile">Font file reference object to add to the set.</param>
+    /// <param name="faceIndex">The zero based index of a font face in a collection.</param>
+    /// <param name="fontSimulations">Font face simulation flags for algorithmic emboldening and italicization.</param>
+    /// <param name="fontAxisValues">List of font axis values.</param>
+    /// <param name="fontAxisValueCount">Number of font axis values.</param>
+    /// <param name="fontAxisRanges">List of axis ranges.</param>
+    /// <param name="fontAxisRangeCount">Number of axis ranges.</param>
+    /// <param name="properties">List of properties to associate with the reference.</param>
+    /// <param name="propertyCount">How many properties are defined.</param>
+    /// <returns>
+    /// Standard HRESULT error code.
+    /// </returns>
+    STDMETHOD(AddFont)(
+        _In_ IDWriteFontFile* fontFile,
+        UINT32 fontFaceIndex,
+        DWRITE_FONT_SIMULATIONS fontSimulations,
+        _In_reads_(fontAxisValueCount) DWRITE_FONT_AXIS_VALUE const* fontAxisValues,
+        UINT32 fontAxisValueCount,
+        _In_reads_(fontAxisRangeCount) DWRITE_FONT_AXIS_RANGE const* fontAxisRanges,
+        UINT32 fontAxisRangeCount,
+        _In_reads_(propertyCount) DWRITE_FONT_PROPERTY const* properties,
+        UINT32 propertyCount
+        ) PURE;
+
+    /// <summary>
+    /// Adds references to all the fonts in the specified font file. The method
+    /// parses the font file to determine the fonts and their properties.
+    /// </summary>
+    /// <param name="filePath">Absolute file path to add to the font set.</param>
+    /// <returns>
+    /// Standard HRESULT error code.
+    /// </returns>
+    STDMETHOD(AddFontFile)(
+        _In_z_ WCHAR const* filePath
+        ) PURE;
+};
+
+
+interface DWRITE_DECLARE_INTERFACE("7E9FDA85-6C92-4053-BC47-7AE3530DB4D3") IDWriteFontSet1 : public IDWriteFontSet
+{
+    /// <summary>
+    /// Generates a matching font set based on the requested inputs, ordered so that nearer matches are earlier.
+    /// </summary>
+    /// <param name="property">Font property of interest, such as typographic family or weight/stretch/style family.</param>
+    /// <param name="fontAxisValues">List of font axis values.</param>
+    /// <param name="fontAxisValueCount">Number of font axis values.</param>
+    /// <param name="matchingSet">Prioritized list of fonts that match the properties, or nullptr on failure.</param>
+    /// <returns>
+    /// Standard HRESULT error code.
+    /// </returns>
+    /// <remarks>
+    /// This can yield distinct items that were not in the original font set, including items with simulation flags
+    /// (if they would be a closer match to the request) and instances that were not named by the font author.
+    /// </remarks>
+    STDMETHOD(GetMatchingFonts)(
+        _In_opt_ DWRITE_FONT_PROPERTY const* fontProperty,
+        _In_reads_(fontAxisValueCount) DWRITE_FONT_AXIS_VALUE const* fontAxisValues,
+        UINT32 fontAxisValueCount,
+        _COM_Outptr_ IDWriteFontSet1** matchingFonts
+        ) PURE;
+
+    /// <summary>
+    /// Returns a font set that contains only the first occurrence of each font resource in the given set.
+    /// </summary>
+    /// <param name="fontSet">New font set consisting of single default instances from font resources.</param>
+    /// <returns>
+    /// Standard HRESULT error code.
+    /// </returns>
+    STDMETHOD(GetFirstFontResources)(
+        _COM_Outptr_ IDWriteFontSet1** filteredFontSet
+        ) PURE;
+
+    /// <summary>
+    /// Returns a subset of fonts filtered by the given properties.
+    /// </summary>
+    /// <param name="properties">List of properties to filter using.</param>
+    /// <param name="propertyCount">How many properties to filter.</param>
+    /// <param name="selectAnyProperty">Select any property rather rather than the intersection of them all.</param>
+    /// <param name="filteredSet">Subset of fonts that match the properties, or nullptr on failure.</param>
+    /// <returns>
+    /// Standard HRESULT error code.
+    /// </returns>
+    /// <remarks>
+    /// If no fonts matched the filter, the returned subset will be empty (GetFontCount returns 0).
+    /// The subset will always be equal to or less than the original set.
+    /// </remarks>
+    STDMETHOD(GetFilteredFonts)(
+        _In_reads_opt_(propertyCount) DWRITE_FONT_PROPERTY const* properties,
+        UINT32 propertyCount,
+        BOOL selectAnyProperty,
+        _COM_Outptr_ IDWriteFontSet1** filteredFontSet
+        ) PURE;
+
+    /// <summary>
+    /// Returns a subset of fonts filtered by the given ranges, endpoint-inclusive.
+    /// </summary>
+    /// <param name="fontAxisRanges">List of axis ranges.</param>
+    /// <param name="fontAxisRangeCount">Number of axis ranges.</param>
+    /// <param name="selectAnyRange">Select any range rather rather than the intersection of them all.</param>
+    /// <param name="filteredSet">Subset of fonts that fall within the ranges, or nullptr on failure.</param>
+    /// <returns>
+    /// Standard HRESULT error code.
+    /// </returns>
+    /// <remarks>
+    /// If no fonts matched the filter, the subset will be empty (GetFontCount returns 0), but the function does not
+    /// return an error. The subset will always be equal to or less than the original set.
+    /// </remarks>
+    STDMETHOD(GetFilteredFonts)(
+        _In_reads_(fontAxisRangeCount) DWRITE_FONT_AXIS_RANGE const* fontAxisRanges,
+        UINT32 fontAxisRangeCount,
+        BOOL selectAnyRange,
+        _COM_Outptr_ IDWriteFontSet1** filteredFontSet
+        ) PURE;
+
+    /// <summary>
+    /// Returns a subset of fonts filtered by the given indices.
+    /// </summary>
+    /// <param name="indices">Array of indices, each index from [0..GetFontCount() - 1].</param>
+    /// <param name="indexCount">Number of indices.</param>
+    /// <param name="filteredSet">Subset of fonts that come from the given indices, or nullptr on failure.</param>
+    /// <returns>
+    /// Standard HRESULT error code.
+    /// </returns>
+    /// <remarks>
+    /// The indices can come in any order, meaning this function can produce a new set with items removed, duplicated,
+    /// or reordered from the original. If zero indices were passed, an empty font set is returned.  
+    /// </remarks>
+    STDMETHOD(GetFilteredFonts)(
+        _In_reads_(indexCount) UINT32 const* indices,
+        UINT32 indexCount,
+        _COM_Outptr_ IDWriteFontSet1** filteredFontSet
+        ) PURE;
+
+    /// <summary>
+    /// Get all the item indices filtered by the given properties.
+    /// </summary>
+    /// <param name="properties">List of properties to filter using.</param>
+    /// <param name="propertyCount">How many properties to filter.</param>
+    /// <param name="selectAnyProperty">Select any property rather rather than the intersection of them all.</param>
+    /// <param name="indices">Ascending array of indices [0..GetFontCount() - 1].</param>
+    /// <param name="indexCount">Number of indices.</param>
+    /// <param name="actualIndexCount">Actual number of indices written or needed [0..GetFontCount()-1].</param>
+    /// <returns>
+    /// E_NOT_SUFFICIENT_BUFFER if the buffer is too small, with actualIndexCount set to the needed size.
+    /// The actualIndexCount will always be <= IDwriteFontSet::GetFontCount.
+    /// </returns>
+    STDMETHOD(GetFilteredFontIndices)(
+        _In_reads_(propertyCount) DWRITE_FONT_PROPERTY const* properties,
+        UINT32 propertyCount,
+        BOOL selectAnyProperty,
+        _Out_writes_(maxIndexCount) UINT32* indices,
+        UINT32 maxIndexCount,
+        _Out_ UINT32* actualIndexCount
+        ) PURE;
+
+    /// <summary>
+    /// Get all the item indices filtered by the given ranges.
+    /// </summary>
+    /// <param name="fontAxisRanges">List of axis ranges.</param>
+    /// <param name="fontAxisRangeCount">Number of axis ranges.</param>
+    /// <param name="selectAnyRange">Select any property rather rather than the intersection of them all.</param>
+    /// <param name="indices">Ascending array of indices [0..GetFontCount() - 1].</param>
+    /// <param name="indexCount">Number of indices.</param>
+    /// <param name="actualIndexCount">Actual number of indices written or needed [0..GetFontCount()-1].</param>
+    /// <returns>
+    /// E_NOT_SUFFICIENT_BUFFER if the buffer is too small, with actualIndexCount set to the needed size.
+    /// </returns>
+    STDMETHOD(GetFilteredFontIndices)(
+        _In_reads_(fontAxisRangeCount) DWRITE_FONT_AXIS_RANGE const* fontAxisRanges,
+        UINT32 fontAxisRangeCount,
+        BOOL selectAnyRange,
+        _Out_writes_(maxIndexCount) UINT32* indices,
+        UINT32 maxIndexCount,
+        _Out_ UINT32* actualIndexCount
+        ) PURE;
+
+    /// <summary>
+    /// Gets all axis ranges in the font set, the union of all contained items.
+    /// </summary>
+    /// <param name="fontAxisRanges">List of axis ranges.</param>
+    /// <param name="fontAxisRangeCount">Number of axis ranges.</param>
+    /// <param name="actualFontAxisRangeCount">Actual number of axis ranges written or needed.</param>
+    /// <returns>
+    /// E_NOT_SUFFICIENT_BUFFER if the buffer is too small, with actualFontAxisRangeCount set to the needed size.
+    /// </returns>
+    STDMETHOD(GetFontAxisRanges)(
+        _Out_writes_(maxFontAxisRangeCount) DWRITE_FONT_AXIS_RANGE* fontAxisRanges,
+        UINT32 maxFontAxisRangeCount,
+        _Out_ UINT32* actualFontAxisRangeCount
+        ) PURE;
+
+    /// <summary>
+    /// Get the axis ranges of a single item.
+    /// </summary>
+    /// <param name="listIndex">Zero-based index of the font in the set.</param>
+    /// <param name="fontAxisRanges">List of axis ranges.</param>
+    /// <param name="fontAxisRangeCount">Number of axis ranges.</param>
+    /// <param name="actualFontAxisRangeCount">Actual number of axis ranges written or needed.</param>
+    /// <returns>
+    /// E_NOT_SUFFICIENT_BUFFER if the buffer is too small, with actualFontAxisRangeCount set to the needed size.
+    /// </returns>
+    STDMETHOD(GetFontAxisRanges)(
+        UINT32 listIndex,
+        _Out_writes_(maxFontAxisRangeCount) DWRITE_FONT_AXIS_RANGE* fontAxisRanges,
+        UINT32 maxFontAxisRangeCount,
+        _Out_ UINT32* actualFontAxisRangeCount
+        ) PURE;
+
+    /// <summary>
+    /// Get the font face reference of a single item.
+    /// </summary>
+    /// <param name="listIndex">Zero-based index of the font item in the set.</param>
+    /// <param name="fontFaceReference">Receives a pointer to the font face reference.</param>
+    /// <returns>
+    /// Standard HRESULT error code.
+    /// </returns>
+    STDMETHOD(GetFontFaceReference)(
+        UINT32 listIndex,
+        _COM_Outptr_ IDWriteFontFaceReference1** fontFaceReference
+        ) PURE;
+
+    using IDWriteFontSet::GetFontFaceReference;
+
+    /// <summary>
+    /// Create the font resource of a single item.
+    /// </summary>
+    /// <param name="listIndex">Zero-based index of the font item in the set.</param>
+    /// <param name="fontResource">Receives a pointer to the font resource.</param>
+    /// <returns>
+    /// Standard HRESULT error code, or DWRITE_E_REMOTEFONT if the file is not local.
+    /// </returns>
+    STDMETHOD(CreateFontResource)(
+        UINT32 listIndex,
+        _COM_Outptr_ IDWriteFontResource** fontResource
+        ) PURE;
+
+    /// <summary>
+    /// Create a font face for a single item (rather than going through the font face reference).
+    /// </summary>
+    /// <param name="listIndex">Zero-based index of the font item in the set.</param>
+    /// <param name="fontFile">Receives a pointer to the font face.</param>
+    /// <returns>
+    /// Standard HRESULT error code, or DWRITE_E_REMOTEFONT if the file is not local.
+    /// </returns>
+    STDMETHOD(CreateFontFace)(
+        UINT32 listIndex,
+        _COM_Outptr_ IDWriteFontFace5** fontFace
+        ) PURE;
+
+    /// <summary>
+    /// Return the locality of a single item.
+    /// </summary>
+    /// <param name="listIndex">Zero-based index of the font item in the set.</param>
+    /// <remarks>
+    /// The locality enumeration. For fully local files, the result will always
+    /// be DWRITE_LOCALITY_LOCAL. For downloadable files, the result depends on how
+    /// much of the file has been downloaded.
+    /// </remarks>
+    /// <returns>
+    /// The locality enumeration.
+    /// </returns>
+    STDMETHOD_(DWRITE_LOCALITY, GetFontLocality)(UINT32 listIndex) PURE;
+};
+
+
+interface DWRITE_DECLARE_INTERFACE("C0763A34-77AF-445A-B735-08C37B0A5BF5") IDWriteFontList2 : public IDWriteFontList1
+{
+    /// <summary>
+    /// Get the underlying font set used by this list.
+    /// </summary>
+    /// <param name="fontSet">Contains font set used by the list.</param>
+    /// <returns>
+    /// Standard HRESULT error code.
+    /// </returns>
+    STDMETHOD(GetFontSet)(
+        _COM_Outptr_ IDWriteFontSet1** fontSet
+        ) PURE;
+};
+
+
+interface DWRITE_DECLARE_INTERFACE("3ED49E77-A398-4261-B9CF-C126C2131EF3") IDWriteFontFamily2 : public IDWriteFontFamily1
+{
+    /// <summary>
+    /// Gets a list of fonts in the font family ranked in order of how well they match the specified axis values.
+    /// </summary>
+    /// <param name="fontAxisValues">List of font axis values.</param>
+    /// <param name="fontAxisValueCount">Number of font axis values.</param>
+    /// <param name="matchingFonts">Receives a pointer to the newly created font list object.</param>
+    /// <returns>
+    /// Standard HRESULT error code.
+    /// </returns>
+    STDMETHOD(GetMatchingFonts)(
+        _In_reads_(fontAxisValueCount) DWRITE_FONT_AXIS_VALUE const* fontAxisValues,
+        UINT32 fontAxisValueCount,
+        _COM_Outptr_ IDWriteFontList2** matchingFonts
+        ) PURE;
+
+    /// <summary>
+    /// Get the underlying font set used by this family.
+    /// </summary>
+    /// <param name="fontSet">Contains font set used by the family.</param>
+    /// <returns>
+    /// Standard HRESULT error code.
+    /// </returns>
+    STDMETHOD(GetFontSet)(
+        _COM_Outptr_ IDWriteFontSet1** fontSet
+        ) PURE;
+};
+
+
+interface DWRITE_DECLARE_INTERFACE("514039C6-4617-4064-BF8B-92EA83E506E0") IDWriteFontCollection2 : public IDWriteFontCollection1
+{
+    /// <summary>
+    /// Creates a font family object given a zero-based font family index.
+    /// </summary>
+    /// <param name="index">Zero-based index of the font family.</param>
+    /// <param name="fontFamily">Receives a pointer the newly created font family object.</param>
+    /// <returns>
+    /// Standard HRESULT error code.
+    /// </returns>
+    STDMETHOD(GetFontFamily)(
+        UINT32 index,
+        _COM_Outptr_ IDWriteFontFamily2** fontFamily
+        ) PURE;
+
+    /// <summary>
+    /// Gets a list of fonts in the specified font family ranked in order of how well they match the specified axis values.
+    /// </summary>
+    /// <param name="familyName">Name of the font family. The name is not case-sensitive but must otherwise exactly match a family name in the collection.</param>
+    /// <param name="fontAxisValues">List of font axis values.</param>
+    /// <param name="fontAxisValueCount">Number of font axis values.</param>
+    /// <param name="matchingFonts">Receives a pointer to the newly created font list object.</param>
+    /// <remarks>
+    /// If no fonts matched, the list will be empty (GetFontCount returns 0),
+    /// but the function does not return an error.
+    /// </remarks>
+    /// <returns>
+    /// Standard HRESULT error code.
+    /// </returns>
+    STDMETHOD(GetMatchingFonts)(
+        _In_z_ WCHAR const* familyName,
+        _In_reads_(fontAxisValueCount) DWRITE_FONT_AXIS_VALUE const* fontAxisValues,
+        UINT32 fontAxisValueCount,
+        _COM_Outptr_ IDWriteFontList2** fontList
+        ) PURE;
+
+    /// <summary>
+    /// Get the font family model used by the font collection to group families.
+    /// </summary>
+    /// <returns>
+    /// Family model enumeration.
+    /// </returns>
+    STDMETHOD_(DWRITE_FONT_FAMILY_MODEL, GetFontFamilyModel)();
+
+    /// <summary>
+    /// Get the underlying font set used by this collection.
+    /// </summary>
+    /// <param name="fontSet">Contains font set used by the collection.</param>
+    /// <returns>
+    /// Standard HRESULT error code.
+    /// </returns>
+    STDMETHOD(GetFontSet)(
+        _COM_Outptr_ IDWriteFontSet1** fontSet
+        ) PURE;
+};
+
+
+interface DWRITE_DECLARE_INTERFACE("05A9BF42-223F-4441-B5FB-8263685F55E9") IDWriteTextLayout4 : public IDWriteTextLayout3
+{
+    /// <summary>
+    /// Set values for font axes over a range of text.
+    /// </summary>
+    /// <param name="fontAxisValues">List of font axis values.</param>
+    /// <param name="fontAxisValueCount">Number of font axis values.</param>
+    /// <returns>
+    /// Standard HRESULT error code.
+    /// </returns>
+    STDMETHOD(SetFontAxisValues)(
+        _In_reads_(fontAxisValueCount) DWRITE_FONT_AXIS_VALUE const* fontAxisValues,
+        UINT32 fontAxisValueCount,
+        DWRITE_TEXT_RANGE textRange
+        ) PURE;
+
+    /// <summary>
+    /// Get the number of axes set on the text position.
+    /// </summary>
+    STDMETHOD_(UINT32, GetFontAxisValueCount)(
+        UINT32 currentPosition
+        ) PURE;
+
+    /// <summary>
+    /// Get the list of font axis values on the text position.
+    /// </summary>
+    /// <param name="fontAxisValues">List of font axis values.</param>
+    /// <param name="fontAxisValueCount">Maximum number of font axis values to write.</param>
+    /// <returns>
+    /// Standard HRESULT error code, or E_INVALIDARG if fontAxisValueCount doesn't match GetFontAxisValueCount.
+    /// </returns>
+    STDMETHOD(GetFontAxisValues)(
+        UINT32 currentPosition,
+        _Out_writes_(fontAxisValueCount) DWRITE_FONT_AXIS_VALUE* fontAxisValues,
+        UINT32 fontAxisValueCount,
+        _Out_opt_ DWRITE_TEXT_RANGE* textRange = nullptr
+        ) PURE;
+
+    /// <summary>
+    /// Get the automatic axis options.
+    /// </summary>
+    /// <returns>
+    /// Automatic axis options.
+    /// </returns>
+    STDMETHOD_(DWRITE_AUTOMATIC_FONT_AXES, GetAutomaticFontAxes)() PURE;
+
+    /// <summary>
+    /// Sets the automatic font axis options.
+    /// </summary>
+    /// <param name="automaticFontAxes">Automatic font axis options.</param>
+    /// <returns>
+    /// Standard HRESULT error code.
+    /// </returns>
+    STDMETHOD(SetAutomaticFontAxes)(DWRITE_AUTOMATIC_FONT_AXES automaticFontAxes) PURE;
+};
+
+
+interface DWRITE_DECLARE_INTERFACE("6D3B5641-E550-430D-A85B-B7BF48A93427") IDWriteTextFormat3 : public IDWriteTextFormat2
+{
+    /// <summary>
+    /// Set values for font axes of the format.
+    /// </summary>
+    /// <param name="fontAxisValues">List of font axis values.</param>
+    /// <param name="fontAxisValueCount">Number of font axis values.</param>
+    /// <returns>
+    /// Standard HRESULT error code.
+    /// </returns>
+    STDMETHOD(SetFontAxisValues)(
+        _In_reads_(fontAxisValueCount) DWRITE_FONT_AXIS_VALUE const* fontAxisValues,
+        UINT32 fontAxisValueCount
+        ) PURE;
+
+    /// <summary>
+    /// Get the number of axes set on the format.
+    /// </summary>
+    STDMETHOD_(UINT32, GetFontAxisValueCount)() PURE;
+
+    /// <summary>
+    /// Get the list of font axis values on the format.
+    /// </summary>
+    /// <param name="fontAxisValues">List of font axis values.</param>
+    /// <param name="fontAxisValueCount">Maximum number of font axis values to write.</param>
+    /// <returns>
+    /// Standard HRESULT error code.
+    /// </returns>
+    STDMETHOD(GetFontAxisValues)(
+        _Out_writes_(fontAxisValueCount) DWRITE_FONT_AXIS_VALUE* fontAxisValues,
+        UINT32 fontAxisValueCount
+        ) PURE;
+
+    /// <summary>
+    /// Get the automatic axis options.
+    /// </summary>
+    /// <returns>
+    /// Automatic axis options.
+    /// </returns>
+    STDMETHOD_(DWRITE_AUTOMATIC_FONT_AXES, GetAutomaticFontAxes)() PURE;
+
+    /// <summary>
+    /// Sets the automatic font axis options.
+    /// </summary>
+    /// <param name="automaticFontAxes">Automatic font axis options.</param>
+    /// <returns>
+    /// Standard HRESULT error code.
+    /// </returns>
+    STDMETHOD(SetAutomaticFontAxes)(DWRITE_AUTOMATIC_FONT_AXES automaticFontAxes) PURE;
+};
+
+
+interface DWRITE_DECLARE_INTERFACE("2397599D-DD0D-4681-BD6A-F4F31EAADE77") IDWriteFontFallback1 : public IDWriteFontFallback
+{
+    /// <summary>
+    /// Determines an appropriate font to use to render the range of text.
+    /// </summary>
+    /// <param name="source">The text source implementation holds the text and locale.</param>
+    /// <param name="textLength">Length of the text to analyze.</param>
+    /// <param name="baseFontCollection">Default font collection to use.</param>
+    /// <param name="baseFamilyName">Family name of the base font. If you pass nullptr, no matching will be done against
+    /// the base family.</param>
+    /// <param name="fontAxisValues">List of font axis values.</param>
+    /// <param name="fontAxisValueCount">Number of font axis values.</param>
+    /// <param name="mappedLength">Length of text mapped to the mapped font. This will always be less or equal to the
+    /// input text length and greater than zero (if the text length is non-zero) so that the caller advances at
+    /// least one character each call.</param>
+    /// <param name="mappedFontFace">The font face that should be used to render the first mappedLength characters of the text.
+    /// If it returns null, then no known font can render the text, and mappedLength is the number of unsupported
+    /// characters to skip.</param>
+    /// <param name="scale">Scale factor to multiply the em size of the returned font by.</param>
+    /// <returns>
+    /// Standard HRESULT error code.
+    /// </returns>
+    STDMETHOD(MapCharacters)(
+        IDWriteTextAnalysisSource* analysisSource,
+        UINT32 textPosition,
+        UINT32 textLength,
+        _In_opt_ IDWriteFontCollection* baseFontCollection,
+        _In_opt_z_ WCHAR const* baseFamilyName,
+        _In_reads_(fontAxisValueCount) DWRITE_FONT_AXIS_VALUE const* fontAxisValues,
+        UINT32 fontAxisValueCount,
+        _Deref_out_range_(0, textLength) UINT32* mappedLength,
+        _Out_ FLOAT* scale,
+        _COM_Outptr_ IDWriteFontFace5** mappedFontFace
+        );
+};
+
+#endif // NTDDI_VERSION >= NTDDI_WIN10_RS3
 
 #endif // DWRITE_3_H_INCLUDED

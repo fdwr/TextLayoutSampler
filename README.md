@@ -6,3 +6,5 @@ Supports:
 - DirectWrite, Direct2D, GDI, GDI+
 
 C++, compiled with Visual Studio 2017 RC.
+
+![Image of TextLayoutSampler](TextLayoutSampler.png)

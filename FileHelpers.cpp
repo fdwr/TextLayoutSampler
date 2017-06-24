@@ -228,15 +228,19 @@ std::u16string GetFullFileName(array_ref<char16_t const> fileName)
     std::u16string fullFileName;
     fullFileName.resize(std::max(fileName.size(), size_t(MAX_PATH)));
 
-    char16_t* filePart;
-    auto newSize = GetFullPathName(ToWChar(fileName.data()), static_cast<DWORD>(fullFileName.size() + 1), OUT ToWChar(&fullFileName[0]), OUT ToWChar(&filePart));
+    auto newSize = GetFullPathName(ToWChar(fileName.data()), static_cast<DWORD>(fullFileName.size() + 1), OUT ToWChar(&fullFileName[0]), /*filePart*/ nullptr);
     if (newSize == 0)
     {
         // Something went wrong with the function. So, at least return the file name that came in.
         fullFileName.assign(fileName.data(), fileName.size());
     }
-    else
+    else // Resize buffer to actual size.
     {
+        if (newSize > fullFileName.size()) // Buffer was too small - retry.
+        {
+            fullFileName.resize(newSize);
+            newSize = GetFullPathName(ToWChar(fileName.data()), static_cast<DWORD>(fullFileName.size() + 1), OUT ToWChar(&fullFileName[0]), /*filePart*/ nullptr);
+        }
         fullFileName.resize(newSize);
     }
 

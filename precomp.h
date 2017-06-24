@@ -77,11 +77,11 @@
 
 #include <sdkddkver.h>
 
-#ifndef NTDDI_WIN10_RS2
-#define NTDDI_WIN10_RS2                     0x0A000003  /* ABRACADABRA_WIN10_RS3 */
+#ifndef NTDDI_WIN10_RS3
+#define NTDDI_WIN10_RS3                     0x0A000003  /* ABRACADABRA_WIN10_RS3 */
 #endif
 #undef NTDDI_VERSION
-#define NTDDI_VERSION NTDDI_WIN10_RS2
+#define NTDDI_VERSION NTDDI_WIN10_RS3
 
 #include <windows.h>
 #include <windowsx.h>

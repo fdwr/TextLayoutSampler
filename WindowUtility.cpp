@@ -1219,7 +1219,7 @@ bool GetOpenFileName(
     filePath.clear();
 
     // Buffer that receives the file name.
-    char16_t filePathBuffer[MAX_PATH];
+    char16_t filePathBuffer[MAX_PATH * 4];
     filePathBuffer[0] = L'\0';
 
     // Initialize the OPENFILENAME structure.
@@ -1229,7 +1229,7 @@ bool GetOpenFileName(
     ofn.lpstrFilter = ToWChar(fileTypes);
     ofn.nFilterIndex = 0;
     ofn.lpstrFile = ToWChar(filePathBuffer);
-    ofn.nMaxFile = MAX_PATH;
+    ofn.nMaxFile = std::size(filePathBuffer);
     ofn.lpstrTitle = ToWChar(title);
     ofn.Flags = OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_NOTESTFILECREATE | OFN_EXPLORER | OFN_ENABLESIZING;
 
@@ -1251,7 +1251,7 @@ bool GetSaveFileName(
     )
 {
     // Buffer that receives the file name.
-    char16_t filePathBuffer[MAX_PATH];
+    char16_t filePathBuffer[MAX_PATH * 4];
     filePathBuffer[0] = '\0';
     if (defaultFileName != nullptr)
     {
@@ -1267,7 +1267,7 @@ bool GetSaveFileName(
     ofn.lpstrFilter = ToWChar(fileTypes);
     ofn.nFilterIndex = 0;
     ofn.lpstrFile = ToWChar(filePathBuffer);
-    ofn.nMaxFile = MAX_PATH;
+    ofn.nMaxFile = std::size(filePathBuffer);
     ofn.lpstrDefExt = ToWChar(defaultExtension);
     ofn.lpstrTitle = ToWChar(title);
     ofn.Flags = OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY | OFN_NOTESTFILECREATE | OFN_EXPLORER | OFN_ENABLESIZING;

@@ -198,6 +198,27 @@ HRESULT GetInformationalString(
     _Out_ std::u16string& value
     );
 
+HRESULT GetFontAxisValues(
+    IDWriteFontFaceReference* fontFaceReference,
+    _Out_ std::vector<DWRITE_FONT_AXIS_VALUE>& fontAxisValues
+    );
+
+HRESULT GetFontAxisValues(
+    IDWriteFontFace* fontFace,
+    _Out_ std::vector<DWRITE_FONT_AXIS_VALUE>& fontAxisValues
+    );
+
+HRESULT GetFontAxisValues(
+    IDWriteFont* font,
+    _Out_ std::vector<DWRITE_FONT_AXIS_VALUE>& fontAxisValues
+    );
+
+float GetFontAxisValue(
+    array_ref<DWRITE_FONT_AXIS_VALUE const> fontAxisValues,
+    DWRITE_FONT_AXIS_TAG axisTag,
+    float defaultValue
+    );
+
 bool IsKnownFontFileExtension(_In_z_ const wchar_t* fileExtension) throw();
 
 // Draw a text layout to a bitmap render target.

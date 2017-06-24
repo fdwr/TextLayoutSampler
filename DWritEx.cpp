@@ -377,7 +377,7 @@ public:
 
             *hasCurrentFile = true;
         }
-        catch (std::bad_alloc)
+        catch (std::bad_alloc const&)
         {
             return E_OUTOFMEMORY; // This is the only exception type we need to worry about.
         }
@@ -1222,13 +1222,11 @@ HRESULT GetFilePath(
     OUT std::u16string& filePath
     ) throw()
 {
-    filePath.clear();
+    std::u16string tempFilePath;
+    std::swap(tempFilePath, filePath);
 
     if (fontFile == nullptr)
         return E_INVALIDARG;
-
-    wchar_t filePathBuffer[MAX_PATH];
-    filePathBuffer[0] = '\0';
 
     ComPtr<IDWriteLocalFontFileLoader> localFileLoader;
     uint32_t fontFileReferenceKeySize = 0;
@@ -1236,21 +1234,29 @@ HRESULT GetFilePath(
 
     IFR(GetLocalFileLoaderAndKey(fontFile, OUT &fontFileReferenceKey, OUT fontFileReferenceKeySize, OUT &localFileLoader));
 
-    IFR(localFileLoader->GetFilePathFromKey(
+    uint32_t filePathLength = 0;
+    IFR(localFileLoader->GetFilePathLengthFromKey(
         fontFileReferenceKey,
         fontFileReferenceKeySize,
-        OUT filePathBuffer,
-        ARRAYSIZE(filePathBuffer)
-        ));
+        OUT &filePathLength
+    ));
 
     try
     {
-        filePath.assign(ToChar16(filePathBuffer));
+        tempFilePath.resize(filePathLength);
     }
-    catch (std::bad_alloc)
+    catch (std::bad_alloc const&)
     {
         return E_OUTOFMEMORY; // This is the only exception type we need to worry about.
     }
+
+    IFR(localFileLoader->GetFilePathFromKey(
+        fontFileReferenceKey,
+        fontFileReferenceKeySize,
+        OUT ToWChar(&tempFilePath[0]),
+        filePathLength + 1
+    ));
+    std::swap(tempFilePath, filePath);
 
     return S_OK;
 }
@@ -1344,7 +1350,7 @@ HRESULT GetLocalizedStringLanguage(
     {
         stringValue.resize(length);
     }
-    catch (std::bad_alloc)
+    catch (std::bad_alloc const&)
     {
         return E_OUTOFMEMORY; // This is the only exception type we need to worry about.
     }
@@ -1403,7 +1409,7 @@ HRESULT GetLocalizedString(
     {
         stringValue.resize(length);
     }
-    catch (std::bad_alloc)
+    catch (std::bad_alloc const&)
     {
         return E_OUTOFMEMORY; // This is the only exception type we need to worry about.
     }
@@ -1515,6 +1521,64 @@ HRESULT GetInformationalString(
     }
 
     return GetLocalizedString(localizedStrings, languageName, OUT stringValue);
+}
+
+
+HRESULT GetFontAxisValues(
+    IDWriteFontFaceReference* fontFaceReference,
+    _Out_ std::vector<DWRITE_FONT_AXIS_VALUE>& fontAxisValues
+    )
+{
+    fontAxisValues.clear();
+    ComPtr<IDWriteFontFaceReference1> fontFaceReference1;
+    IFR(fontFaceReference->QueryInterface(OUT &fontFaceReference1));
+    auto valueCount = fontFaceReference1->GetFontAxisValueCount();
+    fontAxisValues.resize(valueCount);
+    return fontFaceReference1->GetFontAxisValues(OUT fontAxisValues.data(), valueCount);
+}
+
+
+HRESULT GetFontAxisValues(
+    IDWriteFontFace* fontFace,
+    _Out_ std::vector<DWRITE_FONT_AXIS_VALUE>& fontAxisValues
+    )
+{
+    fontAxisValues.clear();
+    ComPtr<IDWriteFontFace3> fontFace3;
+    ComPtr<IDWriteFontFaceReference> fontFaceReference;
+    IFR(fontFace->QueryInterface(OUT &fontFace3));
+    IFR(fontFace3->GetFontFaceReference(OUT &fontFaceReference));
+    return GetFontAxisValues(fontFaceReference, OUT fontAxisValues);
+}
+
+
+HRESULT GetFontAxisValues(
+    IDWriteFont* font,
+    _Out_ std::vector<DWRITE_FONT_AXIS_VALUE>& fontAxisValues
+    )
+{
+    fontAxisValues.clear();
+    ComPtr<IDWriteFont3> font3;
+    ComPtr<IDWriteFontFaceReference> fontFaceReference;
+    IFR(font->QueryInterface(OUT &font3));
+    IFR(font3->GetFontFaceReference(OUT &fontFaceReference));
+    return GetFontAxisValues(fontFaceReference, OUT fontAxisValues);
+}
+
+
+float GetFontAxisValue(
+    array_ref<DWRITE_FONT_AXIS_VALUE const> fontAxisValues,
+    DWRITE_FONT_AXIS_TAG axisTag,
+    float defaultValue
+    )
+{
+    for (auto& fontAxisValue : fontAxisValues)
+    {
+        if (fontAxisValue.axisTag == axisTag)
+            return fontAxisValue.value;
+    }
+
+    return defaultValue;
 }
 
 

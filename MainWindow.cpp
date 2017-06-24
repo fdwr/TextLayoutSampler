@@ -1523,6 +1523,7 @@ HRESULT MainWindow::LoadFontFileIntoDrawableObjects(_In_z_ char16_t const* fileP
     IFR(CreateFontCollection(dwriteFactory, DWRITE_FONT_FAMILY_MODEL_WEIGHT_STRETCH_STYLE, ToWChar(filePath), IntLen(filePath), OUT &fontCollection));
 
     std::u16string familyName, faceName, win32FamilyName, win32FaceName, preferredFamilyName, preferredFaceName, fullName;
+    std::vector<DWRITE_FONT_AXIS_VALUE> fontAxisValues;
 
     // Print all the found faces.
     for (uint32_t familyIndex = 0, familyCount = fontCollection->GetFontFamilyCount(); familyIndex < familyCount; ++familyIndex)
@@ -1546,6 +1547,7 @@ HRESULT MainWindow::LoadFontFileIntoDrawableObjects(_In_z_ char16_t const* fileP
             GetInformationalString(innerFont, DWRITE_INFORMATIONAL_STRING_PREFERRED_SUBFAMILY_NAMES, nullptr, OUT preferredFaceName);
             GetInformationalString(innerFont, DWRITE_INFORMATIONAL_STRING_FULL_NAME, nullptr, OUT fullName);
             DWRITE_FONT_SIMULATIONS fontSimulations = innerFont->GetSimulations();
+            GetFontAxisValues(font, OUT fontAxisValues);
 
             DWRITE_FONT_STYLE fontStyle = innerFont->GetStyle();
             AppendLog(u"%d:%d = wws:'%s'|'%s',  pref:'%s'|'%s',  win32:'%s'|'%s',  full:'%s'%s wght=%d wdth=%d ital=%d slnt=%d\r\n",
@@ -1562,7 +1564,7 @@ HRESULT MainWindow::LoadFontFileIntoDrawableObjects(_In_z_ char16_t const* fileP
                 innerFont->GetWeight(),
                 innerFont->GetStretch(),
                 (fontStyle == DWRITE_FONT_STYLE_ITALIC) ? 1 : 0,
-                (fontStyle == DWRITE_FONT_STYLE_OBLIQUE) ? 1 : 0
+                (fontStyle == DWRITE_FONT_STYLE_OBLIQUE) ? -20 : 0
             );
         }
     }

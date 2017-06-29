@@ -1919,6 +1919,7 @@ public:
 protected:
     std::vector<uint16_t> glyphBuffer_; // only used for nominal glyphs if attribute source returned none.
     std::vector<float> glyphAdvances_; // only used if null glyph advances, and they are desired.
+    std::vector<DWRITE_GLYPH_OFFSET> glyphOffsets_;
 };
 
 
@@ -1958,10 +1959,20 @@ HRESULT CachedDWriteGlyphRun::Update(
         }
     }
 
+    glyphOffsets_.clear();
+
     // Recast the dx/dy float pairs to DWRITE_GLYPH_OFFSET's.
+    // If there aren't enough offsets for the number of glyphs, copy the first entries to an array,
+    // leaving the others as zeroes.
     if (glyphOffsetFloats.size() >= glyphs.size() * 2U)
     {
         glyphOffsets.reset(glyphOffsetFloats.reinterpret_as<DWRITE_GLYPH_OFFSET const>());
+    }
+    else
+    {
+        glyphOffsets_.resize(glyphs.size());
+        memcpy(glyphOffsets_.data(), glyphOffsetFloats.data(), glyphOffsetFloats.size_in_bytes());
+        glyphOffsets.reset(glyphOffsets_);
     }
 
     glyphAdvances_.clear();

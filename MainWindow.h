@@ -127,7 +127,7 @@ protected:
     MainWindow::DialogProcResult CALLBACK OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify);
     MainWindow::DialogProcResult CALLBACK OnNotification(HWND hwnd, int controlId, NMHDR* notifyMessageHeader);
     MainWindow::DialogProcResult CALLBACK OnVerticalScroll(HWND hwnd, HWND controlHandle, UINT code, int position);
-    MainWindow::DialogProcResult CALLBACK ProcessDragAndDrop(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+    MainWindow::DialogProcResult CALLBACK OnDragAndDrop(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
     void OnHorizontalOrVerticalScroll(HWND hwnd, int barType, UINT code, int smallStep);
     void OnAssortedActions(HWND anchorControl);
 

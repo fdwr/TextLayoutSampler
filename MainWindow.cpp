@@ -191,7 +191,7 @@ MainWindow::DialogProcResult CALLBACK MainWindow::DialogProc(HWND hwnd, UINT mes
         break;
 
     case WM_DROPFILES:
-        return ProcessDragAndDrop(hwnd, message, wParam, lParam);
+        return OnDragAndDrop(hwnd, message, wParam, lParam);
 
     default:
         return false;
@@ -1076,7 +1076,7 @@ void MainWindow::ShiftSelectedDrawableObjects(int32_t shiftDirection /* down = p
 }
 
 
-MainWindow::DialogProcResult CALLBACK MainWindow::ProcessDragAndDrop(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+MainWindow::DialogProcResult CALLBACK MainWindow::OnDragAndDrop(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     std::u16string fileName;
     HDROP hDrop = (HDROP)wParam;
@@ -1109,6 +1109,7 @@ MainWindow::DialogProcResult CALLBACK MainWindow::ProcessDragAndDrop(HWND hwnd, 
             }
             else if (_wcsicmp(ToWChar(filenameExtension), L"ttf") == 0
                 ||   _wcsicmp(ToWChar(filenameExtension), L"otf") == 0
+                ||   _wcsicmp(ToWChar(filenameExtension), L"tte") == 0
                 ||   _wcsicmp(ToWChar(filenameExtension), L"ttc") == 0
                 ||   _wcsicmp(ToWChar(filenameExtension), L"otc") == 0)
             {
@@ -1512,8 +1513,6 @@ HRESULT MainWindow::LoadFontFileIntoDrawableObjects(_In_z_ char16_t const* fileP
     ComPtr<IDWriteFactory> dwriteFactory;
     ComPtr<IDWriteGdiInterop> gdiInterop;
     ComPtr<IDWriteFontCollection> fontCollection;
-    ComPtr<IDWriteFontFamily> fontFamily;
-    ComPtr<IDWriteFont> font;
 
     IFR(DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), reinterpret_cast<IUnknown**>(OUT &dwriteFactory)));
     IFR(dwriteFactory->GetGdiInterop(OUT &gdiInterop));
@@ -1528,28 +1527,28 @@ HRESULT MainWindow::LoadFontFileIntoDrawableObjects(_In_z_ char16_t const* fileP
     // Print all the found faces.
     for (uint32_t familyIndex = 0, familyCount = fontCollection->GetFontFamilyCount(); familyIndex < familyCount; ++familyIndex)
     {
-        ComPtr<IDWriteFontFamily> innerFontFamily;
-        if (FAILED(fontCollection->GetFontFamily(familyIndex, OUT &innerFontFamily)))
+        ComPtr<IDWriteFontFamily> fontFamily;
+        if (FAILED(fontCollection->GetFontFamily(familyIndex, OUT &fontFamily)))
             continue;
 
-        GetFontFamilyName(innerFontFamily.Get(), nullptr, OUT familyName);
+        GetFontFamilyName(fontFamily.Get(), nullptr, OUT familyName);
 
-        for (uint32_t faceIndex = 0, faceCount = innerFontFamily->GetFontCount(); faceIndex < faceCount; ++faceIndex)
+        for (uint32_t faceIndex = 0, faceCount = fontFamily->GetFontCount(); faceIndex < faceCount; ++faceIndex)
         {
-            ComPtr<IDWriteFont> innerFont;
-            if (FAILED(innerFontFamily->GetFont(faceIndex, OUT &innerFont))/* || innerFont->GetSimulations() != DWRITE_FONT_SIMULATIONS_NONE*/)
+            ComPtr<IDWriteFont> font;
+            if (FAILED(fontFamily->GetFont(faceIndex, OUT &font))/* || innerFont->GetSimulations() != DWRITE_FONT_SIMULATIONS_NONE*/)
                 continue;
 
-            GetFontFaceName(innerFont, nullptr, OUT faceName);
-            GetInformationalString(innerFont, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES, nullptr, OUT win32FamilyName);
-            GetInformationalString(innerFont, DWRITE_INFORMATIONAL_STRING_WIN32_SUBFAMILY_NAMES, nullptr, OUT win32FaceName);
-            GetInformationalString(innerFont, DWRITE_INFORMATIONAL_STRING_PREFERRED_FAMILY_NAMES, nullptr, OUT preferredFamilyName);
-            GetInformationalString(innerFont, DWRITE_INFORMATIONAL_STRING_PREFERRED_SUBFAMILY_NAMES, nullptr, OUT preferredFaceName);
-            GetInformationalString(innerFont, DWRITE_INFORMATIONAL_STRING_FULL_NAME, nullptr, OUT fullName);
-            DWRITE_FONT_SIMULATIONS fontSimulations = innerFont->GetSimulations();
+            GetFontFaceName(font, nullptr, OUT faceName);
+            GetInformationalString(font, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES, nullptr, OUT win32FamilyName);
+            GetInformationalString(font, DWRITE_INFORMATIONAL_STRING_WIN32_SUBFAMILY_NAMES, nullptr, OUT win32FaceName);
+            GetInformationalString(font, DWRITE_INFORMATIONAL_STRING_PREFERRED_FAMILY_NAMES, nullptr, OUT preferredFamilyName);
+            GetInformationalString(font, DWRITE_INFORMATIONAL_STRING_PREFERRED_SUBFAMILY_NAMES, nullptr, OUT preferredFaceName);
+            GetInformationalString(font, DWRITE_INFORMATIONAL_STRING_FULL_NAME, nullptr, OUT fullName);
+            DWRITE_FONT_SIMULATIONS fontSimulations = font->GetSimulations();
             GetFontAxisValues(font, OUT fontAxisValues);
 
-            DWRITE_FONT_STYLE fontStyle = innerFont->GetStyle();
+            DWRITE_FONT_STYLE fontStyle = font->GetStyle();
             AppendLog(u"%d:%d = wws:'%s'|'%s',  pref:'%s'|'%s',  win32:'%s'|'%s',  full:'%s'%s wght=%d wdth=%d ital=%d slnt=%d\r\n",
                 familyIndex,
                 faceIndex,
@@ -1561,19 +1560,21 @@ HRESULT MainWindow::LoadFontFileIntoDrawableObjects(_In_z_ char16_t const* fileP
                 win32FaceName.c_str(),
                 fullName.c_str(),
                 fontSimulations != DWRITE_FONT_SIMULATIONS_NONE ? u",  simulated" : u"",
-                innerFont->GetWeight(),
-                innerFont->GetStretch(),
+                font->GetWeight(),
+                font->GetStretch(),
                 (fontStyle == DWRITE_FONT_STYLE_ITALIC) ? 1 : 0,
                 (fontStyle == DWRITE_FONT_STYLE_OBLIQUE) ? -20 : 0
             );
         }
     }
 
-    IFR(fontCollection->GetFontFamily(/*index*/0, OUT &fontFamily));
-    IFR(fontFamily->GetFirstMatchingFont(DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STRETCH_NORMAL, DWRITE_FONT_STYLE_NORMAL, OUT &font));
+    ComPtr<IDWriteFontFamily> firstFontFamily;
+    ComPtr<IDWriteFont> firstFont;
+    IFR(fontCollection->GetFontFamily(/*index*/0, OUT &firstFontFamily));
+    IFR(firstFontFamily->GetFirstMatchingFont(DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STRETCH_NORMAL, DWRITE_FONT_STYLE_NORMAL, OUT &firstFont));
 
     MainWindow::FontFamilyNameProperties fontFamilyNameProperties = {};
-    SetFontFamilyNameProperties(font, filePath, OUT fontFamilyNameProperties);
+    SetFontFamilyNameProperties(firstFont, filePath, OUT fontFamilyNameProperties);
     return UpdateDrawableObjectsFromFontFamilyNameProperties(fontFamilyNameProperties);
 }
 

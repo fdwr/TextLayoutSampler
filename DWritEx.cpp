@@ -97,6 +97,17 @@ namespace
         DWRITE_GLYPH_IMAGE_FORMATS_JPEG |
         DWRITE_GLYPH_IMAGE_FORMATS_PREMULTIPLIED_B8G8R8A8
         ;
+
+    DWRITE_GLYPH_IMAGE_FORMATS g_allColorGlyphImageFormats =
+        // DWRITE_GLYPH_IMAGE_FORMATS_TRUETYPE |
+        // DWRITE_GLYPH_IMAGE_FORMATS_CFF |
+        DWRITE_GLYPH_IMAGE_FORMATS_COLR |
+        DWRITE_GLYPH_IMAGE_FORMATS_SVG |
+        DWRITE_GLYPH_IMAGE_FORMATS_PNG |
+        DWRITE_GLYPH_IMAGE_FORMATS_TIFF |
+        DWRITE_GLYPH_IMAGE_FORMATS_JPEG |
+        DWRITE_GLYPH_IMAGE_FORMATS_PREMULTIPLIED_B8G8R8A8
+        ;
 }
 
 
@@ -2298,7 +2309,7 @@ HRESULT GetFontCharacterCoverageCounts(
             {
                 DWRITE_GLYPH_IMAGE_FORMATS glyphImageFormats = DWRITE_GLYPH_IMAGE_FORMATS_NONE;
                 IFR(fontFace4->GetGlyphImageFormats(glyphIds[ch], 0, UINT32_MAX, OUT &glyphImageFormats));
-                if (!(glyphImageFormats & g_allNonOutlineGlyphImageFormats))
+                if (!(glyphImageFormats & g_allColorGlyphImageFormats))
                 {
                     continue;
                 }

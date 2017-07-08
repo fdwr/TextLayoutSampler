@@ -1029,7 +1029,7 @@ void MainWindow::ShiftSelectedDrawableObjects(int32_t shiftDirection /* down = p
         return; // Nop
 
     int32_t iDelta = (/*if shifting up*/ shiftDirection < 0) ? /*swap down*/1 : /*swap up*/ -1;
-    uint32_t begin = 0, end = drawableObjectIndices.size(); // if shifting up
+    uint32_t begin = 0, end = uint32_t(drawableObjectIndices.size()); // if shifting up
 
     // Check for selected lines already being at either end, thus unabled to shift further.
     if (shiftDirection > 0)

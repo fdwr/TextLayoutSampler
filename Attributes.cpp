@@ -219,7 +219,7 @@ HRESULT Attribute::MapValueToName(_Out_ uint32_t enumValue, _Out_ std::u16string
     stringValue.clear();
 
     // Look for enum value.
-    for (uint32_t i = 0, ci = this->predefinedValues.size(); i < ci; ++i)
+    for (uint32_t i = 0, ci = uint32_t(this->predefinedValues.size()); i < ci; ++i)
     {
         if (this->predefinedValues[i].integerValue == enumValue)
         {

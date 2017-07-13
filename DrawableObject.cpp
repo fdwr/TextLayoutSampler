@@ -3036,18 +3036,26 @@ HRESULT CachedGdiPlusFont::EnsureCached(IAttributeSource& attributeSource, Drawi
         fontCollection.emplace(); // Clear it to the default constructor.
         IFR(MapGdiPlusStatusToHResult(fontCollection->AddFontFile(ToWChar(customFontFilePath.data()))));
 
-        int32_t familiesCount = fontCollection->GetFamilyCount();
-        if (fontFaceIndex >= uint32_t(familiesCount))
+        if (familyName.empty()) // Use face index if no family name specified.
         {
-            return HRESULT_FROM_WIN32(ERROR_INVALID_INDEX);
-        }
+            int32_t familiesCount = fontCollection->GetFamilyCount();
+            if (fontFaceIndex >= uint32_t(familiesCount))
+            {
+                return HRESULT_FROM_WIN32(ERROR_INVALID_INDEX);
+            }
 
-        // Allocate families array.
-        delete[] fontFamilies;
-        fontFamilies = nullptr;
-        fontFamilies = new Gdiplus::FontFamily[familiesCount];
-        IFR(MapGdiPlusStatusToHResult(fontCollection->GetFamilies(familiesCount, OUT fontFamilies, OUT &familiesCount)));
-        activeFontFamily = &fontFamilies[fontFaceIndex];
+            // Allocate families array.
+            delete[] fontFamilies;
+            fontFamilies = nullptr;
+            fontFamilies = new Gdiplus::FontFamily[familiesCount];
+            IFR(MapGdiPlusStatusToHResult(fontCollection->GetFamilies(familiesCount, OUT fontFamilies, OUT &familiesCount)));
+            activeFontFamily = &fontFamilies[fontFaceIndex];
+        }
+        else
+        {
+            fontFamily.emplace(ToWChar(familyName.data()), &*fontCollection);
+            activeFontFamily = &*fontFamily;
+        }
     }
     else
     {

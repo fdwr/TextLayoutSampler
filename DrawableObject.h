@@ -323,11 +323,17 @@ struct CachedGdiPlusStringFormat
 struct CachedGdiPlusFont
 {
     // Wrap the font in an optional to get around the lack of a default constructor for Font.
-    optional_value<Gdiplus::FontFamily> fontFamily;
     optional_value<Gdiplus::Font> font;
+    optional_value<Gdiplus::FontFamily> fontFamily;
+    optional_value<Gdiplus::PrivateFontCollection> fontCollection;
+
+    // Array of font families for custom font collections when a specific file is given.
+    // Can't use std::vector sadly because FontFamily lacks a copy constructor -_-.
+    Gdiplus::FontFamily* fontFamilies = nullptr;
 
     operator Gdiplus::Font&() { return font.value(); } // Assumes !stringFormat.empty()
 
+    ~CachedGdiPlusFont();
     HRESULT EnsureCached(IAttributeSource& attributeSource, DrawingCanvas& drawingCanvas, bool isDriverString);
     void Invalidate() { fontFamily.clear(); font.clear(); }
 };

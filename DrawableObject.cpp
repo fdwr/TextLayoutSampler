@@ -2996,6 +2996,12 @@ HRESULT CachedGdiPlusStringFormat::EnsureCached(IAttributeSource& attributeSourc
 };
 
 
+CachedGdiPlusFont::~CachedGdiPlusFont()
+{
+    delete[] fontFamilies;
+}
+
+
 HRESULT CachedGdiPlusFont::EnsureCached(IAttributeSource& attributeSource, DrawingCanvas& drawingCanvas, bool isDriverString)
 {
     if (!font.empty())
@@ -3018,8 +3024,38 @@ HRESULT CachedGdiPlusFont::EnsureCached(IAttributeSource& attributeSource, Drawi
     if (fontWeight >= DWRITE_FONT_WEIGHT_BOLD)  fontStyle |= Gdiplus::FontStyleBold;
     if (fontSlope != DWRITE_FONT_STYLE_NORMAL)  fontStyle |= Gdiplus::FontStyleItalic;
 
-    fontFamily.emplace(ToWChar(familyName.data()));
-    font.emplace(&*fontFamily, fontSize, fontStyle, Gdiplus::UnitPixel);
+    Gdiplus::FontFamily* activeFontFamily = nullptr; // Must be set by branch below.
+
+    // Use either a custom font or system font.
+    array_ref<char16_t const> customFontFilePath = attributeSource.GetString(DrawableObjectAttributeFontFilePath);
+    if (!customFontFilePath.empty())
+    {
+        auto fontFaceIndex = attributeSource.GetValue(DrawableObjectAttributeFontFaceIndex, 0ui32);
+
+        // Add the custom font file to a private font collection.
+        fontCollection.emplace(); // Clear it to the default constructor.
+        IFR(MapGdiPlusStatusToHResult(fontCollection->AddFontFile(ToWChar(customFontFilePath.data()))));
+
+        int32_t familiesCount = fontCollection->GetFamilyCount();
+        if (fontFaceIndex >= uint32_t(familiesCount))
+        {
+            return HRESULT_FROM_WIN32(ERROR_INVALID_INDEX);
+        }
+
+        // Allocate families array.
+        delete[] fontFamilies;
+        fontFamilies = nullptr;
+        fontFamilies = new Gdiplus::FontFamily[familiesCount];
+        IFR(MapGdiPlusStatusToHResult(fontCollection->GetFamilies(familiesCount, OUT fontFamilies, OUT &familiesCount)));
+        activeFontFamily = &fontFamilies[fontFaceIndex];
+    }
+    else
+    {
+        fontFamily.emplace(ToWChar(familyName.data()));
+        activeFontFamily = &*fontFamily;
+    }
+
+    font.emplace(activeFontFamily, fontSize, fontStyle, Gdiplus::UnitPixel);
 
     return MapGdiPlusStatusToHResult(font->GetLastStatus());
 };

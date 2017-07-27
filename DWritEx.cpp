@@ -900,6 +900,7 @@ HRESULT RecreateFontFace(
     IDWriteFactory* factory,
     IDWriteFontFace* originalFontFace,
     DWRITE_FONT_SIMULATIONS fontSimulations,
+    array_ref<const DWRITE_FONT_AXIS_VALUE> fontAxisValues,
     _COM_Outptr_ IDWriteFontFace** newFontFace
     )
 {
@@ -907,6 +908,24 @@ HRESULT RecreateFontFace(
     IFR(GetFontFile(originalFontFace, OUT &fontFile));
     auto fontFaceType = originalFontFace->GetType();
     auto fontFaceIndex = originalFontFace->GetIndex();
+
+    if (!fontAxisValues.empty())
+    {
+        ComPtr<IDWriteFactory6> factory6;
+        if SUCCEEDED(factory->QueryInterface(OUT &factory6))
+        {
+            ComPtr<IDWriteFontFaceReference1> fontFaceReference;
+            IFR(factory6->CreateFontFaceReference(
+                fontFile,
+                originalFontFace->GetIndex(),
+                fontSimulations,
+                fontAxisValues.data(),
+                static_cast<uint32_t>(fontAxisValues.size()),
+                OUT &fontFaceReference
+            ));
+            return fontFaceReference->CreateFontFace(OUT reinterpret_cast<IDWriteFontFace5**>(newFontFace));
+        }
+    }
 
     IDWriteFontFile* fontFileArray[] = {fontFile};
     return factory->CreateFontFace(

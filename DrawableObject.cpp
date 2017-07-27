@@ -1805,6 +1805,8 @@ HRESULT CachedDWriteFontFace::Update(
     std::string sampleText;
     std::vector<uint32_t> codePointArray;
     std::copy(sampleText.begin(), sampleText.end(), codePointArray.begin());
+    std::vector<DWRITE_FONT_AXIS_VALUE> fontAxisValues;
+    GetFontAxisValues(attributeSource, OUT fontAxisValues);
 
     fontFace.clear();
 
@@ -1817,8 +1819,6 @@ HRESULT CachedDWriteFontFace::Update(
         if (GetFileAttributes(ToWChar(customFontFilePath.data())) == -1)
             return DWRITE_E_FILENOTFOUND;
 
-        std::vector<DWRITE_FONT_AXIS_VALUE> fontAxisValues;
-        GetFontAxisValues(attributeSource, OUT fontAxisValues);
         auto fontSimulations = attributeSource.GetValue(DrawableObjectAttributeFontSimulations, DWRITE_FONT_SIMULATIONS_NONE);
         auto fontFaceIndex = attributeSource.GetValue(DrawableObjectAttributeFontFaceIndex, 0ui32);
         auto fontFaceType = attributeSource.GetValue(DrawableObjectAttributeDWriteFontFaceType, DWRITE_FONT_FACE_TYPE_UNKNOWN);
@@ -1854,13 +1854,14 @@ HRESULT CachedDWriteFontFace::Update(
             ));
 
         // If fontSimulations are set, recreate it using them instead.
-        if (fontSimulations != DWRITE_FONT_SIMULATIONS_NONE)
+        if (fontSimulations != DWRITE_FONT_SIMULATIONS_NONE || !fontAxisValues.empty())
         {
             ComPtr<IDWriteFontFace> simulatedFontFace;
             IFR(RecreateFontFace(
                 drawingCanvas.GetDWriteFactoryWeakRef(),
                 this->fontFace,
                 fontSimulations,
+                fontAxisValues,
                 &simulatedFontFace
                 ));
             std::swap(simulatedFontFace, this->fontFace);

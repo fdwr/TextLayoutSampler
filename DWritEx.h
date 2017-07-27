@@ -65,6 +65,7 @@ HRESULT RecreateFontFace(
     IDWriteFactory* factory,
     IDWriteFontFace* originalFontFace,
     DWRITE_FONT_SIMULATIONS fontSimulations,
+    array_ref<const DWRITE_FONT_AXIS_VALUE> fontAxisValues,
     _COM_Outptr_ IDWriteFontFace** newFontFace
     );
 

@@ -56,7 +56,7 @@ template <typename FunctorType>
 struct DeferCleanupType
 {
 public:
-    explicit DeferCleanupType(FunctorType f) : f_(f) {}
+    explicit DeferCleanupType(FunctorType const& f) : f_(f) {}
     ~DeferCleanupType() { f_(); }
 
 private:
@@ -64,7 +64,24 @@ private:
 };
 
 template <typename FunctorType>
-DeferCleanupType<FunctorType> DeferCleanup(FunctorType f) { return DeferCleanupType<FunctorType>(f); }
+DeferCleanupType<FunctorType> inline DeferCleanup(FunctorType const& f) { return DeferCleanupType<FunctorType>(f); }
+
+
+template <typename FunctorType>
+struct DismissableCleanupType
+{
+public:
+    explicit DismissableCleanupType(FunctorType const& f) : f_(f) {}
+    ~DismissableCleanupType() { if (!isDismissed_) f_(); }
+    void Dismiss() { isDismissed_ = true; }
+
+private:
+    FunctorType f_;
+    bool isDismissed_ = false;
+};
+
+template <typename FunctorType>
+DismissableCleanupType<FunctorType> inline DismissableCleanup(FunctorType const& f) { return DismissableCleanupType<FunctorType>(f); }
 
 
 // Range of iterators that can be used in a ranged for loop.

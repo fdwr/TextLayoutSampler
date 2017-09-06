@@ -2552,6 +2552,7 @@ HRESULT DrawableObjectDirect2DDrawColorBitmapGlyphRun::Draw(
     IFR(drawingCanvas.GetDWriteFactoryWeakRef()->QueryInterface(OUT &dwriteFactory4));
 
     DWRITE_MEASURING_MODE measuringMode = attributeSource.GetValue(DrawableObjectAttributeDWriteMeasuringMode, DWRITE_MEASURING_MODE_NATURAL);
+    bool enablePixelSnapping = attributeSource.GetValue(DrawableObjectAttributePixelSnapping, true);
 
     auto* d2dRenderTarget = drawingCanvas.GetD2DRenderTargetWeakRef();
     auto* wicFactory = drawingCanvas.GetWicFactoryWeakRef();
@@ -2581,7 +2582,7 @@ HRESULT DrawableObjectDirect2DDrawColorBitmapGlyphRun::Draw(
         { x, y },
         &cachedGlyphRun,
         measuringMode,
-        D2D1_COLOR_BITMAP_GLYPH_SNAP_OPTION_DEFAULT
+        enablePixelSnapping ? D2D1_COLOR_BITMAP_GLYPH_SNAP_OPTION_DEFAULT : D2D1_COLOR_BITMAP_GLYPH_SNAP_OPTION_DISABLE
         );
     //d2dRenderTarget4->SetDpi(96, 96);
 
@@ -2769,7 +2770,9 @@ HRESULT DrawableObjectDirect2DDrawText::Draw(
 
     auto* d2dRenderTarget = drawingCanvas.GetD2DRenderTargetWeakRef();
     ComPtr<ID2D1DeviceContext> deviceContext;
+    ComPtr<ID2D1DeviceContext4> deviceContext4;
     d2dRenderTarget->QueryInterface(OUT &deviceContext);
+    d2dRenderTarget->QueryInterface(OUT &deviceContext4);
 
     D2D1_DRAW_TEXT_OPTIONS drawTextOptions = D2D1_DRAW_TEXT_OPTIONS_NONE;
     if (enableColorFonts && deviceContext != nullptr /* Windows 8.1 added device context and color support*/)
@@ -2779,6 +2782,10 @@ HRESULT DrawableObjectDirect2DDrawText::Draw(
     if (!enablePixelSnapping)
     {
         drawTextOptions |= D2D1_DRAW_TEXT_OPTIONS_NO_SNAP;
+        if (deviceContext4 != nullptr /* Windows RS1 added device context and color support*/)
+        {
+            drawTextOptions |= D2D1_DRAW_TEXT_OPTIONS_DISABLE_COLOR_BITMAP_SNAPPING;
+        }
     }
     if (isClipped)
     {

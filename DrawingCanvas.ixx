@@ -19,6 +19,14 @@
 #pragma comment(lib, "WindowsCodecs.lib")
 
 import Common.String;
+import Common.AutoResource;
+
+
+module DrawingCanvas;
+export
+{
+    #include "DrawingCanvas.h"
+}
 
 
 // WinCodec_Proxy.h appears to be missing from Visual Studio's include path??
@@ -32,17 +40,6 @@ extern "C"
 
 
 const DX_MATRIX_3X2F DrawingCanvas::g_identityMatrix = {1,0,0,1,0,0};
-
-
-DX_MATRIX_3X2F CombineMatrix(
-    _In_  DX_MATRIX_3X2F const& a,
-    _In_  DX_MATRIX_3X2F const& b
-    )
-{
-    DX_MATRIX_3X2F result;
-    CombineMatrix(a, b, OUT result);
-    return result;
-}
 
 
 void CombineMatrix(

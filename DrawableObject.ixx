@@ -14,6 +14,7 @@ import Common.String;
 import ArrayRef;
 import Attributes;
 import DrawingCanvas;
+import DWritEx;
 
 module DrawableObject;
 export

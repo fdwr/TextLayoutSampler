@@ -11,6 +11,15 @@
 
 import FileHelpers;
 import Common.String;
+import ArrayRef;
+import Attributes;
+import DrawingCanvas;
+
+module DrawableObject;
+export
+{
+    #include "DrawableObject.h"
+}
 
 
 const D2D_RECT_F DrawableObject::emptyRect = { 0,0,0,0 };

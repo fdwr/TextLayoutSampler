@@ -115,7 +115,7 @@
     <ClCompile Include="Common.ListSubstringPrioritizer.ixx" />
     <ClCompile Include="DrawableObject.ixx" />
     <ClCompile Include="DrawableObjectAndValues.ixx" />
-    <ClCompile Include="DrawingCanvas.cpp" />
+    <ClCompile Include="DrawingCanvas.ixx" />
     <ClCompile Include="DrawingCanvasControl.ixx" />
     <ClCompile Include="DWritEx.ixx" />
     <ClCompile Include="MainWindow.ixx" />

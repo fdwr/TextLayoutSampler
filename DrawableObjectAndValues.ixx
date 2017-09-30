@@ -5,7 +5,10 @@
 //----------------------------------------------------------------------------
 #include "precomp.h"
 
-#include "common.listsubstringprioritizer.h"
+import Common.ListSubstringPrioritizer;
+import Attributes;
+import Common.AutoResource;
+module DrawableObject;
 
 module DrawableObjectAndValues;
 

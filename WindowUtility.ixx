@@ -6,6 +6,13 @@
 
 
 import Common.String;
+import Common.ArrayRef;
+
+module WindowUtility;
+export
+{
+    #include "WindowUtility.h"
+}
 
 
 ////////////////////////////////////////

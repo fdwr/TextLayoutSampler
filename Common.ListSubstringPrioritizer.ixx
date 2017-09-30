@@ -3,15 +3,18 @@
 //  History:    2015-06-19 Created
 //----------------------------------------------------------------------------
 #include "precomp.h"
-
-#include "Common.ArrayRef.h"
-//--#include "Common.String.h"
-#include "Common.ListSubstringPrioritizer.h"
 #include <vector>
 #include <string>
 
-
+import Common.ArrayRef;
 import Common.String;
+
+module Common.ListSubstringPrioritizer;
+export
+{
+    #include "Common.ListSubstringPrioritizer.h"
+}
+
 
 ListSubstringPrioritizer::ListSubstringPrioritizer(
     array_ref<char16_t const> filterString,

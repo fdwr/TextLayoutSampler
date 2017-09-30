@@ -17,6 +17,14 @@
 
 import FileHelpers;
 import Common.String;
+import ArrayRef;
+
+module DWritEx;
+
+export
+{
+    #include "DWritEx.h"
+}
 
 
 ////////////////////////////////////////

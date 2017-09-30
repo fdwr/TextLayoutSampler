@@ -113,7 +113,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Common.ListSubstringPrioritizer.ixx" />
-    <ClCompile Include="DrawableObject.cpp" />
+    <ClCompile Include="DrawableObject.ixx" />
     <ClCompile Include="DrawableObjectAndValues.ixx" />
     <ClCompile Include="DrawingCanvas.cpp" />
     <ClCompile Include="DrawingCanvasControl.ixx" />
@@ -135,7 +135,9 @@
   <ItemGroup>
     <ClInclude Include="Common.ArrayRef.h" />
     <ClInclude Include="Attributes.h" />
-    <ClInclude Include="Common.AutoResource.h" />
+    <ClInclude Include="Common.AutoResource.h">
+      <FileType>Document</FileType>
+    </ClInclude>
     <ClInclude Include="Common.h" />
     <ClInclude Include="Common.ListSubstringPrioritizer.h" />
     <ClInclude Include="DrawableObject.h" />
@@ -161,6 +163,16 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="MainWindow.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Common.AutoResource.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Common.OptionalValue.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

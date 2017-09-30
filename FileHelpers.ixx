@@ -11,10 +11,11 @@
 #include <string>
 #include <Shlwapi.h>
 #include <stdint.h>
-#include "Common.AutoResource.h"
-#include "Common.ArrayRef.h"
-#include "Common.ArrayRef.h"
 #pragma comment(lib, "Shlwapi.lib")
+
+import Common.String;
+import Common.ArrayRef;
+import Common.AutoResource;
 
 
 module FileHelpers;
@@ -23,8 +24,6 @@ export
 {
     #include "FileHelpers.h"
 }
-
-import Common.String;
 
 
 HRESULT ReadTextFile(const char16_t* filename, OUT std::u16string& text) throw()

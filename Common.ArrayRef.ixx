@@ -5,8 +5,6 @@
 //----------------------------------------------------------------------------
 #include "precomp.h"
 
-//#ifdef _DEBUG
-#if 1
 
 #include <array>
 #include <stdint.h>
@@ -14,8 +12,12 @@
 #include <vector>
 #include <string>
 
-#include "Common.ArrayRef.h"
+module Common.ArrayRef;
 
+export
+{
+    #include "Common.ArrayRef.h"
+}
 
 template <typename ResourceType = void*>
 class WrapperType
@@ -99,5 +101,3 @@ struct array_ref_test_class
     array_ref_test_class() { array_ref_test(); }
 };
 array_ref_test_class array_ref_test_class_instance;
-
-#endif

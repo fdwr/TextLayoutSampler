@@ -12,6 +12,8 @@
 #include "precomp.h"
 
 
+import ArrayRef;
+
 module Common.String;
 export
 {

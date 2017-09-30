@@ -5,6 +5,16 @@
 #include "precomp.h"
 
 import Common.String;
+import Common.ArrayRef;
+import Common.OptionalValue;
+import Common.ListSubstringPrioritizer;
+
+
+module Attributes;
+export
+{
+    #include "Attributes.h"
+}
 
 
 char16_t const* Attribute::PredefinedValue::GetName() const

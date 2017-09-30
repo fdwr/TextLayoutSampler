@@ -15,6 +15,10 @@
 
 #pragma comment(lib, "DWrite.lib")
 
+import FileHelpers;
+import Common.String;
+
+
 ////////////////////////////////////////
 
 // For older systems where it is not defined, such as Windows 7/Vista.

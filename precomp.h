@@ -12,6 +12,9 @@
 // Even Windows public header files have this problem. So silence the noise to reveal more pertinent warings.
 #pragma warning(disable:4458)
 
+// Flexible array members in struct/union are perfectly fine and supported in all major compilers.
+#pragma warning(disable:4200)
+
 // Modify the following defines if you have to target a platform prior to the ones specified below.
 // Refer to MSDN for the latest info on corresponding values for different platforms.
 #ifndef WINVER              // Allow use of features specific to Windows XP or later.
@@ -78,10 +81,8 @@
 #include <sdkddkver.h>
 
 #ifndef NTDDI_WIN10_RS3
-#define NTDDI_WIN10_RS3                     0x0A000003  /* ABRACADABRA_WIN10_RS3 */
+#define NTDDI_WIN10_RS3                     0x0A000004  /* ABRACADABRA_WIN10_RS3 */
 #endif
-#undef NTDDI_VERSION
-#define NTDDI_VERSION NTDDI_WIN10_RS3
 
 #include <windows.h>
 #include <windowsx.h>
@@ -90,11 +91,7 @@
 #include <CommDlg.h>
 #include <ShellApi.h>
 
-#include <DxgiFormat.h>
-#include <DxgiType.h>
-#include <Dxgi.h>
-
-#if WINSDKVER_14393
+#if NTDDI_VERSION >= NTDDI_WIN10_RS3
 
 #include <DWrite_3.h>
 #include <D2D1_3.h>
@@ -116,6 +113,13 @@
 
 #else // Older SDK. So use newer versions of the 2D headers.
 
+#undef NTDDI_VERSION
+#define NTDDI_VERSION NTDDI_WIN10_RS3
+
+#include "Windows2DHeaders14393/D2D1Helper.h"
+#include "Windows2DHeaders14393/D2D1_1helper.h"
+#include "Windows2DHeaders14393/D2D1_2helper.h"
+#include "Windows2DHeaders14393/D2D1_3helper.h"
 #include "Windows2DHeaders14393/DCommon.h"
 #include "Windows2DHeaders14393/DWrite_1.h"
 #include "Windows2DHeaders14393/DWrite_2.h"
@@ -125,12 +129,12 @@
 #include "Windows2DHeaders14393/D2D1_1.h"
 #include "Windows2DHeaders14393/D2D1_2.h"
 #include "Windows2DHeaders14393/D2D1_3.h"
-#include "Windows2DHeaders14393/D2D1Helper.h"
-#include "Windows2DHeaders14393/D2D1_1helper.h"
-#include "Windows2DHeaders14393/D2D1_2helper.h"
-#include "Windows2DHeaders14393/D2D1_3helper.h"
 
 #endif
+
+#include <DxgiFormat.h>
+#include <DxgiType.h>
+#include <Dxgi.h>
 
 #include <WinCodec.h>
 
@@ -149,9 +153,7 @@
 #include "Common.ArrayRef.h"
 #include "Common.OptionalValue.h"
 #include "Common.AutoResource.h"
-#include "Common.String.h"
 #include "WindowUtility.h"
-#include "FileHelpers.h"
 #include "DWritEx.h"
 #include "Common.ListSubstringPrioritizer.h"
 
@@ -159,7 +161,6 @@
 // Application specific.
 
 #include "DrawingCanvas.h"
-#include "DrawingCanvasControl.h"
 #include "Attributes.h"
 #include "TextTreeParser.h"
 #include "DrawableObject.h"

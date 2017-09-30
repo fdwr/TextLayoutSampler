@@ -39,6 +39,9 @@ App translucency
 
 
 import MessageBoxShaded;
+import FileHelpers;
+import DrawingCanvasControl;
+import Common.String;
 
 
 #define DEBUG_SHOW_WINDOWS_MESSAGES 0

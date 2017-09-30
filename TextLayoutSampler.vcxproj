@@ -21,7 +21,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{E0964FE3-5D6D-48CB-AC4D-1A6FF19A911C}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <WindowsTargetPlatformVersion>10.0.14393.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.15063.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Label="Configuration">
@@ -112,24 +112,24 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Common.ListSubstringPrioritizer.cpp" />
+    <ClCompile Include="Common.ListSubstringPrioritizer.ixx" />
     <ClCompile Include="DrawableObject.cpp" />
-    <ClCompile Include="DrawableObjectAndValues.cpp" />
+    <ClCompile Include="DrawableObjectAndValues.ixx" />
     <ClCompile Include="DrawingCanvas.cpp" />
-    <ClCompile Include="DrawingCanvasControl.cpp" />
-    <ClCompile Include="DWritEx.cpp" />
-    <ClCompile Include="MainWindow.cpp" />
+    <ClCompile Include="DrawingCanvasControl.ixx" />
+    <ClCompile Include="DWritEx.ixx" />
+    <ClCompile Include="MainWindow.ixx" />
     <ClCompile Include="MessageBoxShaded.ixx" />
     <ClCompile Include="precomp.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="TextLayoutSampler.cpp" />
-    <ClCompile Include="TextTreeParser.cpp" />
-    <ClCompile Include="Attributes.cpp" />
-    <ClCompile Include="WindowUtility.cpp" />
-    <ClCompile Include="FileHelpers.cpp" />
-    <ClCompile Include="Common.String.cpp" />
-    <ClCompile Include="Common.ArrayRef.cpp" />
+    <ClCompile Include="TextTreeParser.ixx" />
+    <ClCompile Include="Attributes.ixx" />
+    <ClCompile Include="WindowUtility.ixx" />
+    <ClCompile Include="FileHelpers.ixx" />
+    <ClCompile Include="Common.String.ixx" />
+    <ClCompile Include="Common.ArrayRef.ixx" />
     <ClCompile Include="Common.cpp" />
   </ItemGroup>
   <ItemGroup>

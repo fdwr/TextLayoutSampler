@@ -18,6 +18,9 @@
 #pragma comment(lib, "GdiPlus.lib")
 #pragma comment(lib, "WindowsCodecs.lib")
 
+import Common.String;
+
+
 // WinCodec_Proxy.h appears to be missing from Visual Studio's include path??
 extern "C"
 {

@@ -4,6 +4,8 @@
 //----------------------------------------------------------------------------
 #include "precomp.h"
 
+import Common.String;
+
 
 char16_t const* Attribute::PredefinedValue::GetName() const
 {

@@ -5,7 +5,6 @@
 #include "precomp.h"
 #include "MainWindow.h"
 #include <specstrings.h>
-#include <winspool.h>
 
 
 #pragma comment(linker, "/SUBSYSTEM:WINDOWS")
@@ -25,6 +24,9 @@
 HINSTANCE Application::g_hModule = nullptr;
 MSG Application::g_msg;
 HWND Application::g_mainHwnd;
+
+
+import Common.String;
 
 
 ////////////////////////////////////////

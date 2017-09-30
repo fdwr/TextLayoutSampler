@@ -5,6 +5,9 @@
 #include "precomp.h"
 
 
+import Common.String;
+
+
 ////////////////////////////////////////
 
 #pragma prefast(disable:__WARNING_ACCESSIBILITY_COLORAPI, "Shush. It's a test program.")

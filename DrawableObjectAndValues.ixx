@@ -7,6 +7,15 @@
 
 #include "common.listsubstringprioritizer.h"
 
+module DrawableObjectAndValues;
+
+export
+{
+    #include "DrawableObjectAndValues.h"
+}
+
+import Common.String;
+
 namespace
 {
     LOGFONT s_defaultLabelLogFont = {

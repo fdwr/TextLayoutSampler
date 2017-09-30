@@ -16,6 +16,8 @@
 
 module MessageBoxShaded;
 
+import Common.String;
+
 
 namespace
 {

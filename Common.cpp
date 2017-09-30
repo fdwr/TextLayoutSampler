@@ -5,6 +5,9 @@
 #include "precomp.h"
 
 
+import Common.String;
+
+
 bool ThrowIf(bool value, _In_opt_z_ char const* message)
 {
     if (value)

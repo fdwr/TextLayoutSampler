@@ -3,10 +3,10 @@
 //  History:        2015-06-19 Created
 //  Description:    Generic drawable object instance with attribute values.
 //----------------------------------------------------------------------------
-#include "precomp.h"
+#pragma once
 
 
-interface AttributeSource;
+//interface AttributeSource;
 class DrawableObject;
 
 // Combination of the drawable object and its associated attribute values.

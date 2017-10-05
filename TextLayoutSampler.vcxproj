@@ -78,6 +78,7 @@
       <Optimization>Disabled</Optimization>
       <UndefinePreprocessorDefinitions>
       </UndefinePreprocessorDefinitions>
+      <MultiProcessorCompilation>false</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
@@ -101,6 +102,7 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <UndefinePreprocessorDefinitions>
       </UndefinePreprocessorDefinitions>
+      <MultiProcessorCompilation>false</MultiProcessorCompilation>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -113,29 +115,30 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="MainWindow.ixx" />
-    <ClCompile Include="FileHelpers.ixx" />
-    <ClCompile Include="WindowUtility.ixx" />
-    <ClCompile Include="Attributes.ixx" />
-    <ClCompile Include="TextTreeParser.ixx" />
+    <ClCompile Include="Application.ixx" />
     <ClCompile Include="MessageBoxShaded.ixx" />
+    <ClCompile Include="WindowUtility.ixx" />
     <ClCompile Include="DrawingCanvasControl.ixx" />
-    <ClCompile Include="DrawingCanvas.ixx" />
     <ClCompile Include="DrawableObjectAndValues.ixx" />
+    <ClCompile Include="TextTreeParser.ixx" />
     <ClCompile Include="DrawableObject.ixx" />
+    <ClCompile Include="DrawingCanvas.ixx" />
+    <ClCompile Include="Attributes.ixx" />
     <ClCompile Include="DWritEx.ixx" />
+    <ClCompile Include="FileHelpers.ixx" />
     <ClCompile Include="Common.ListSubstringPrioritizer.ixx" />
     <ClCompile Include="Common.OptionalValue.ixx" />
     <ClCompile Include="Common.AutoResource.Windows.ixx" />
     <ClCompile Include="Common.AutoResource.ixx" />
+    <ClCompile Include="Common.cpp" />
     <ClCompile Include="Common.String.ixx" />
     <ClCompile Include="Common.ArrayRef.ixx" />
-    <ClCompile Include="Common.cpp" />
     <ClCompile Include="precomp.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Application.h" />
+    <ClInclude Include="Application.macros.h" />
     <ClInclude Include="Common.ArrayRef.h" />
     <ClInclude Include="Attributes.h" />
     <ClInclude Include="Common.AutoResource.h" />
@@ -167,9 +170,7 @@
     <Image Include="MainWindow.ico" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Application.ixx">
-      <FileType>Document</FileType>
-    </ClCompile>
+    <None Include="LICENSE" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

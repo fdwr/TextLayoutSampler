@@ -71,10 +71,6 @@ bool GetSaveFileName(
 // A more recallable and sensible name, since the function is not dialog-specific.
 inline HWND WINAPI GetWindowFromId(_In_opt_ HWND parentWindowHandle, _In_ int windowId) { return GetDlgItem(parentWindowHandle, windowId); }
 
-#ifndef SetWindowStyle
-#define SetWindowStyle(hwnd, value)    ((DWORD)SetWindowLong(hwnd, GWL_STYLE, value))
-#endif
-
 
 enum PositionOptions : uint32_t
 {
@@ -206,22 +202,6 @@ struct DialogProcResult
         value()
     { }
 };
-
-
-#ifndef LVN_GETEMPTYTEXTW
-#define LVN_GETEMPTYTEXTA          (LVN_FIRST-60)
-#define LVN_GETEMPTYTEXTW          (LVN_FIRST-61)
-
-#ifdef UNICODE
-#define LVN_GETEMPTYTEXT           LVN_GETEMPTYTEXTW
-#else
-#define LVN_GETEMPTYTEXT           LVN_GETEMPTYTEXTA
-#endif
-#endif
-
-#ifndef LVM_RESETEMPTYTEXT
-#define LVM_RESETEMPTYTEXT         0x1054
-#endif
 
 
 // Why doesn't CommCtrl.h have a helper function like this?

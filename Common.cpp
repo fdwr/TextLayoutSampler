@@ -3,10 +3,13 @@
 //  History:    2015-06-19 Created
 //----------------------------------------------------------------------------
 #include "precomp.h"
-
+#include <string>
+#include <stdint.h>
 
 import Common.String;
 
+
+////////////////////////////////////////
 
 bool ThrowIf(bool value, _In_opt_z_ char const* message)
 {

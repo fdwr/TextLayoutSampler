@@ -8,10 +8,11 @@
 //----------------------------------------------------------------------------
 #include "precomp.h"
 
-
-import FileHelpers;
+import Common.ArrayRef;
 import Common.String;
-import ArrayRef;
+import Common.AutoResource;
+import Common.AutoResource.Windows;
+import FileHelpers;
 import Attributes;
 import DrawingCanvas;
 import DWritEx;
@@ -22,6 +23,7 @@ export
     #include "DrawableObject.h"
 }
 
+////////////////////////////////////////
 
 const D2D_RECT_F DrawableObject::emptyRect = { 0,0,0,0 };
 const DX_MATRIX_3X2F DrawableObject::identityTransform = {1,0,0,1,0,0};

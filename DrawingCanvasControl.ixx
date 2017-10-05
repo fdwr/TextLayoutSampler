@@ -5,6 +5,8 @@
 //----------------------------------------------------------------------------
 #include "precomp.h"
 
+import DrawingCanvas;
+
 module DrawingCanvasControl;
 
 export

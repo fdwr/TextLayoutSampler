@@ -3,96 +3,37 @@
 //  History:    2015-06-19 Created
 //----------------------------------------------------------------------------
 #include "precomp.h"
-#include "MainWindow.h"
 #include <specstrings.h>
+#include "Application.h"
 
+import Common.String;
 
-#pragma comment(linker, "/SUBSYSTEM:WINDOWS")
-#pragma comment(linker,"/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
-#pragma comment(lib, "DWrite.lib")
-#pragma comment(lib, "D2D1.lib")
-#pragma comment(lib, "GdiPlus.lib")
-#pragma comment(lib, "ComCtl32.lib")
+module Application;
 
 
 ////////////////////////////////////////
-// UI related
 
-#pragma prefast(disable:__WARNING_HARD_CODED_STRING_TO_UI_FN, "It's an internal test program.")
+export class Application
+{
+public:
+    static HINSTANCE g_hModule;
+    static MSG g_msg;
+    static HWND g_mainHwnd;
 
+    static void Dispatch();
+    static int DisplayError(__in_z const char16_t* message, __in_z_opt const char16_t* formatString, int functionResult);
+    static void Fail(__in_z const char16_t* message, __in_z_opt const char16_t* formatString, int functionResult);
+    static void DebugLog(const char16_t* logMessage, ...);
+    static HRESULT ExceptionToHResult() throw();
+};
 
 HINSTANCE Application::g_hModule = nullptr;
 MSG Application::g_msg;
 HWND Application::g_mainHwnd;
 
-
-import Common.String;
-
+#pragma prefast(disable:__WARNING_HARD_CODED_STRING_TO_UI_FN, "It's an internal test program.")
 
 ////////////////////////////////////////
-
-
-int APIENTRY wWinMain(
-    __in HINSTANCE      hInstance, 
-    __in_opt HINSTANCE  hPrevInstance,
-    __in LPWSTR         commandLine,
-    __in int            nCmdShow
-    )
-{
-    Application::g_hModule = hInstance;
-
-    _wsetlocale(LC_ALL, L""); // Unicode, not ANSI!
-
-    ////////////////////
-    // Read command line parameters.
-
-    std::u16string trimmedCommandLine(ToChar16(commandLine));
-    TrimSpaces(IN OUT trimmedCommandLine);
-
-    if (!trimmedCommandLine.empty())
-    {
-        if (_wcsicmp(ToWChar(trimmedCommandLine.c_str()), L"/?"    ) == 0
-        ||  _wcsicmp(ToWChar(trimmedCommandLine.c_str()), L"/help" ) == 0
-        ||  _wcsicmp(ToWChar(trimmedCommandLine.c_str()), L"-h"    ) == 0
-        ||  _wcsicmp(ToWChar(trimmedCommandLine.c_str()), L"--help") == 0
-            )
-        {
-            MessageBox(nullptr, L"TextLayoutSampler.exe [SomeFile.TextLayoutSamplerSettings].", APPLICATION_TITLE, MB_OK);
-            return (int)0;
-        }
-        else if (trimmedCommandLine[0] == '/')
-        {
-            Application::Fail(trimmedCommandLine.c_str(), u"Unknown command line option.\r\n\r\n\"%s\"", 0);
-        }
-        UnquoteString(IN OUT trimmedCommandLine);
-        // Else just pass the command line to the main window.
-    }
-
-    ////////////////////
-    // Create user interface elements.
-
-    Application::g_mainHwnd = MainWindow::Create();
-    if (Application::g_mainHwnd == nullptr)
-    {
-        Application::Fail(u"Could not create main window.", u"%s = %08X", HRESULT_FROM_WIN32(GetLastError()));
-    }
-    ShowWindow(Application::g_mainHwnd, SW_SHOWNORMAL);
-    SendMessage(Application::g_mainHwnd, WM_CHANGEUISTATE, UIS_CLEAR | UISF_HIDEACCEL | UISF_HIDEFOCUS, (LPARAM)nullptr); // Always shows the focus rectangle.
-
-    MainWindow& mainWindow = *MainWindow::GetClass(Application::g_mainHwnd);
-
-    if (!trimmedCommandLine.empty())
-    {
-        mainWindow.LoadDrawableObjectsSettings(trimmedCommandLine.data());
-    }
-
-    while (GetMessage(&Application::g_msg, nullptr, 0, 0) > 0)
-    {
-        Application::Dispatch();
-    }
-
-    return static_cast<int>(Application::g_msg.wParam);
-}
 
 
 void Application::Dispatch()
@@ -215,22 +156,4 @@ void Application::DebugLog(const char16_t* logMessage, ...)
         );
 
     OutputDebugString(buffer);
-}
-
-
-// Maps exceptions to equivalent HRESULTs,
-HRESULT Application::ExceptionToHResult() throw()
-{
-    try
-    {
-        throw;  // Rethrow previous exception.
-    }
-    catch (std::bad_alloc const&)
-    {
-        return E_OUTOFMEMORY;
-    }
-    catch (...)
-    {
-        return E_FAIL;
-    }
 }

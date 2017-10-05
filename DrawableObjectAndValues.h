@@ -7,7 +7,7 @@
 
 
 //interface AttributeSource;
-class DrawableObject;
+//class DrawableObject; // causes - fatal error C1001: An internal error has occurred in the compiler.
 
 // Combination of the drawable object and its associated attribute values.
 struct DrawableObjectAndValues : public IAttributeSource

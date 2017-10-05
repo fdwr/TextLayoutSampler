@@ -11,14 +11,15 @@
 //----------------------------------------------------------------------------
 #include "precomp.h"
 
-
-import ArrayRef;
+import Common.ArrayRef;
 
 module Common.String;
 export
 {
     #include "Common.String.h"
 }
+
+////////////////////////////////////////
 
 array_ref<char16_t const> ToChar16ArrayRef(_In_z_ char16_t const* text)
 {

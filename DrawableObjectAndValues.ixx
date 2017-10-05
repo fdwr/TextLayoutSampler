@@ -6,18 +6,26 @@
 #include "precomp.h"
 
 import Common.ListSubstringPrioritizer;
-import Attributes;
 import Common.AutoResource;
-module DrawableObject;
-
-module DrawableObjectAndValues;
-
-export
-{
-    #include "DrawableObjectAndValues.h"
-}
-
+import Common.AutoResource.Windows;
+import Common.ArrayRef;
 import Common.String;
+import Attributes;
+import DrawingCanvas;
+import DrawableObject;
+import TextTreeParser;
+
+//module DrawableObjectAndValues;
+//export
+//{
+    #include "DrawableObjectAndValues.h"
+//}
+
+#if 0 // This shouldn't actually compile without an import Common.ArrayRef statement, and yet it does.
+array_ref<int> a;
+#endif
+
+////////////////////////////////////////
 
 namespace
 {
@@ -76,10 +84,16 @@ void DrawableObjectAndValues::Draw(
         {
             if (spareDrawingCanvas == nullptr)
             {
-                if (drawingCanvas.GetSharedResource(u"SpareDrawingCanvas", OUT &spareDrawingCanvas) == E_NOT_SET)
+                // MODULE BUG: 'no GUID has been associated with this object'
+                // if (drawingCanvas.GetSharedResource(u"SpareDrawingCanvas", OUT &spareDrawingCanvas) == E_NOT_SET)
+
+                if (drawingCanvas.GetSharedResource(DrawingCanvas::g_guid, u"SpareDrawingCanvas", OUT reinterpret_cast<IUnknown**>(&spareDrawingCanvas)) == E_NOT_SET)
                 {
                     drawingCanvas.Clone(OUT &spareDrawingCanvas);
-                    drawingCanvas.SetSharedResource(u"SpareDrawingCanvas", spareDrawingCanvas.Get());
+                    // MODULE BUG: 'no GUID has been associated with this object'
+                    // drawingCanvas.SetSharedResource(u"SpareDrawingCanvas", spareDrawingCanvas.Get());
+
+                    drawingCanvas.SetSharedResource(DrawingCanvas::g_guid, u"SpareDrawingCanvas", OUT spareDrawingCanvas.Get());
                 }
                 auto* renderTarget = drawingCanvas.GetDWriteBitmapRenderTargetWeakRef();
                 SIZE size = {};

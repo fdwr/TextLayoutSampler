@@ -10,6 +10,7 @@
 ////////////////////
 // Matrix helpers
 
+#if 0
 // For older systems where it is not defined, such as Windows 7/Vista.
 __if_not_exists(DX_MATRIX_3X2F)
 {
@@ -61,6 +62,7 @@ DX_MATRIX_3X2F CombineMatrix(
     _In_  DX_MATRIX_3X2F const& a,
     _In_  DX_MATRIX_3X2F const& b
     );
+#endif
 
 void ComputeInverseMatrix(
     _In_  DX_MATRIX_3X2F const& matrix,
@@ -161,6 +163,7 @@ public:
     };
 
     const static DX_MATRIX_3X2F g_identityMatrix;
+    const static GUID g_guid;
 
     static void SetIdentityMatrix(_Out_ DX_MATRIX_3X2F& result)
     {

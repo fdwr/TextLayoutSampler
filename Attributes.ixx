@@ -16,6 +16,7 @@ export
     #include "Attributes.h"
 }
 
+////////////////////////////////////////
 
 char16_t const* Attribute::PredefinedValue::GetName() const
 {

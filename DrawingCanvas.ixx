@@ -5,9 +5,6 @@
 //----------------------------------------------------------------------------
 #include "precomp.h"
 
-
-////////////////////////////////////////
-
 #pragma prefast(disable:__WARNING_ACCESSIBILITY_COLORAPI, "Shush. It's a test program.")
 #pragma prefast(disable:__WARNING_HARDCODED_FONT_INFO,    "Shush. It's a test program.")
 #pragma warning(disable:4351)   // Yes, we're aware that POD's are default initialized.
@@ -20,7 +17,8 @@
 
 import Common.String;
 import Common.AutoResource;
-
+import Common.AutoResource.Windows;
+import DWritEx;
 
 module DrawingCanvas;
 export
@@ -28,6 +26,7 @@ export
     #include "DrawingCanvas.h"
 }
 
+////////////////////////////////////////
 
 // WinCodec_Proxy.h appears to be missing from Visual Studio's include path??
 extern "C"
@@ -40,33 +39,7 @@ extern "C"
 
 
 const DX_MATRIX_3X2F DrawingCanvas::g_identityMatrix = {1,0,0,1,0,0};
-
-
-void CombineMatrix(
-    _In_  DX_MATRIX_3X2F const& a,
-    _In_  DX_MATRIX_3X2F const& b,
-    _Out_ DX_MATRIX_3X2F& result
-    )
-{
-    DEBUG_ASSERT(&a != &result);
-    DEBUG_ASSERT(&b != &result);
-
-    // Common transposed dot product (as opposed to any of the other numerous
-    // forms of matrix 'multiplication' like the element-wise Hadamard product)
-    // such that:
-    //
-    //  If you transpose <10,0> and rotate 45 degrees, you'll be at <.7,.7>
-    //  If you rotate 45 degrees and transpose <10,0>, you'll be at <10,0>
-    //
-    // This is similar to XNA and opposite of OpenGL (so, easier to understand).
-
-    result.xx = a.xx * b.xx + a.xy * b.yx;
-    result.xy = a.xx * b.xy + a.xy * b.yy;
-    result.yx = a.yx * b.xx + a.yy * b.yx;
-    result.yy = a.yx * b.xy + a.yy * b.yy;
-    result.dx = a.dx * b.xx + a.dy * b.yx + b.dx;
-    result.dy = a.dx * b.xy + a.dy * b.yy + b.dy;
-}
+const GUID DrawingCanvas::g_guid = { 0x74868E11, 0xF1CF, 0x461A, 0xAE,0xAF,0x17,0x52,0x16,0xDF,0xF0,0xBA };
 
 
 void ComputeInverseMatrix(

@@ -112,32 +112,34 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Common.ListSubstringPrioritizer.ixx" />
-    <ClCompile Include="DrawableObject.ixx" />
-    <ClCompile Include="DrawableObjectAndValues.ixx" />
-    <ClCompile Include="DrawingCanvas.ixx" />
-    <ClCompile Include="DrawingCanvasControl.ixx" />
-    <ClCompile Include="DWritEx.ixx" />
     <ClCompile Include="MainWindow.ixx" />
-    <ClCompile Include="MessageBoxShaded.ixx" />
-    <ClCompile Include="precomp.cpp">
-      <PrecompiledHeader>Create</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="TextLayoutSampler.cpp" />
-    <ClCompile Include="TextTreeParser.ixx" />
-    <ClCompile Include="Attributes.ixx" />
-    <ClCompile Include="WindowUtility.ixx" />
     <ClCompile Include="FileHelpers.ixx" />
+    <ClCompile Include="WindowUtility.ixx" />
+    <ClCompile Include="Attributes.ixx" />
+    <ClCompile Include="TextTreeParser.ixx" />
+    <ClCompile Include="MessageBoxShaded.ixx" />
+    <ClCompile Include="DrawingCanvasControl.ixx" />
+    <ClCompile Include="DrawingCanvas.ixx" />
+    <ClCompile Include="DrawableObjectAndValues.ixx" />
+    <ClCompile Include="DrawableObject.ixx" />
+    <ClCompile Include="DWritEx.ixx" />
+    <ClCompile Include="Common.ListSubstringPrioritizer.ixx" />
+    <ClCompile Include="Common.OptionalValue.ixx" />
+    <ClCompile Include="Common.AutoResource.Windows.ixx" />
+    <ClCompile Include="Common.AutoResource.ixx" />
     <ClCompile Include="Common.String.ixx" />
     <ClCompile Include="Common.ArrayRef.ixx" />
     <ClCompile Include="Common.cpp" />
+    <ClCompile Include="precomp.cpp">
+      <PrecompiledHeader>Create</PrecompiledHeader>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Application.h" />
     <ClInclude Include="Common.ArrayRef.h" />
     <ClInclude Include="Attributes.h" />
-    <ClInclude Include="Common.AutoResource.h">
-      <FileType>Document</FileType>
-    </ClInclude>
+    <ClInclude Include="Common.AutoResource.h" />
+    <ClInclude Include="Common.AutoResource.Windows.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="Common.ListSubstringPrioritizer.h" />
     <ClInclude Include="DrawableObject.h" />
@@ -151,9 +153,9 @@
     <ClInclude Include="precomp.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="Common.String.h" />
-    <ClInclude Include="TextLayoutSampler.h" />
     <ClInclude Include="TextTreeParser.h" />
     <ClInclude Include="WindowUtility.h" />
+    <ClInclude Include="WindowUtility.macros.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="MainWindow.rc" />
@@ -165,12 +167,7 @@
     <Image Include="MainWindow.ico" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Common.AutoResource.ixx">
-      <FileType>Document</FileType>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="Common.OptionalValue.ixx">
+    <ClCompile Include="Application.ixx">
       <FileType>Document</FileType>
     </ClCompile>
   </ItemGroup>

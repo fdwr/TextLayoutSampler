@@ -12,12 +12,15 @@
 
 #include "precomp.h"
 #include "resource.h"
-#include "wchar.h"
+#include <string>
+#include <Windows.h>
+
+import Common.String;
+import WindowUtility;
 
 module MessageBoxShaded;
 
-import Common.String;
-
+////////////////////////////////////////
 
 namespace
 {

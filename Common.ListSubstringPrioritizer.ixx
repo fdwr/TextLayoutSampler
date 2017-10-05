@@ -15,6 +15,7 @@ export
     #include "Common.ListSubstringPrioritizer.h"
 }
 
+////////////////////////////////////////
 
 ListSubstringPrioritizer::ListSubstringPrioritizer(
     array_ref<char16_t const> filterString,

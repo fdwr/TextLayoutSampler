@@ -4,8 +4,6 @@
 //              2015-10-20 Forked
 //----------------------------------------------------------------------------
 #include "precomp.h"
-
-
 #include <array>
 #include <stdint.h>
 #include <initializer_list>
@@ -13,11 +11,12 @@
 #include <string>
 
 module Common.ArrayRef;
-
 export
 {
     #include "Common.ArrayRef.h"
 }
+
+////////////////////////////////////////
 
 template <typename ResourceType = void*>
 class WrapperType

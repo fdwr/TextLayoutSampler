@@ -8,11 +8,17 @@
 //
 //----------------------------------------------------------------------------
 #include "precomp.h"
-#include "TextTreeParser.h"
-
 
 import Common.String;
+import Common.ArrayRef;
 
+module TextTreeParser;
+export
+{
+    #include "TextTreeParser.h"
+}
+
+////////////////////////////////////////
 
 namespace
 {

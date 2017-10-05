@@ -11,17 +11,44 @@
 #include <windows.h>
 #include <Dwrite_2.h>
 
+import Common.ArrayRef;
+import Common.String;
+import FileHelpers;
+
 #pragma comment(lib, "DWrite.lib")
 
-import FileHelpers;
-import Common.String;
-import Common.ArrayRef;
-
 module DWritEx;
-
 export
 {
     #include "DWritEx.h"
+}
+
+////////////////////////////////////////
+
+void CombineMatrix(
+    _In_  DX_MATRIX_3X2F const& a,
+    _In_  DX_MATRIX_3X2F const& b,
+    _Out_ DX_MATRIX_3X2F& result
+    )
+{
+    DEBUG_ASSERT(&a != &result);
+    DEBUG_ASSERT(&b != &result);
+
+    // Common transposed dot product (as opposed to any of the other numerous
+    // forms of matrix 'multiplication' like the element-wise Hadamard product)
+    // such that:
+    //
+    //  If you transpose <10,0> and rotate 45 degrees, you'll be at <.7,.7>
+    //  If you rotate 45 degrees and transpose <10,0>, you'll be at <10,0>
+    //
+    // This is similar to XNA and opposite of OpenGL (so, easier to understand).
+
+    result.xx = a.xx * b.xx + a.xy * b.yx;
+    result.xy = a.xx * b.xy + a.xy * b.yy;
+    result.yx = a.yx * b.xx + a.yy * b.yx;
+    result.yy = a.yx * b.xy + a.yy * b.yy;
+    result.dx = a.dx * b.xx + a.dy * b.yx + b.dx;
+    result.dy = a.dx * b.xy + a.dy * b.yy + b.dy;
 }
 
 

@@ -58,7 +58,6 @@
 #include <malloc.h>
 #include <memory.h>
 #include <tchar.h>
-//#include <xutility>
 #include <math.h>
 #include <new>
 #include <algorithm>
@@ -72,8 +71,6 @@
 #include <string>
 #include <functional>
 #include <map>
-
-//#include <yvals.h>
 
 //////////////////////////////
 // Windows Header Files:

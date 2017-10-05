@@ -4,16 +4,16 @@
 //----------------------------------------------------------------------------
 #include "precomp.h"
 
-
 import Common.String;
 import Common.ArrayRef;
+import Common.AutoResource;
+import Common.AutoResource.Windows;
 
 module WindowUtility;
 export
 {
     #include "WindowUtility.h"
 }
-
 
 ////////////////////////////////////////
 
@@ -52,6 +52,24 @@ namespace
             return hr;
         }
     };
+}
+
+
+// Maps exceptions to equivalent HRESULTs,
+HRESULT ExceptionToHResult() throw()
+{
+    try
+    {
+        throw;  // Rethrow previous exception.
+    }
+    catch (std::bad_alloc const&)
+    {
+        return E_OUTOFMEMORY;
+    }
+    catch (...)
+    {
+        return E_FAIL;
+    }
 }
 
 
@@ -130,7 +148,7 @@ HRESULT PasteFromClipboard(OUT std::u16string& text)
                 }
                 catch (...)
                 {
-                    lastError.hr = Application::ExceptionToHResult();
+                    lastError.hr = ExceptionToHResult();
                 }
 
                 GlobalUnlock(hClipboardData);

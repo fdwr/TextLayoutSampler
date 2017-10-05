@@ -4,7 +4,7 @@
 //----------------------------------------------------------------------------
 #include "precomp.h"
 #include <specstrings.h>
-#include "Application.h"
+#include "Application.macros.h"
 
 import Common.String;
 

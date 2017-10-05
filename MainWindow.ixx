@@ -35,7 +35,7 @@ App translucency
 
 #include "precomp.h"
 #include "resource.h"
-#include "Application.h"
+#include "Application.macros.h"
 #include "WindowUtility.macros.h"
 
 import Common.ArrayRef;

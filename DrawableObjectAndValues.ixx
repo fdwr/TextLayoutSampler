@@ -713,7 +713,7 @@ HRESULT DrawableObjectAndValues::Set(DrawableObjectAttribute attributeIndex, _In
 {
     // Set a single attribute's value, parsing the string according to attribute data type.
 
-    static_assert(_countof(values_) == countof(DrawableObject::attributeList), "Attribute and value arrays differ in size.");
+    static_assert(_countof(DrawableObjectAndValues::values_) == countof(DrawableObject::attributeList), "Attribute and value arrays differ in size.");
     if (attributeIndex >= countof(values_))
         E_INVALIDARG;
 

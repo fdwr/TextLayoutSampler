@@ -26,7 +26,7 @@ bool ThrowIf(bool value, _In_opt_z_ char const* message = nullptr);
 #define DEBUG_ASSERT assert
 
 template <typename T, size_t N>
-constexpr size_t countof(T(&a)[N])
+constexpr size_t countof(const T(&a)[N])
 {
     return N;// _countof(a);
 }

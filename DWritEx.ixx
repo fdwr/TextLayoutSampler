@@ -9,7 +9,7 @@
 #include "precomp.h"
 
 #include <windows.h>
-#include <Dwrite_2.h>
+#include <Dwrite_3.h>
 
 import Common.ArrayRef;
 import Common.String;

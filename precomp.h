@@ -147,20 +147,6 @@
 // Generic.
 
 #include "Common.h"
-//!#include "Common.OptionalValue.h"
-//!#include "Common.AutoResource.h"
-//!#include "DWritEx.h"
-//!#include "Common.ListSubstringPrioritizer.h"
-
-//////////////////////////////
-// Application specific.
-
-//!#include "DrawingCanvas.h"
-//!#include "Attributes.h"
-//!#include "TextTreeParser.h"
-//!#include "DrawableObject.h"
-//!#include "DrawableObjectAndValues.h"
-//!#include "TextLayoutSampler.h"
 
 void DebugLog(const wchar_t* logMessage, ...);
 

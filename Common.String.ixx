@@ -385,8 +385,8 @@ void ConvertTextUtf8ToUtf16(
 
     // Skip byte-order-mark.
     int32_t startingOffset = 0;
-    if (utf8text.size() >= countof(utf8bom)
-    &&  memcmp(utf8text.data(), utf8bom, countof(utf8bom)) == 0)
+    if (utf8text.size() >= std::size(utf8bom)
+    &&  memcmp(utf8text.data(), utf8bom, std::size(utf8bom)) == 0)
     {
         startingOffset = ARRAYSIZE(utf8bom);
     }

@@ -124,7 +124,7 @@ int Application::DisplayError(__in_z const char16_t* message, __in_z_opt const c
 
     StringCchPrintf(
         buffer,
-        countof(buffer),
+        std::size(buffer),
         ToWChar(formatString),
         ToWChar(message),
         functionResult
@@ -150,7 +150,7 @@ void Application::DebugLog(const char16_t* logMessage, ...)
     buffer[0] = 0;
     StringCchVPrintf(
         buffer,
-        countof(buffer),
+        std::size(buffer),
         ToWChar(logMessage),
         argList
         );

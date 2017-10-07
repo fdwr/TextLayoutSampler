@@ -5,6 +5,7 @@
 #include "precomp.h"
 #include <string>
 #include <stdint.h>
+#include "Common.h"
 
 import Common.String;
 

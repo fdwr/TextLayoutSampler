@@ -2463,7 +2463,7 @@ HRESULT DrawableObjectDirect2DDrawGlyphRun::Draw(
     d2dRenderTarget->SetTransform(&transform.d2d);
     d2dRenderTarget->BeginDraw();
 
-    // hack::::
+    // debugging hack to draw rects behind glyphs.
     #if 0
     DWRITE_FONT_METRICS fontMetrics;
     std::vector<DWRITE_GLYPH_METRICS> glyphMetricsArray(cachedGlyphRun.glyphCount);
@@ -2748,68 +2748,6 @@ HRESULT DrawableObjectDWriteBitmapRenderTargetLayoutDraw::Draw(
         );
 
     renderTarget->SetCurrentTransform(&DrawableObject::identityTransform.dwrite);
-
-    // hack:
-#if 0
-    auto* factory = drawingCanvas.GetDWriteFactoryWeakRef();
-    ComPtr<IDWriteFactory6> factory6;
-    IFR(factory->QueryInterface(OUT &factory6));
-    ComPtr<IDWriteFontSet> fontSet;
-    ComPtr<IDWriteFontSetBuilder1> fontSetBuilder;
-    IFR(factory6->CreateFontSetBuilder(OUT &fontSetBuilder));
-    ComPtr<IDWriteFontFile> fontFile;
-    ComPtr<IDWriteFontFaceReference1> fontFaceReference;
-    FILETIME fileTime = {};
-    IFR(factory6->CreateFontFileReference(L"c:\\foo.ttf", &fileTime, OUT &fontFile));
-    IFR(factory6->CreateFontFaceReference(fontFile, 0, DWRITE_FONT_SIMULATIONS_NONE, nullptr, 0, OUT &fontFaceReference));
-
-#if 0
-    ptr auto factory = drawingCanvas.Factory
-    Windows.FileTime fileTime = {}
-    auto fontSetBuilder = factory.CreateFontSetBuilder()
-    auto fontFile = factory.CreateFontFileReference("c:\\foo.ttf", fileTime)
-    auto fontFaceReference = factory.CreateFontFaceReference(fontFile, 0, DWrite.FontSimulations.None, nullptr, 0)
-    auto fontSet = fontSetBuilder.CreateFontSet()
-
-    const DWrite.FontProperty fontProperties0[] = {
-        { DWrite.FontPropertyId.FamilyName, "arial", "" },
-        { DWrite.FontPropertyId.FamilyName, "Arial", "" },
-        { DWrite.FontPropertyId.FamilyName, "Trial", "" },
-        { DWrite.FontPropertyId.FamilyName, "triaL", "" },
-        { DWrite.FontPropertyId.FamilyName, "일반체", "" },
-    }
-    const DWrite.FontProperty fontProperties1[] = {
-        { DWrite.FontPropertyId.FamilyName, "일반체", "" },
-        { DWrite.FontPropertyId.FamilyName, "일반체", "" },
-        { DWrite.FontPropertyId.FamilyName, "arial", "" },
-    }
-
-#endif
-
-    const DWRITE_FONT_PROPERTY fontProperties0[] = {
-        { DWRITE_FONT_PROPERTY_ID_TYPOGRAPHIC_FAMILY_NAME, L"arial", L"" },
-        { DWRITE_FONT_PROPERTY_ID_TYPOGRAPHIC_FAMILY_NAME, L"Arial", L"" },
-        { DWRITE_FONT_PROPERTY_ID_TYPOGRAPHIC_FAMILY_NAME, L"Trial", L"" },
-        { DWRITE_FONT_PROPERTY_ID_TYPOGRAPHIC_FAMILY_NAME, L"triaL", L"" },
-        { DWRITE_FONT_PROPERTY_ID_TYPOGRAPHIC_FAMILY_NAME, L"일반체", L"" },
-    };
-    const DWRITE_FONT_PROPERTY fontProperties1[] = {
-        { DWRITE_FONT_PROPERTY_ID_TYPOGRAPHIC_FAMILY_NAME, L"일반체", L"" },
-        { DWRITE_FONT_PROPERTY_ID_TYPOGRAPHIC_FAMILY_NAME, L"일반체", L"" },
-        { DWRITE_FONT_PROPERTY_ID_TYPOGRAPHIC_FAMILY_NAME, L"arial", L"" },
-    };
-
-    const array_ref<DWRITE_FONT_PROPERTY const> fontPropertiesArray[] = {
-        fontProperties0,
-        fontProperties1,
-    };
-
-    for (auto& fontProperties : fontPropertiesArray)
-    {
-        IFR(fontSetBuilder->AddFontFaceReference(fontFaceReference, fontProperties.data(), fontProperties.size()));
-    }
-    IFR(fontSetBuilder->CreateFontSet(OUT &fontSet));
-#endif
 
     return hr;
 }

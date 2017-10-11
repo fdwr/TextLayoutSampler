@@ -2956,8 +2956,7 @@ void MainWindow::ShowMessageAndAppendLog(const char16_t* logMessage, ...)
     buffer[0] = 0;
     StringCchVPrintf(OUT ToWChar(buffer), countof(buffer), ToWChar(logMessage), argList);
 
-    HWND__* h = reinterpret_cast<HWND__*>(hwnd_); // hack:::
-    MessageBoxShaded::Show(h, buffer, u"", MB_OK|MB_ICONWARNING);
+    MessageBoxShaded::Show(hwnd_, buffer, u"", MB_OK|MB_ICONWARNING);
 
     AppendLogDirect(buffer);
     if (buffer[wcslen(ToWChar(buffer))] != '\n')

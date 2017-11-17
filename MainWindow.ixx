@@ -50,7 +50,7 @@ import DrawableObject;
 import Application;
 
 #if CPP_MODULES_ARE_FIXED
-import DrawableObjectAndValues; // Causes internal 
+import DrawableObjectAndValues; // Causes internal compiler error crash.
 #else
 import TextTreeParser; // for DrawableObjectAndValues
 #include "DrawableObjectAndValues.h"
@@ -59,10 +59,8 @@ import TextTreeParser; // for DrawableObjectAndValues
 #pragma comment(lib, "ComCtl32.lib")
 
 module MainWindow;
-export
-{
-    #include "MainWindow.h"
-}
+
+#include "MainWindow.h"
 
 ////////////////////////////////////////
 

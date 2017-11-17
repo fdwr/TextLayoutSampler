@@ -518,7 +518,6 @@ void StoreDrawableObject(
             continue; // Skip this attribute since it's identical to the shared object.
         }
 
-
         Attribute const& attribute = DrawableObject::attributeList[attributeId];
         objectNode.SetKeyValue(
             attribute.name,

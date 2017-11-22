@@ -1,32 +1,32 @@
 ﻿/*
 todo:::
-Rendering mode
-Custom font fallback
-Custom font collection
-AddFontMemResource
-EDIT/RichEdit
-Show red attribute on parse error
-Add font selection dialog
-Add font open dialog for font file
-Get all characters
+-Custom font fallback
+-Custom font collection
+-EDIT/RichEdit
+-Show red attribute on parse error
 ?Character glyph map
-App translucency
--Hit test canvas
--Pan scroll canvas
--Font fallback enable/disable
--Store settings
--Load settings
--Transform drawable objects
--Context menu on drawable objects right-click
--Drawable object absolute placement
--Draw labels
--Reflow drawable objects
--GDI+ DrawString/MeasureString
--GDI+ DrawDriverString
--Show red box on drawing error
--Draw object background colors and object together
--Fix user32 DrawText for vertical
--Save selected font file
+?App translucency
++Rendering mode
++GDI AddFontMemResource
++Add font open dialog for font file
++Get all characters
++Add font selection dialog
++Hit test canvas
++Pan scroll canvas
++Font fallback enable/disable
++Store settings
++Load settings
++Transform drawable objects
++Context menu on drawable objects right-click
++Drawable object absolute placement
++Draw labels
++Reflow drawable objects
++GDI+ DrawString/MeasureString
++GDI+ DrawDriverString
++Show red box on drawing error
++Draw object background colors and object together
++Fix user32 DrawText for vertical
++Save selected font file
 */
 //----------------------------------------------------------------------------
 //  Author:     Dwayne Robinson

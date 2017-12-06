@@ -39,8 +39,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <EmbedManifest>false</EmbedManifest>
-    <OutDir>$(SolutionDir)$(Platform)_$(Configuration)\</OutDir>
-    <IntDir>$(Platform)_$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)\.$(Platform)_$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)\.$(Platform)_$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>

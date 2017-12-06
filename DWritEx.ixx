@@ -805,12 +805,12 @@ HRESULT CreateFontFaceFromFile(
             dwriteFactory6->CreateFontFaceReference(
                 fontFile,
                 fontFaceIndex,
-                DWRITE_FONT_SIMULATIONS_NONE,
+                fontSimulations,
                 fontAxisValues.data(),
                 static_cast<uint32_t>(fontAxisValues.size()), // variationAxisCount
                 OUT &fontFaceReference
             );
-            fontFaceReference->CreateFontFace(OUT reinterpret_cast<IDWriteFontFace5**>(fontFace));
+            return fontFaceReference->CreateFontFace(OUT reinterpret_cast<IDWriteFontFace5**>(fontFace));
         }
     }
 

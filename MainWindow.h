@@ -62,6 +62,7 @@ public:
 
     struct FontFamilyNameProperties;
 
+    void InitializeDefaultDrawableObjects();
     HRESULT LoadTextFileIntoDrawableObjects(_In_z_ char16_t const* filePath);
     HRESULT StoreTextFileFromDrawableObjects(_In_z_ char16_t const* filePath);
     HRESULT LoadFontFileIntoDrawableObjects(_In_z_ char16_t const* filePath);
@@ -89,6 +90,7 @@ protected:
     void UpdateDrawableObjectsListView();
     void DeleteDrawableObjectsListViewSelected();
     void CreateDrawableObjectsListViewSelected();
+    void EnsureAtLeastOneDrawableObject();
     void ShiftSelectedDrawableObjects(int32_t shiftDirection /* down = positive, up = negative */);
     HRESULT LoadDrawableObjectsSettings(bool clearExistingItems = true, bool merge = false);
     HRESULT StoreDrawableObjectsSettings();

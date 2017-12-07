@@ -94,6 +94,7 @@ int APIENTRY wWinMain(
     Application::g_hModule = hInstance;
 
     _wsetlocale(LC_ALL, L""); // Unicode, not ANSI!
+    bool wantBlankCanvas = false;
 
     ////////////////////
     // Read command line parameters.
@@ -112,12 +113,16 @@ int APIENTRY wWinMain(
             MessageBox(nullptr, L"TextLayoutSampler.exe [SomeFile.TextLayoutSamplerSettings].", APPLICATION_TITLE, MB_OK);
             return (int)0;
         }
+        else if (_wcsicmp(ToWChar(trimmedCommandLine.c_str()), L"/blank") == 0)
+        {
+            wantBlankCanvas = true;
+        }
         else if (trimmedCommandLine[0] == '/')
         {
             Application::Fail(trimmedCommandLine.c_str(), u"Unknown command line option.\r\n\r\n\"%s\"", 0);
         }
         UnquoteString(IN OUT trimmedCommandLine);
-        // Else just pass the command line to the main window.
+        // Else just pass parse command line as a settings file name.
     }
 
     ////////////////////
@@ -136,6 +141,10 @@ int APIENTRY wWinMain(
     if (!trimmedCommandLine.empty())
     {
         mainWindow.LoadDrawableObjectsSettings(trimmedCommandLine.data());
+    }
+    else if (!wantBlankCanvas)
+    {
+        mainWindow.InitializeDefaultDrawableObjects();
     }
 
     while (GetMessage(&Application::g_msg, nullptr, 0, 0) > 0)
@@ -404,31 +413,6 @@ INT_PTR MainWindow::InitializeMainDialog()
         LWA_ALPHA
         );
     #endif
-
-    ////////////////////
-    // Initialize with initialize objects.
-
-    char16_t* const functionNames[] = {
-        u"D2D DrawTextLayout",
-        u"IDWriteBitmapRenderTarget IDWriteTextLayout",
-        u"User32 DrawText",
-        u"GDIPlus DrawString",
-        //u"GDI ExtTextOut",
-        //u"IDWriteBitmapRenderTarget DrawGlyphRun",
-        //u"GDIPlus DrawDriverString",
-    };
-    drawableObjects_.clear();
-    drawableObjects_.resize(countof(functionNames));
-
-    for (size_t i = 0; i < countof(functionNames); ++i)
-    {
-        auto& drawableObject = drawableObjects_[i];
-        drawableObject.Set(DrawableObjectAttributeFunction, functionNames[i]);
-        drawableObject.Set(DrawableObjectAttributeText, u"This is a test.");
-        drawableObject.Set(DrawableObjectAttributeFontFamily, u"Segoe UI");
-        drawableObject.Set(DrawableObjectAttributeFontSize, u"18");
-        drawableObject.Update();
-    }
 
     Edit_LimitText(GetWindowFromId(hwnd_, IdcLog), 1048576);
 
@@ -1009,7 +993,44 @@ namespace
         drawableObjectAndValues.Set(DrawableObjectAttributeText, u"This is a test.");
         drawableObjectAndValues.Set(DrawableObjectAttributeFontFamily, u"Segoe UI");
         drawableObjectAndValues.Set(DrawableObjectAttributeFontSize, u"18");
-        drawableObjectAndValues.Update();
+    }
+}
+
+
+void MainWindow::InitializeDefaultDrawableObjects()
+{
+    ////////////////////
+    // Initialize with typical APIs.
+
+    char16_t* const functionNames[] = {
+        u"D2D DrawTextLayout",
+        u"IDWriteBitmapRenderTarget IDWriteTextLayout",
+        u"User32 DrawText",
+        u"GDIPlus DrawString",
+        //u"GDI ExtTextOut",
+        //u"IDWriteBitmapRenderTarget DrawGlyphRun",
+        //u"GDIPlus DrawDriverString",
+    };
+    drawableObjects_.clear();
+    drawableObjects_.resize(countof(functionNames));
+
+    for (size_t i = 0; i < countof(functionNames); ++i)
+    {
+        auto& drawableObject = drawableObjects_[i];
+        InitializeDefaultDrawableObjectAndValues(drawableObject);
+        drawableObject.Set(DrawableObjectAttributeFunction, functionNames[i]);
+        drawableObject.Update();
+    }
+}
+
+
+void MainWindow::EnsureAtLeastOneDrawableObject()
+{
+    if (drawableObjects_.empty())
+    {
+        drawableObjects_.resize(1);
+        InitializeDefaultDrawableObjectAndValues(drawableObjects_.front());
+        drawableObjects_.front().Update();
     }
 }
 
@@ -1026,8 +1047,7 @@ void MainWindow::CreateDrawableObjectsListViewSelected()
     if (originalDrawableObjectsCount == 0)
     {
         // Initialize new default object because there are no existing ones.
-        drawableObjects_.resize(1);
-        InitializeDefaultDrawableObjectAndValues(drawableObjects_.front());
+        EnsureAtLeastOneDrawableObject();
     }
     else
     {
@@ -1591,6 +1611,8 @@ HRESULT MainWindow::SelectFontFile()
 
 HRESULT MainWindow::LoadFontFileIntoDrawableObjects(_In_z_ char16_t const* filePath)
 {
+    EnsureAtLeastOneDrawableObject();
+
     // Update the path for every selected drawable object.
     std::vector<uint32_t> const drawableObjectIndices = GetSelectedDrawableObjectIndices();
     DrawableObjectAndValues::Set(drawableObjects_, drawableObjectIndices, DrawableObjectAttributeFontFilePath, filePath);
@@ -1792,12 +1814,9 @@ HRESULT MainWindow::LoadTextFileIntoDrawableObjects(_In_z_ char16_t const* fileP
 
     if (drawableObjects_.empty())
     {
-        // todo::: Initialize defaults somewhere shared.
         drawableObjects_.resize(1);
         auto& drawableObject = drawableObjects_[0];
-        drawableObject.Set(DrawableObjectAttributeFunction, u"IDWriteBitmapRenderTarget IDWriteTextLayout");
-        drawableObject.Set(DrawableObjectAttributeFontFamily, u"Segoe UI");
-        drawableObject.Set(DrawableObjectAttributeFontSize, u"18");
+        InitializeDefaultDrawableObjectAndValues(drawableObject);
     }
 
     for (auto& drawableObject : drawableObjects_)

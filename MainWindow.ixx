@@ -1244,7 +1244,18 @@ MainWindow::DialogProcResult CALLBACK MainWindow::OnDragAndDrop(HWND hwnd, UINT 
 
 std::vector<uint32_t> MainWindow::GetSelectedDrawableObjectIndices()
 {
-    return GetListViewMatchingIndices(GetWindowFromId(hwnd_, IdcDrawableObjectsList), LVNI_SELECTED,  /*returnAllIfNoMatch*/true);
+    auto selectedIndices = GetListViewMatchingIndices(GetWindowFromId(hwnd_, IdcDrawableObjectsList), LVNI_SELECTED,  /*returnAllIfNoMatch*/true);
+
+    // Return all the indices if none are selected, or if none exist in the list control
+    // due to the drawableObjects_ array being sized before the IdcDrawableObjectsList control
+    // was updated.
+    if (selectedIndices.empty())
+    {
+        selectedIndices.resize(drawableObjects_.size());
+        std::iota(selectedIndices.begin(), selectedIndices.end(), 0);
+    }
+
+    return selectedIndices;
 }
 
 
@@ -1532,6 +1543,8 @@ UINT_PTR CALLBACK ChooseFontHookProc(
 
 HRESULT MainWindow::SelectFontFamily()
 {
+    EnsureAtLeastOneDrawableObject();
+
     LOGFONT logFont = {};
     GetLogFontFromDrawableObjects(OUT logFont);
 

@@ -2407,3 +2407,309 @@ D2D1_RECT_F GetBlackBox(const DWRITE_OVERHANG_METRICS& overhangMetrics, const DW
         /*bottom*/  overhangMetrics.bottom + textMetrics.layoutHeight
         };
 }
+
+
+HRESULT GetGlyphMetrics(
+    IDWriteFontFace* fontFace,
+    float fontEmSize,
+    float pixelsPerDip,
+    const DWRITE_MATRIX* transform,
+    DWRITE_MEASURING_MODE measuringMode,
+    bool isSideways,
+    uint32_t glyphCount,
+    _In_reads_(glyphCount) const uint16_t* glyphIndices,
+    _Out_writes_(glyphCount) DWRITE_GLYPH_METRICS* glyphMetrics
+    )
+{
+    switch (measuringMode)
+    {
+    case DWRITE_MEASURING_MODE_GDI_CLASSIC:
+    case DWRITE_MEASURING_MODE_GDI_NATURAL:
+            IFR(fontFace->GetGdiCompatibleGlyphMetrics(
+                fontEmSize,
+                pixelsPerDip,
+                transform,
+                (measuringMode == DWRITE_MEASURING_MODE_GDI_NATURAL),
+                glyphIndices,
+                glyphCount,
+                OUT glyphMetrics,
+                isSideways
+                ));
+        break;
+
+    default:
+        DEBUG_ASSERT("A new measuring mode has been added. Handle it here.");
+        __fallthrough;
+
+    case DWRITE_MEASURING_MODE_NATURAL:
+        IFR(fontFace->GetDesignGlyphMetrics(
+                glyphIndices,
+                glyphCount,
+                OUT glyphMetrics,
+                isSideways
+                ));
+        break;
+    }
+
+    return S_OK;
+}
+
+
+DWRITE_GLYPH_ORIENTATION_ANGLE GetRelativeOrientation(bool isSideways, bool isFlippedOrientation) throw()
+{
+    // Determine a relative angle from the flags.
+    //
+    //  isSideways  isFlipped ->    Angle
+    //      F           F           0
+    //      T           T           90
+    //      F           T           180
+    //      T           F           270
+
+    DWRITE_GLYPH_ORIENTATION_ANGLE          rotationAmount = DWRITE_GLYPH_ORIENTATION_ANGLE_0_DEGREES;
+    if (isSideways)                         rotationAmount = DWRITE_GLYPH_ORIENTATION_ANGLE(rotationAmount + 1);
+    if (isSideways != isFlippedOrientation) rotationAmount = DWRITE_GLYPH_ORIENTATION_ANGLE(rotationAmount + 2);
+
+    return rotationAmount;
+}
+
+
+void AccumulateRect(_Inout_ D2D1_RECT_F& modifiedRect, D2D1_RECT_F const& otherRect)
+{
+    if (otherRect.left   < modifiedRect.left)    modifiedRect.left = otherRect.left;
+    if (otherRect.right  > modifiedRect.right)   modifiedRect.right = otherRect.right;
+    if (otherRect.top    < modifiedRect.top)     modifiedRect.top = otherRect.top;
+    if (otherRect.bottom > modifiedRect.bottom)  modifiedRect.bottom = otherRect.bottom;
+}
+
+
+inline void OffsetRect(_Inout_ D2D1_RECT_F& modifiedRect, float x, float y)
+{
+    modifiedRect.left   += x;
+    modifiedRect.top    += y;
+    modifiedRect.right  += x;
+    modifiedRect.bottom += y;
+}
+
+
+template<typename RectType>
+void RotateRect(
+    _Inout_ RectType& modifiedRect,
+    DWRITE_GLYPH_ORIENTATION_ANGLE rotationAmount
+    )
+{
+    // Rotate the corners around the zero point <0,0>, whether it be a glyph
+    // or inline object.
+    switch (rotationAmount)
+    {
+    case DWRITE_GLYPH_ORIENTATION_ANGLE_0_DEGREES:
+        break; // do nothing
+
+    case DWRITE_GLYPH_ORIENTATION_ANGLE_90_DEGREES:
+        {
+            auto oldLeft          =  modifiedRect.left;
+            modifiedRect.left     =  modifiedRect.bottom;
+            modifiedRect.bottom   = -modifiedRect.right;
+            modifiedRect.right    =  modifiedRect.top;
+            modifiedRect.top      = -oldLeft;
+        }
+        break;
+
+    case DWRITE_GLYPH_ORIENTATION_ANGLE_180_DEGREES: // for stacked Arabic
+        {
+            std::swap(modifiedRect.left, modifiedRect.right);
+            std::swap(modifiedRect.top, modifiedRect.bottom);
+            modifiedRect.left     = -modifiedRect.left;
+            modifiedRect.right    = -modifiedRect.right;
+            modifiedRect.top      = -modifiedRect.top;
+            modifiedRect.bottom   = -modifiedRect.bottom;
+        }
+        break;
+
+    case DWRITE_GLYPH_ORIENTATION_ANGLE_270_DEGREES: // for ideographs (isSideways = true)
+        {
+            auto oldLeft          =  modifiedRect.left;
+            modifiedRect.left     =  modifiedRect.top;
+            modifiedRect.top      = -modifiedRect.right;
+            modifiedRect.right    =  modifiedRect.bottom;
+            modifiedRect.bottom   = -oldLeft;
+        }
+        break;
+
+    default:
+        DEBUG_ASSERT("Update the code to handle the new orientation.");
+    }
+}
+
+
+// Checks whether a glyph has a non-empty black box.
+inline bool GlyphHasSize(DWRITE_GLYPH_METRICS const& glyphMetrics) throw()
+{
+    return static_cast<int64_t>(glyphMetrics.advanceWidth)  - glyphMetrics.leftSideBearing - glyphMetrics.rightSideBearing  > 0
+        && static_cast<int64_t>(glyphMetrics.advanceHeight) - glyphMetrics.topSideBearing  - glyphMetrics.bottomSideBearing > 0;
+}
+
+
+HRESULT GetGlyphRunBlackBox(
+    float baselineOriginX,
+    float baselineOriginY,
+    IDWriteFontFace* fontFace,
+    float fontEmSize,
+    float pixelsPerDip,
+    const DWRITE_MATRIX* transform,
+    DWRITE_MEASURING_MODE measuringMode,
+    bool isRtlContent,
+    bool isRtlSpan,
+    bool isSideways,
+    uint32_t glyphCount,
+    _In_reads_(glyphCount) const uint16_t* glyphIndices,
+    _In_reads_(glyphCount) const float* glyphAdvances,
+    _In_reads_opt_(glyphCount) const DWRITE_GLYPH_OFFSET* glyphOffsets,
+    _Inout_ D2D1_RECT_F& blackBox
+)
+{
+    if (glyphCount <= 0)
+    {
+        return S_OK;
+    }
+
+    DWRITE_FONT_METRICS fontMetrics = {};
+    fontFace->GetMetrics(&fontMetrics);
+
+    DWRITE_GLYPH_METRICS smallBuffer[120];
+    std::vector<DWRITE_GLYPH_METRICS> bigBuffer;
+    DWRITE_GLYPH_METRICS* glyphRunMetrics = smallBuffer;
+
+    if (glyphCount > std::size(smallBuffer))
+    {
+        bigBuffer.resize(glyphCount);
+        glyphRunMetrics = &bigBuffer[0];
+    }
+
+    IFR(GetGlyphMetrics(
+        fontFace,
+        fontEmSize,
+        pixelsPerDip,
+        transform,
+        measuringMode,
+        isSideways,
+        glyphCount,
+        glyphIndices,
+        OUT glyphRunMetrics
+    ));
+
+    D2D1_RECT_F accumulatedBounds;
+    float       baselineX = baselineOriginX;
+    float const baselineY = baselineOriginY;
+    float const fontScale = fontEmSize / fontMetrics.designUnitsPerEm;
+
+    // Determine how to rotate the blackbox of each glyph from the flags.
+
+    bool const isFlippedOrientation = (isRtlContent != isRtlSpan);
+    DWRITE_GLYPH_ORIENTATION_ANGLE const rotationAmount = GetRelativeOrientation(isSideways, isFlippedOrientation);
+
+    for (uint32_t j = 0; j < glyphCount; ++j)
+    {
+        DWRITE_GLYPH_METRICS const& glyphMetrics = glyphRunMetrics[j];
+        float const nominalGlyphAdvance = (isSideways ? glyphMetrics.advanceHeight : glyphMetrics.advanceWidth) * fontScale;
+        float const glyphAdvance = (glyphAdvances != nullptr) ? glyphAdvances[j] : nominalGlyphAdvance;
+
+        float glyphX = baselineX, glyphY = baselineY;
+
+        // When glyphs are drawn RTL, the glyph origin is on the opposite
+        // side of the pen. So add the nominal advance to get the glyph origin
+        // (the nominal advance, not the user supplied advance). The sign
+        // depends on whether the glyphs are increasing/decreasing in
+        // coordinate space which depends on the direction of the span
+        // rather than the content (since upside-down RTL text is effectively
+        // LTR).
+        if (isRtlContent)
+        {
+            glyphX += isRtlSpan ? -nominalGlyphAdvance : nominalGlyphAdvance;
+        }
+        // Advance the pen.
+        baselineX += isRtlSpan ? -glyphAdvance : glyphAdvance;
+
+        // Skip any blank glyphs like the space character, which has no black box.
+        if (!GlyphHasSize(glyphMetrics))
+            continue;
+
+        // For sideways glyphs like ideographs in vertical, move from the pen
+        // position (which is relative to the vertical origin) to the glyph
+        // origin at the bottom left (0,0 in font design space). The delta
+        // from the vertical origin to the horizontal origin is the vertical
+        // origin distance and half the advance width.
+        if (isSideways)
+        {
+            // If the glyph run is flipped relative to the line, then reverse
+            // the signs, since the glyph is turned 180 degrees relative to
+            // the coordinate space.
+            int32_t originY = glyphMetrics.verticalOriginY;
+            int32_t advance = glyphMetrics.advanceWidth;
+            glyphX += (isFlippedOrientation ? -originY : originY) * fontScale;
+            glyphY += (isFlippedOrientation ? -advance : advance) * fontScale * 0.5f;
+        }
+
+        // Determine ink edges of glyph (in font design units but Cartesian coordinates).
+        // The four corners are relative to the horizontal glyph origin now.
+        D2D_RECT_L intBounds = {
+            int32_t(glyphMetrics.leftSideBearing),
+            int32_t(glyphMetrics.topSideBearing - glyphMetrics.verticalOriginY),
+            int32_t(glyphMetrics.advanceWidth - glyphMetrics.rightSideBearing),
+            int32_t(glyphMetrics.advanceHeight - glyphMetrics.bottomSideBearing - glyphMetrics.verticalOriginY)
+        };
+
+        RotateRect(IN OUT intBounds, rotationAmount);
+
+        // Add the glyph offset from shaping/character spacing/justification.
+        if (glyphOffsets != nullptr)
+        {
+            float advanceOffset = glyphOffsets[j].advanceOffset;
+            float ascenderOffset = glyphOffsets[j].ascenderOffset;
+            glyphX += isRtlSpan ? -advanceOffset : advanceOffset;
+            glyphY += isFlippedOrientation ? ascenderOffset : -ascenderOffset;
+        }
+
+        // Scale the font design units by the font size to get DIPs
+        // and add the glyph position to move from glyph space to layout space.
+        D2D1_RECT_F glyphBounds = {
+            float(intBounds.left)   * fontScale,
+            float(intBounds.top)    * fontScale,
+            float(intBounds.right)  * fontScale,
+            float(intBounds.bottom) * fontScale
+        };
+        OffsetRect(IN OUT glyphBounds, glyphX, glyphY);
+
+        AccumulateRect(IN OUT accumulatedBounds, glyphBounds);
+    }
+
+    AccumulateRect(IN OUT blackBox, accumulatedBounds);
+
+    return S_OK;
+}
+
+
+HRESULT GetGlyphRunBlackBox(
+    DWRITE_GLYPH_RUN const& glyphRun,
+    float baselineOriginX,
+    float baselineOriginY,
+    _Inout_ D2D1_RECT_F& blackBox
+    )
+{
+    return GetGlyphRunBlackBox(
+        baselineOriginX,
+        baselineOriginY,
+        glyphRun.fontFace,
+        glyphRun.fontEmSize,
+        1, // pixelsPerDip
+        nullptr, // transform
+        DWRITE_MEASURING_MODE_NATURAL,
+        glyphRun.bidiLevel & 1,
+        glyphRun.bidiLevel & 1,
+        glyphRun.isSideways,
+        glyphRun.glyphCount,
+        glyphRun.glyphIndices,
+        glyphRun.glyphAdvances,
+        glyphRun.glyphOffsets,
+        OUT blackBox
+    );
+}

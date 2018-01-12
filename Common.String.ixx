@@ -141,10 +141,17 @@ void TrimSpaces(_Inout_ std::u16string& text)
 
 void UnquoteString(_Inout_ std::u16string& path)
 {
+    if (path.empty())
+        return;
+
     if (path.back() == '\"')
     {
         path.pop_back();
     }
+
+    if (path.empty())
+        return;
+
     if (path.front() == '\"')
     {
         path.erase(0, 1);

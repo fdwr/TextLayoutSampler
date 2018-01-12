@@ -116,6 +116,7 @@ int APIENTRY wWinMain(
         else if (_wcsicmp(ToWChar(trimmedCommandLine.c_str()), L"/blank") == 0)
         {
             wantBlankCanvas = true;
+            trimmedCommandLine.clear();
         }
         else if (trimmedCommandLine[0] == '/')
         {

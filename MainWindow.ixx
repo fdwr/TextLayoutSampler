@@ -1968,19 +1968,20 @@ HRESULT MainWindow::SaveUnpackedWoffFontFile()
 
     saveFilePath = openFilePath;
     RemoveFileNameExtension(IN OUT saveFilePath);
-    if (!GetSaveFileName(hwnd_, saveFilters, u"otf", saveFilePath.c_str(), OUT saveFilePath))
+    if (!GetSaveFileName(hwnd_, saveFilters, u"otf", saveFilePath.c_str(), OUT saveFilePath, u"Save unpacked OpenType font file"))
         return S_FALSE;
 
     std::vector<uint8_t> fileData;
     IFR(ShowMessageIfError(
-        u"Could not read file",
-        ReadBinaryFile(openFilePath.c_str(), OUT fileData)
+        u"Could not read WOFF file (error = %08X) '%s'",
+        ReadBinaryFile(openFilePath.c_str(), OUT fileData),
+        openFilePath.c_str()
         ));
 
     DWRITE_CONTAINER_TYPE containerType = dwriteFactory->AnalyzeContainerType(fileData.data(), static_cast<uint32_t>(fileData.size()));
     if (containerType == DWRITE_CONTAINER_TYPE_UNKNOWN)
     {
-        ShowMessageAndAppendLog(u"Unknown container type for file '%s'", openFilePath.c_str());
+        ShowMessageAndAppendLog(u"Unknown container type for file '%s'. Expect WOFF or WOFF2.", openFilePath.c_str());
         return DWRITE_E_FILEFORMAT;
     }
 
@@ -1993,12 +1994,12 @@ HRESULT MainWindow::SaveUnpackedWoffFontFile()
         ));
 
     IFR(ShowMessageIfError(
-        u"Could not write font to file. Error = 0x%08X writing to '%s'.",
+        u"Could not write unpacked font to file (error = 0x%08X) '%s'.",
         SaveDWriteFontFile(fontFileStream, saveFilePath.c_str()),
         saveFilePath.c_str()
         ));
 
-    AppendLog(u"Wrote font to file '%s'.\r\n", saveFilePath.c_str());
+    AppendLog(u"Wrote unpacked font to file '%s'.\r\n", saveFilePath.c_str());
     return S_OK;
 }
 

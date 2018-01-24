@@ -107,6 +107,16 @@ HRESULT GetFileModifiedDate(
     _Out_ FILETIME& fileTime
     ) throw();
 
+HRESULT SaveDWriteFontFile(
+    IDWriteFontFileStream* fontFileStream,
+    _In_z_ char16_t const* filePath
+    );
+
+HRESULT SaveDWriteFontFile(
+    IDWriteFontFace* fontFace,
+    _In_z_ char16_t const* filePath
+    );
+
 // Overload that takes a DWRITE_MEASURING_MODE, since the measuring mode is often used.
 HRESULT CreateTextLayout(
     IDWriteFactory* factory,

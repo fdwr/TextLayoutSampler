@@ -69,6 +69,7 @@ public:
     HRESULT LoadDrawableObjectsSettings(_In_z_ char16_t const* filePath, bool clearExistingItems = true, bool merge = false);
     HRESULT StoreDrawableObjectsSettings(_In_z_ char16_t const* filePath);
     HRESULT SaveSelectedFontFile();
+    HRESULT SaveUnpackedWoffFontFile();
     HRESULT ExportFontGlyphData();
     HRESULT AutofitDrawableObjects(bool useMaximumWidth, bool useMaximumHeight);
     HRESULT GetSelectedDrawableObject(_Out_ uint32_t& selectedDrawableObject); // S_FALSE and ~0 if none.
@@ -115,11 +116,13 @@ protected:
 // Miscellaneous public.
 
 public:
-    void AppendLogCached(const char16_t* logMessage, ...);
-    void AppendLog(const char16_t* logMessage, ...);
-    void AppendLogDirect(const char16_t* logMessage);
-    void ShowMessageAndAppendLog(const char16_t* logMessage, ...);
-    HRESULT ShowMessageIfError(const char16_t* logMessage, HRESULT hr);
+    void AppendLogCached(char16_t const* logMessage, ...);
+    void AppendLog(char16_t const* logMessage, ...);
+    void AppendLogUnformatted(char16_t const* logMessage);
+    void ShowMessageAndAppendLog(char16_t const* logMessage, ...);
+    void ShowMessageAndAppendLogUnformatted(char16_t const* logMessage);
+    HRESULT ShowMessageIfError(char16_t const* logMessage, HRESULT hr, ...);
+
     void ClearLog();
 
 ////////////////////////////////////////

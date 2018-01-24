@@ -81,12 +81,6 @@ HRESULT ReadTextFile(const char16_t* filename, OUT std::u16string& text) throw()
 }
 
 
-HRESULT WriteTextFile(const char16_t* filename, const std::u16string& text) throw()
-{
-    return WriteTextFile(filename, text.c_str(), static_cast<uint32_t>(text.size()));
-}
-
-
 HRESULT WriteTextFile(
     const char16_t* filename,
     array_ref<char16_t const> text
@@ -315,6 +309,20 @@ const char16_t* FindFileNameExtension(array_ref<char16_t const> fileName)
     }
 
     return extension;
+}
+
+
+void RemoveFileNameExtension(_Inout_ std::u16string& fileName)
+{
+    auto* extension = FindFileNameExtension(fileName);
+
+    if (extension > fileName.data())
+    {
+        if (extension[-1] == '.')
+            --extension;
+
+        fileName.erase(extension - fileName.data());
+    }
 }
 
 

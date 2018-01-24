@@ -1366,6 +1366,41 @@ HRESULT GetFileModifiedDate(
 }
 
 
+HRESULT SaveDWriteFontFile(
+    IDWriteFontFileStream* fontFileStream,
+    _In_z_ char16_t const* filePath
+    )
+{
+    void const* fragment = nullptr;
+    void* fragmentContext = nullptr;
+    uint64_t fileSize = 0;
+
+    auto fragmentCleanup = DeferCleanup([&] { fontFileStream->ReleaseFileFragment(fragmentContext); });
+    IFR(fontFileStream->GetFileSize(OUT &fileSize));
+    IFR(fontFileStream->ReadFileFragment(OUT &fragment, 0, fileSize, OUT &fragmentContext));
+    return WriteBinaryFile(filePath, fragment, static_cast<uint32_t>(fileSize));
+}
+
+
+HRESULT SaveDWriteFontFile(
+    IDWriteFontFace* fontFace,
+    _In_z_ char16_t const* filePath
+    )
+{
+    ComPtr<IDWriteFontFile> fontFile;
+    ComPtr<IDWriteFontFileStream> fontFileStream;
+    ComPtr<IDWriteFontFileLoader> fontFileLoader;
+    void const* fontFileReferenceKey = nullptr;
+    uint32_t fontFileReferenceKeySize = 0;
+
+    IFR(GetFontFile(fontFace, &fontFile));
+    IFR(fontFile->GetLoader(OUT &fontFileLoader));
+    IFR(fontFile->GetReferenceKey(OUT &fontFileReferenceKey, OUT &fontFileReferenceKeySize));
+    IFR(fontFileLoader->CreateStreamFromKey(fontFileReferenceKey, fontFileReferenceKeySize, OUT &fontFileStream));
+    return SaveDWriteFontFile(fontFileStream, filePath);
+}
+
+
 HRESULT GetLocalizedStringLanguage(
     IDWriteLocalizedStrings* strings,
     uint32_t stringIndex,

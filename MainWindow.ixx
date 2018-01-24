@@ -1921,7 +1921,7 @@ HRESULT MainWindow::SaveSelectedFontFile()
     IFR(GetSelectedDrawableObject(OUT selectedDrawableObjectIndex));
     IFR(GetFileOrFamilyName(selectedDrawableObjectIndex, OUT filePath));
 
-    if (!GetSaveFileName(hwnd_, filePath.c_str(), filters, u"ttf", OUT filePath))
+    if (!GetSaveFileName(hwnd_, filters, u"otf", filePath.c_str(), OUT filePath))
         return S_OK;
 
     DrawingCanvasControl& drawingCanvas = *DrawingCanvasControl::GetClass(GetWindowFromId(hwnd_, IdcDrawingCanvas));
@@ -1945,6 +1945,61 @@ HRESULT MainWindow::SaveSelectedFontFile()
     }
 
     return hr;
+}
+
+
+HRESULT MainWindow::SaveUnpackedWoffFontFile()
+{
+    std::u16string openFilePath, saveFilePath;
+    auto const* openFilters = u"Fonts (*.woff *.woff2)\0" u"*.woff;*.woff2\0"
+                              u"All files (*)\0" u"*\0";
+    auto const* saveFilters = u"Fonts (*.otf *.ttf)\0" u"*.otf;*.ttf\0"
+                              u"All files (*)\0" u"*\0";
+
+    ComPtr<IDWriteFactory5> dwriteFactory;
+
+    IFR(ShowMessageIfError(
+        u"Operating system does not not support IDWriteFactory5. TextLayoutSampler uses DWrite to unpack WOFF files. Error = 0x%08X",
+        DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory5), reinterpret_cast<IUnknown**>(OUT &dwriteFactory))
+    ));
+
+    if (!GetOpenFileName(hwnd_, openFilters, OUT openFilePath, u"Open WOFF font file"))
+        return S_FALSE;
+
+    saveFilePath = openFilePath;
+    RemoveFileNameExtension(IN OUT saveFilePath);
+    if (!GetSaveFileName(hwnd_, saveFilters, u"otf", saveFilePath.c_str(), OUT saveFilePath))
+        return S_FALSE;
+
+    std::vector<uint8_t> fileData;
+    IFR(ShowMessageIfError(
+        u"Could not read file",
+        ReadBinaryFile(openFilePath.c_str(), OUT fileData)
+        ));
+
+    DWRITE_CONTAINER_TYPE containerType = dwriteFactory->AnalyzeContainerType(fileData.data(), static_cast<uint32_t>(fileData.size()));
+    if (containerType == DWRITE_CONTAINER_TYPE_UNKNOWN)
+    {
+        ShowMessageAndAppendLog(u"Unknown container type for file '%s'", openFilePath.c_str());
+        return DWRITE_E_FILEFORMAT;
+    }
+
+    ComPtr<IDWriteFontFileStream> fontFileStream;
+    IFR(dwriteFactory->UnpackFontFile(
+        containerType,
+        fileData.data(),
+        static_cast<uint32_t>(fileData.size()),
+        OUT &fontFileStream
+        ));
+
+    IFR(ShowMessageIfError(
+        u"Could not write font to file. Error = 0x%08X writing to '%s'.",
+        SaveDWriteFontFile(fontFileStream, saveFilePath.c_str()),
+        saveFilePath.c_str()
+        ));
+
+    AppendLog(u"Wrote font to file '%s'.\r\n", saveFilePath.c_str());
+    return S_OK;
 }
 
 
@@ -1999,12 +2054,10 @@ HRESULT MainWindow::ExportFontGlyphData()
     IFR(GetFileOrFamilyName(selectedDrawableObjectIndex, OUT filePath));
 
     // Remove any extension, appending underscore to separate.
-    filePath.erase(FindFileNameExtension(filePath) - filePath.data());
-    if (!filePath.empty() && filePath.back() == '.')
-        filePath.pop_back();
+    RemoveFileNameExtension(IN OUT filePath);
     filePath += u"_";
 
-    if (!GetSaveFileName(hwnd_, filePath.c_str(), filters, nullptr, OUT filePath))
+    if (!GetSaveFileName(hwnd_, filters, nullptr, filePath.c_str(), OUT filePath))
         return S_OK;
 
     DrawingCanvasControl& drawingCanvas = *DrawingCanvasControl::GetClass(GetWindowFromId(hwnd_, IdcDrawingCanvas));
@@ -2096,7 +2149,7 @@ HRESULT MainWindow::StoreDrawableObjectsSettings()
 {
     std::u16string filePath;
 
-    if (!GetSaveFileName(hwnd_, previousSettingsFilePath_.c_str(), g_openSaveFiltersList, u"TextLayoutSamplerSettings", OUT filePath))
+    if (!GetSaveFileName(hwnd_, g_openSaveFiltersList, u"TextLayoutSamplerSettings", previousSettingsFilePath_.c_str(), OUT filePath))
         return S_OK;
 
     HRESULT hr = HRESULT_FROM_WIN32(ERROR_BAD_FORMAT);
@@ -2895,7 +2948,8 @@ void MainWindow::Resize(int id)
 void MainWindow::OnAssortedActions(HWND anchorControl)
 {
     TrackPopupMenu_Item constexpr static items[] = {
-        {IdcSaveSelectedFontFile,  u"Save font file..."},
+        {IdcSaveSelectedFontFile, u"Save font file..."},
+        {IdcSaveUnpackedWoffFontFile, u"Save unpacked WOFF font file..."},
         {IdcExportGlyphImageData, u"Export all glyph image data..." },
         { 0, u"-" },
         {IdcGetAllFontCharacters, u"Get all font characters"},
@@ -2915,6 +2969,7 @@ void MainWindow::OnAssortedActions(HWND anchorControl)
     switch (menuId)
     {
     case IdcSaveSelectedFontFile: SaveSelectedFontFile(); break;
+    case IdcSaveUnpackedWoffFontFile: SaveUnpackedWoffFontFile(); break;
     case IdcGetAllFontCharacters: GetAllFontCharacters(/*copyToClipboardInstead*/false, /*getOnlyColorFontCharacters*/ false); break;
     case IdcGetAllColorFontCharacters: GetAllFontCharacters(/*copyToClipboardInstead*/false, /*getOnlyColorFontCharacters*/ true); break;
     case IdcCopyAllFontCharacters: GetAllFontCharacters(/*copyToClipboardInstead*/true, /*getOnlyColorFontCharacters*/ false); break;
@@ -2925,73 +2980,82 @@ void MainWindow::OnAssortedActions(HWND anchorControl)
 }
 
 
-void MainWindow::AppendLogCached(const char16_t* logMessage, ...)
+void MainWindow::AppendLogCached(char16_t const* logMessage, ...)
 {
     va_list argList;
     va_start(argList, logMessage);
-
     char16_t buffer[1000];
     buffer[0] = 0;
-    StringCchVPrintf(OUT ToWChar(buffer), countof(buffer), ToWChar(logMessage), argList);
 
+    StringCchVPrintf(OUT ToWChar(buffer), countof(buffer), ToWChar(logMessage), argList);
     cachedLog_ += buffer;
 }
 
 
-void MainWindow::AppendLogDirect(const char16_t* logMessage)
+void MainWindow::AppendLogUnformatted(char16_t const* logMessage)
 {
     HWND hwndLog = GetWindowFromId(hwnd_, IdcLog);
 
-    uint32_t textLength = Edit_GetTextLength(hwndLog);
     if (!cachedLog_.empty())
     {
-        Edit_SetSel(hwndLog, textLength, textLength);
-        Edit_ReplaceSel(hwndLog, cachedLog_.c_str());
-        cachedLog_.clear();
-        textLength = Edit_GetTextLength(hwndLog);
+        cachedLog_ += logMessage;
+        logMessage = cachedLog_.data();
     }
-    Edit_SetSel(hwndLog, textLength, textLength);
+    uint32_t previousTextLength = Edit_GetTextLength(hwndLog);
+    Edit_SetSel(hwndLog, previousTextLength, previousTextLength);
     Edit_ReplaceSel(hwndLog, logMessage);
+    cachedLog_.clear();
 }
 
 
-void MainWindow::AppendLog(const char16_t* logMessage, ...)
+void MainWindow::AppendLog(char16_t const* logMessage, ...)
 {
     va_list argList;
     va_start(argList, logMessage);
-    
     char16_t buffer[1000];
     buffer[0] = 0;
-    StringCchVPrintf(OUT ToWChar(buffer), countof(buffer), ToWChar(logMessage), argList);
 
-    AppendLogDirect(buffer);
+    StringCchVPrintf(OUT ToWChar(buffer), countof(buffer), ToWChar(logMessage), argList);
+    AppendLogUnformatted(buffer);
 }
 
 
-HRESULT MainWindow::ShowMessageIfError(const char16_t* logMessage, HRESULT hr)
+void MainWindow::ShowMessageAndAppendLogUnformatted(char16_t const* logMessage)
+{
+    MessageBoxShaded::Show(hwnd_, logMessage, u"", MB_OK | MB_ICONWARNING);
+
+    AppendLogUnformatted(logMessage);
+    size_t messageLength = wcslen(ToWChar(logMessage));
+    if (messageLength > 0 && logMessage[messageLength - 1] != '\n')
+        AppendLogUnformatted(u"\r\n");
+}
+
+
+void MainWindow::ShowMessageAndAppendLog(char16_t const* logMessage, ...)
+{
+    va_list argList;
+    va_start(argList, logMessage);
+    char16_t buffer[1000];
+    buffer[0] = 0;
+
+    StringCchVPrintf(OUT ToWChar(buffer), countof(buffer), ToWChar(logMessage), argList);
+    ShowMessageAndAppendLogUnformatted(buffer);
+}
+
+
+HRESULT MainWindow::ShowMessageIfError(char16_t const* logMessage, HRESULT hr, ...)
 {
     if (FAILED(hr))
     {
-        MainWindow::ShowMessageAndAppendLog(logMessage, hr);
+        va_list argList;
+        va_start(argList, logMessage);
+        char16_t buffer[1000];
+        buffer[0] = 0;
+
+        StringCchVPrintf(OUT ToWChar(buffer), countof(buffer), ToWChar(logMessage), argList);
+        MainWindow::ShowMessageAndAppendLogUnformatted(buffer);
     }
     return hr;
-}
-
-
-void MainWindow::ShowMessageAndAppendLog(const char16_t* logMessage, ...)
-{
-    va_list argList;
-    va_start(argList, logMessage);
-
-    char16_t buffer[1000];
-    buffer[0] = 0;
-    StringCchVPrintf(OUT ToWChar(buffer), countof(buffer), ToWChar(logMessage), argList);
-
-    MessageBoxShaded::Show(hwnd_, buffer, u"", MB_OK|MB_ICONWARNING);
-
-    AppendLogDirect(buffer);
-    if (buffer[wcslen(ToWChar(buffer))] != '\n')
-        AppendLogDirect(u"\r\n");
 }
 
 

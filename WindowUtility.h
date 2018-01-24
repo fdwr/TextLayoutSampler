@@ -61,9 +61,9 @@ bool GetOpenFileName(
 
 bool GetSaveFileName(
     HWND hwnd,
-    _In_opt_z_ char16_t const* defaultFileName,
     _In_opt_z_ char16_t const* fileTypes,
     _In_opt_z_ char16_t const* defaultExtension,
+    _In_opt_z_ char16_t const* defaultFileName,
     _Out_ std::u16string& fileName,
     char16_t const* title = nullptr
     );

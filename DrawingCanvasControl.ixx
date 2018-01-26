@@ -220,24 +220,23 @@ LRESULT CALLBACK DrawingCanvasControl::WindowProc(HWND hwnd, UINT message, WPARA
 
     case WM_KEYDOWN:
         {
-            float static const scrollMultiple = 64;
+            float constexpr scrollMultipleDefault = 64;
+            float constexpr scrollPageDefault = 256;
             bool heldControl = (GetKeyState(VK_CONTROL) & 0x80) != 0;
+            bool heldShift   = (GetKeyState(VK_SHIFT)   & 0x80) != 0;
+            auto getScrollMultiplier = [&]() -> float { return (heldControl && heldShift) ? 1.0f / 8 : heldControl ? 1 : scrollMultipleDefault; };
 
             switch (wParam)
             {
-            case 'C':
-                if (heldControl)
-                {
-                    CopyToClipboard();
-                }
-                break;
-
-            case VK_UP:    Pan(0,  scrollMultiple); break;
-            case VK_DOWN:  Pan(0, -scrollMultiple); break;
-            case VK_LEFT:  Pan( scrollMultiple, 0); break;
-            case VK_RIGHT: Pan(-scrollMultiple, 0); break;
-            case VK_HOME:  ResetView();             break;
-
+            case 'C':       if (heldControl) CopyToClipboard(); break;
+            case VK_UP:     Pan(0,  getScrollMultiplier()); break;
+            case VK_DOWN:   Pan(0, -getScrollMultiplier()); break;
+            case VK_LEFT:   Pan( getScrollMultiplier(), 0); break;
+            case VK_RIGHT:  Pan(-getScrollMultiplier(), 0); break;
+            case VK_PRIOR:  Pan(0,  scrollPageDefault); break;
+            case VK_NEXT:   Pan(0, -scrollPageDefault); break;
+            case VK_HOME:   if (heldControl) ResetView(); else Pan(scrollPageDefault, 0); break;
+            case VK_END:    Pan(-scrollPageDefault, 0); break;
             default:
                 return DefWindowProc(hwnd, message, wParam, lParam);
             } // switch

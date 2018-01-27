@@ -205,10 +205,10 @@ HRESULT Attribute::ParseString(
         {
             hr = S_OK;
             size_t sourceCount = 0;
-            UnicodeCharacterReader reader = { stringValue, stringValue + 2 };
+            UnicodeCharacterReader reader(stringValue, stringValue + 2);
             data.ch32 = reader.ReadNext();
-            if (*reader.current != '\0')
-                stringValue = reader.current;
+            if (reader.front() != '\0')
+                stringValue = reader.data();
         }
         break;
 

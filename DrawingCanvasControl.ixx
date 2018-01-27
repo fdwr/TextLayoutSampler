@@ -237,8 +237,7 @@ LRESULT CALLBACK DrawingCanvasControl::WindowProc(HWND hwnd, UINT message, WPARA
             case VK_NEXT:   Pan(0, -scrollPageDefault); break;
             case VK_HOME:   if (heldControl) ResetView(); else Pan(scrollPageDefault, 0); break;
             case VK_END:    Pan(-scrollPageDefault, 0); break;
-            default:
-                return DefWindowProc(hwnd, message, wParam, lParam);
+            default:        return DefWindowProc(hwnd, message, wParam, lParam);
             } // switch
         }
         break;

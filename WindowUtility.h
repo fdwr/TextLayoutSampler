@@ -42,10 +42,12 @@ struct TrackPopupMenu_Item
 int TrackPopupMenu(
     array_ref<TrackPopupMenu_Item const> items,
     HWND controlHwnd,
-    HWND parentHwnd
+    HWND parentHwnd,
+    uint32_t defaultMenuItemId = ~0
     );
 
-// More useful version that places the menu where it should go to begin with.
+// More useful version that places the menu where it should go to begin with,
+// around the pertinent rect of the control.
 int TrackPopupMenu(
     HMENU menu,
     HWND controlHwnd,

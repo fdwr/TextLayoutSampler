@@ -60,6 +60,14 @@ public:
         SettingsVisibilityTotal
     };
 
+    enum TextEscapeMode
+    {
+        TextEscapeModeNone,     // Raw verbatim UTF-16
+        TextEscapeModeCppUcn,   // C++ Universal character names
+        TextEscapeModeHtmlNcr,  // HTML Numeric character references
+        TextEscapeModeHtmlTotal
+    };
+
     struct FontFamilyNameProperties;
 
     void InitializeDefaultDrawableObjects();
@@ -135,6 +143,10 @@ protected:
     MainWindow::DialogProcResult CALLBACK OnDragAndDrop(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
     void OnHorizontalOrVerticalScroll(HWND hwnd, int barType, UINT code, int smallStep);
     void OnAssortedActions(HWND anchorControl);
+    void OnTextEscapeMode(HWND anchorControl);
+    void SetTextEscapeMode(TextEscapeMode textEscapeMode);
+    void UnescapeText(IN OUT std::u16string& text);
+    void EscapeText(IN OUT std::u16string& text);
 
     HWND GetSubdialogItem(int dialogId, int childId);
 
@@ -151,6 +163,7 @@ protected:
     std::u16string attributeFilter_;
     std::u16string selectedAttributeValue_;
     std::u16string previousSettingsFilePath_;
+    TextEscapeMode textEscapeMode_ = TextEscapeModeNone;
 
     std::vector<DrawableObjectAndValues> drawableObjects_;
 

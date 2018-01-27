@@ -729,7 +729,7 @@ HRESULT DrawableObjectAndValues::Set(DrawableObjectAttribute attributeIndex, _In
 HRESULT DrawableObjectAndValues::Set(DrawableObjectAttribute attributeIndex, _In_z_ uint32_t value)
 {
     wchar_t buffer[12];
-    auto stringValue = to_wstring(value, OUT buffer);
+    auto stringValue = ToWString(value, OUT buffer);
     return Set(attributeIndex, ToChar16(stringValue.data()));
 }
 

@@ -904,6 +904,11 @@ void MainWindow::UpdateAttributeValuesEdit()
 
 void MainWindow::UpdateTextEdit()
 {
+    HWND editHwnd = GetWindowFromId(hwnd_, IdcEditText);
+
+    if (!IsWindowVisible(editHwnd))
+        return;
+
     std::vector<uint32_t> drawableObjectIndices(drawableObjects_.size());
     std::iota(OUT drawableObjectIndices.begin(), OUT drawableObjectIndices.end(), 0);
 
@@ -914,7 +919,15 @@ void MainWindow::UpdateTextEdit()
                                         u""
                                         );
 
-    SetWindowText(GetWindowFromId(hwnd_, IdcEditText), ToWChar(stringValue));
+    std::u16string text;
+    if (textEscapeMode_ != TextEscapeModeNone)
+    {
+        text.assign(stringValue);
+        EscapeText(IN OUT text);
+        stringValue = text.c_str();
+    }
+
+    SetWindowText(editHwnd, ToWChar(stringValue));
 }
 
 
@@ -2344,9 +2357,11 @@ MainWindow::DialogProcResult CALLBACK MainWindow::OnCommand(HWND hwnd, int id, H
         {
         case EN_CHANGE:
             {
+                // Get updated text from edit control, unescaping if needed.
                 std::u16string text;
                 std::vector<uint32_t> drawableObjectIndices = GetSelectedDrawableObjectIndices();
                 GetWindowText(GetWindowFromId(hwnd_, IdcEditText), OUT text);
+                UnescapeText(IN OUT text);
                 DrawableObjectAndValues::Set(drawableObjects_, drawableObjectIndices, DrawableObjectAttributeText, text.c_str());
                 DrawableObjectAndValues::Update(drawableObjects_, drawableObjectIndices);
 
@@ -2466,6 +2481,10 @@ MainWindow::DialogProcResult CALLBACK MainWindow::OnCommand(HWND hwnd, int id, H
 
     case IdcAssortedActions:
         OnAssortedActions(hwndControl);
+        break;
+
+    case IdcTextEscapeMode:
+        OnTextEscapeMode(hwndControl);
         break;
 
     default:
@@ -2814,13 +2833,19 @@ MainWindow::DialogProcResult CALLBACK MainWindow::OnNotification(HWND hwnd, int 
         break;
 
     case IdcAssortedActions:
+    case IdcTextEscapeMode:
+
         switch (nmh.code)
         {
-        // todo: Also drop down list when the regular button part is clicked.
         case BCN_DROPDOWN:
             {
                 NMBCDROPDOWN const& dropDown = reinterpret_cast<NMBCDROPDOWN&>(nmh);
-                OnAssortedActions(dropDown.hdr.hwndFrom);
+                switch (controlId)
+                {
+                case IdcAssortedActions: OnAssortedActions(dropDown.hdr.hwndFrom); break;
+                case IdcTextEscapeMode: OnTextEscapeMode(dropDown.hdr.hwndFrom); break;
+                default: return false;
+                }
             }
             break;
 
@@ -2869,25 +2894,26 @@ void MainWindow::Resize(int id)
                 /* 10 */ WindowPosition(GetWindowFromId(hwnd, IdcSettingsLight), PositionOptionsAlignTop),
                 /* 11 */ WindowPosition(GetWindowFromId(hwnd, IdcSettingsFull), PositionOptionsAlignTop),
                 /* 12 */ WindowPosition(GetWindowFromId(hwnd, IdcAssortedActions), PositionOptionsAlignTop),
-                /* 13 */ WindowPosition(GetWindowFromId(hwnd, IdcEditText), PositionOptionsFillWidth | PositionOptionsFillHeight | PositionOptionsAlignTop | PositionOptionsPreNewLine),
-                /* 14 */ WindowPosition(GetWindowFromId(hwnd, IdcCanvasLabelsVisible), PositionOptionsAlignTop),
-                /* 15 */ WindowPosition(GetWindowFromId(hwnd, IdcCanvasLabelsAdjacent), PositionOptionsAlignTop | PositionOptionsPostNewLine),
-                /* 16 */ WindowPosition(GetWindowFromId(hwnd, IdcDrawableObjectsList), PositionOptionsFillWidth | PositionOptionsFillHeight | PositionOptionsPreNewLine),
-                /* 17 */ WindowPosition(GetWindowFromId(hwnd, IdcAttributesFilterEdit), PositionOptionsFillWidth | PositionOptionsIgnored),
-                /* 18 */ WindowPosition(GetWindowFromId(hwnd, IdcAttributesList), PositionOptionsFillWidth | PositionOptionsFillHeight),
-                /* 19 */ WindowPosition(GetWindowFromId(hwnd, IdcAttributeValuesEdit), PositionOptionsFillWidth | PositionOptionsFillHeight | PositionOptionsIgnored),
-                /* 20 */ WindowPosition(GetWindowFromId(hwnd, IdcAttributeValueSlider), PositionOptionsFillWidth | PositionOptionsIgnored),
-                /* 21 */ WindowPosition(GetWindowFromId(hwnd, IdcAttributeValuesList), PositionOptionsFillWidth | PositionOptionsFillHeight),
-                /* 22 */ WindowPosition(GetWindowFromId(hwnd, IdcDrawingCanvas), PositionOptionsFillWidth | PositionOptionsFillHeight | PositionOptionsAlignLeft | PositionOptionsPreNewLine),
-                /* 23 */ WindowPosition(GetWindowFromId(hwnd, IdcLog), PositionOptionsFillWidth | PositionOptionsAlignTop | PositionOptionsPreNewLine),
+                /* 13 */ WindowPosition(GetWindowFromId(hwnd, IdcTextEscapeMode), PositionOptionsAlignTop),
+                /* 14 */ WindowPosition(GetWindowFromId(hwnd, IdcEditText), PositionOptionsFillWidth | PositionOptionsFillHeight | PositionOptionsAlignTop | PositionOptionsPreNewLine),
+                /* 15 */ WindowPosition(GetWindowFromId(hwnd, IdcCanvasLabelsVisible), PositionOptionsAlignTop),
+                /* 16 */ WindowPosition(GetWindowFromId(hwnd, IdcCanvasLabelsAdjacent), PositionOptionsAlignTop | PositionOptionsPostNewLine),
+                /* 17 */ WindowPosition(GetWindowFromId(hwnd, IdcDrawableObjectsList), PositionOptionsFillWidth | PositionOptionsFillHeight | PositionOptionsPreNewLine),
+                /* 18 */ WindowPosition(GetWindowFromId(hwnd, IdcAttributesFilterEdit), PositionOptionsFillWidth | PositionOptionsIgnored),
+                /* 19 */ WindowPosition(GetWindowFromId(hwnd, IdcAttributesList), PositionOptionsFillWidth | PositionOptionsFillHeight),
+                /* 20 */ WindowPosition(GetWindowFromId(hwnd, IdcAttributeValuesEdit), PositionOptionsFillWidth | PositionOptionsFillHeight | PositionOptionsIgnored),
+                /* 21 */ WindowPosition(GetWindowFromId(hwnd, IdcAttributeValueSlider), PositionOptionsFillWidth | PositionOptionsIgnored),
+                /* 22 */ WindowPosition(GetWindowFromId(hwnd, IdcAttributeValuesList), PositionOptionsFillWidth | PositionOptionsFillHeight),
+                /* 23 */ WindowPosition(GetWindowFromId(hwnd, IdcDrawingCanvas), PositionOptionsFillWidth | PositionOptionsFillHeight | PositionOptionsAlignLeft | PositionOptionsPreNewLine),
+                /* 24 */ WindowPosition(GetWindowFromId(hwnd, IdcLog), PositionOptionsFillWidth | PositionOptionsAlignTop | PositionOptionsPreNewLine),
             };
-            WindowPosition& windowPositionEditText              = windowPositions[13];
-            WindowPosition& windowPositionDrawableObjectsList   = windowPositions[16];
-            WindowPosition& windowPositionAttributesFilterEdit  = windowPositions[17];
-            WindowPosition& windowPositionAttributesList        = windowPositions[18];
-            WindowPosition& windowPositionAttributeValuesEdit   = windowPositions[19];
-            WindowPosition& windowPositionAttributeValuesSlider = windowPositions[20];
-            WindowPosition& windowPositionAttributeValuesList   = windowPositions[21];
+            WindowPosition& windowPositionEditText              = windowPositions[14];
+            WindowPosition& windowPositionDrawableObjectsList   = windowPositions[17];
+            WindowPosition& windowPositionAttributesFilterEdit  = windowPositions[18];
+            WindowPosition& windowPositionAttributesList        = windowPositions[19];
+            WindowPosition& windowPositionAttributeValuesEdit   = windowPositions[20];
+            WindowPosition& windowPositionAttributeValuesSlider = windowPositions[21];
+            WindowPosition& windowPositionAttributeValuesList   = windowPositions[22];
 
             // Apply initial overall resizing.
             WindowPosition::ReflowGrid(windowPositions, uint32_t(countof(windowPositions)), clientRect, spacing, 0, PositionOptionsNone);
@@ -2961,11 +2987,7 @@ void MainWindow::OnAssortedActions(HWND anchorControl)
         {IdcAutofitDrawableObjectsUniformly, u"Autofit drawable objects uniformly" },
     };
 
-    int menuId = TrackPopupMenu(
-        make_array_ref(items, countof(items)),
-        anchorControl,
-        hwnd_
-        );
+    int menuId = TrackPopupMenu(make_array_ref(items, countof(items)), anchorControl, hwnd_);
 
     switch (menuId)
     {
@@ -2978,6 +3000,76 @@ void MainWindow::OnAssortedActions(HWND anchorControl)
     case IdcAutofitDrawableObjects: AutofitDrawableObjects(/*useMaximumWidth*/false, /*useMaximumHeight*/false); break;
     case IdcAutofitDrawableObjectsUniformly: AutofitDrawableObjects(/*useMaximumWidth*/true, /*useMaximumHeight*/true); break;
     }
+}
+
+
+void MainWindow::OnTextEscapeMode(HWND anchorControl)
+{
+    TrackPopupMenu_Item constexpr static items[] = {
+        { IdcTextEscapeModeNone, u"Raw text ('ģ')" },
+        { IdcTextEscapeModeCppUcn, u"Escaped C++ UCN hex (\u0123)" },
+        { IdcTextEscapeModeHtmlNcr, u"Escaped HTML NCR hex (&#x0123;)" },
+    };
+
+    int menuId = TrackPopupMenu(make_array_ref(items, countof(items)), anchorControl, hwnd_, textEscapeMode_ + IdcTextEscapeModeFirst);
+
+    TextEscapeMode textEscapeMode = static_cast<TextEscapeMode>(menuId - IdcTextEscapeModeFirst);
+    switch (menuId)
+    {
+    case IdcTextEscapeModeNone:
+    case IdcTextEscapeModeCppUcn:
+    case IdcTextEscapeModeHtmlNcr:
+        SetTextEscapeMode(textEscapeMode); break;
+    }
+}
+
+
+void MainWindow::SetTextEscapeMode(TextEscapeMode textEscapeMode)
+{
+    assert(textEscapeMode_ < TextEscapeModeHtmlTotal);
+
+    // Get existing text; Unescape it; Re-escape it if needed.
+    std::u16string text;
+    HWND editHwnd = GetWindowFromId(hwnd_, IdcEditText);
+    GetWindowText(editHwnd, OUT text);
+
+    UnescapeText(IN OUT text);
+    textEscapeMode_ = textEscapeMode;
+    EscapeText(IN OUT text);
+
+    SetWindowText(editHwnd, ToWChar(text.c_str()));
+}
+
+
+void MainWindow::UnescapeText(IN OUT std::u16string& text)
+{
+    std::u16string outputText;
+
+    switch (textEscapeMode_)
+    {
+    case TextEscapeModeNone: return;
+    case TextEscapeModeCppUcn: UnescapeCppUniversalCharacterNames(text, OUT outputText); break;
+    case TextEscapeModeHtmlNcr: UnescapeHtmlNamedCharacterReferences(text, OUT outputText); break;
+    }
+
+    if (!outputText.empty())
+        std::swap(text, outputText);
+}
+
+
+void MainWindow::EscapeText(IN OUT std::u16string& text)
+{
+    std::u16string outputText;
+
+    switch (textEscapeMode_)
+    {
+    case TextEscapeModeNone: return;
+    case TextEscapeModeCppUcn: EscapeCppUniversalCharacterNames(text, OUT outputText); break;
+    case TextEscapeModeHtmlNcr: EscapeHtmlNamedCharacterReferences(text, OUT outputText); break;
+    }
+
+    if (!outputText.empty())
+        std::swap(text, outputText);
 }
 
 

@@ -45,6 +45,11 @@ inline char16_t GetTrailingSurrogate(char32_t ch)
     return char16_t(0xDC00 + (ch & 0x3FF));
 }
 
+inline bool IsHexDigit(char32_t ch) throw()
+{
+    return (ch >= '0' && ch <= '9') || (ch &= ~32, ch >= 'A' && ch <= 'F');
+}
+
 enum UnicodeCodePoint
 {
     UnicodeSpace                    = 0x000020,
@@ -104,9 +109,14 @@ void AppendFormattedString(_Inout_ std::u16string& returnString, _In_z_ const ch
 void TrimSpaces(_Inout_ std::u16string& text);
 void UnquoteString(_Inout_ std::u16string& path);
 void ToUpperCase(_Inout_ array_ref<char16_t> s);
-void UnescapeString(_In_z_ const char16_t* escapedText, OUT std::u16string& expandedText);
+void UnescapeCppUniversalCharacterNames(array_ref<char16_t const> escapedText, OUT std::u16string& expandedText);
+void UnescapeHtmlNamedCharacterReferences(array_ref<char16_t const> escapedText, OUT std::u16string& expandedText);
+void EscapeCppUniversalCharacterNames(array_ref<char16_t const> text, OUT std::u16string& escapedText);
+void EscapeHtmlNamedCharacterReferences(array_ref<char16_t const> text, OUT std::u16string& escapedText);
 void RemoveTrailingZeroes(_Inout_ std::u16string& text) throw();
-array_ref<wchar_t> to_wstring(int32_t value, OUT array_ref<wchar_t> s);
+void WriteZeroPaddedHexNum(uint32_t value, OUT array_ref<char16_t> buffer);
+uint32_t ReadUnsignedNumericValue(_Inout_ array_ref<char16_t const>& text, uint32_t base); // Unlike wcstoul, respects length limit, and doesn't throw exception!
+array_ref<wchar_t> ToWString(int32_t value, OUT array_ref<wchar_t> s);
 
 static_assert(sizeof(wchar_t) == sizeof(char16_t), "These casts only work on platforms where wchar_t is 16 bits.");
 inline wchar_t* ToWChar(char16_t* p) { return reinterpret_cast<wchar_t*>(p); }
@@ -121,35 +131,40 @@ uint32_t IntLen(_In_z_ char16_t const* text);
 
 array_ref<char16_t const> ToChar16ArrayRef(_In_z_ char16_t const* text);
 
-struct UnicodeCharacterReader
+struct UnicodeCharacterReader : public array_ref<char16_t const>
 {
-    const char16_t* current;
-    const char16_t* end;
+    UnicodeCharacterReader() = default;
+
+    UnicodeCharacterReader(array_ref::pointer begin, array_ref::pointer end) : array_ref(begin, end)
+    {}
+
+    // todo: Inheriting constructors causes Visual Studio 15.4.1 compiler to crash when calling base class size().
+    //using array_ref::array_ref;
 
     bool IsAtEnd()
     {
-        return current >= end;
+        return begin_ >= end_;
     }
 
     char32_t ReadNext()
     {
-        if (current >= end)
+        if (begin_ >= end_)
             return 0;
 
-        char32_t ch = *current;
-        ++current;
+        char32_t ch = *begin_;
+        ++begin_;
 
         // Just use the character if not a surrogate code point.
         // For unpaired surrogates, pass the isolated surrogate
         // through (rather than remap to U+FFFD).
-        if (IsLeadingSurrogate(ch) && current < end)
+        if (IsLeadingSurrogate(ch) && begin_ < end_)
         {
             char32_t leading = ch;
-            char32_t trailing = *current;
+            char32_t trailing = *begin_;
             if (IsTrailingSurrogate(trailing))
             {
                 ch = MakeUnicodeCodePoint(leading, trailing);
-                ++current;
+                ++begin_;
             }
         }
 

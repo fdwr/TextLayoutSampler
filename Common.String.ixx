@@ -76,10 +76,78 @@ void RemoveTrailingZeroes(std::u16string& text) throw()
 }
 
 
-array_ref<wchar_t> to_wstring(int32_t value, OUT array_ref<wchar_t> s)
+array_ref<wchar_t> ToWString(int32_t value, OUT array_ref<wchar_t> s)
 {
     auto charactersWritten = swprintf_s(s.data(), s.size(), L"%d", value);
     return make_array_ref(s.data(), std::max(charactersWritten, 0));
+}
+
+
+// Fills the entire buffer up to fixed size, including leading zeroes.
+void WriteZeroPaddedHexNum(uint32_t value, OUT array_ref<char16_t> text)
+{
+    // Convert character to digits.
+    while (!text.empty())
+    {
+        char16_t digit = value & 0xF;
+        digit += (digit >= 10) ? 'A' - 10 : '0';
+        text.back() = digit;
+        text.pop_back();
+        value >>= 4;
+    }
+}
+
+
+uint32_t ReadUnsignedNumericValue(_Inout_ array_ref<char16_t const>& text, _In_range_(2, 36) uint32_t base)
+{
+    // Sadly, both wcstoul and std::stoul are useless functions because:
+    // (1) wcstoul doesn't respect any boundaries and tries to parse beyond the code sequence
+    //     (e.g. \x12345 should be treated as {0x1234, '5'}, not as {0x12345})
+    // (2) std::stoul throws an exception on parse error, which is overkill for the user
+    //     interactively typing in a number.
+    // (3) std::stoul requries a std::string as input, which gimps its utility.
+    // Additionally, some uses such as escapement conversion don't want whitespace skipped.
+
+    // - 'text' is updated upon returning to point after the consumed part.
+    // - Any character outside the radix stops the read. So 123A4G would stop at 'A' for decimal,
+    //   but it would continue until 'G' for hexademical.
+    // - An empty string returns 0.
+    // - The caller doesn't receive a flag, but it can easily detect missing strings or whether
+    //   the entire number was read by checking the return array_ref.
+
+    uint32_t value = 0;
+    array_ref<char16_t const> input = text;
+
+    while (!input.empty())
+    {
+        uint32_t digit = input.front();
+
+        if (digit < '0')
+            break;
+
+        digit -= '0'; // Handle 0..9.
+
+        if (digit >= 10) // Handle A..Z.
+        {
+            digit &= ~32; // Make upper case.
+            if (digit < 'A' - '0')
+                break;
+
+            digit -= 'A' - '0' - 10;
+        }
+
+        if (digit >= base)
+        {
+            break;
+        }
+
+        value = value * base + digit;
+        input.pop_front();
+    }
+
+    text = input;
+
+    return value;
 }
 
 
@@ -172,79 +240,63 @@ void ToUpperCase(_Inout_ array_ref<char16_t> s)
 }
 
 
-void UnescapeString(
-    _In_z_ const char16_t* escapedText,
+void UnescapeCppUniversalCharacterNames(
+    array_ref<char16_t const> escapedText,
     OUT std::u16string& expandedText
     )
 {
     expandedText.clear();
+    expandedText.reserve(escapedText.size());
 
-    const char16_t* p = escapedText;
-
-    for (;;)
+    while (!escapedText.empty())
     {
-        char32_t ch = *p;
-        if (ch == '\0')
-            break;
+        char16_t ch = escapedText.front();
+        escapedText.pop_front();
 
         // Check escape codes.
-        if (ch == '\\')
+        if (ch == '\\' && !escapedText.empty())
         {
-            const char16_t* escapeStart = p;
-            char16_t* escapeEnd = const_cast<char16_t*>(escapeStart + 1);
-            char32_t replacement = L'?';
-            ++p;
+            char32_t replacement = L'\\';
+            char16_t code = escapedText.front();
 
-            switch (*escapeEnd)
+            switch (code)
             {
-            case L'r': // return
-                replacement = L'\r';
-                ++escapeEnd;
-                break;
-
-            case L'n': // new line
-                replacement = L'\n';
-                ++escapeEnd;
-                break;
-
-            case L't': // tab
-                replacement = L'\t';
-                ++escapeEnd;
-                break;
-
-            case L'q': // quote
-                replacement = L'\"';
-                ++escapeEnd;
-                break;
-
-            case L'b': // backspace
-                replacement = 0x0008;
-                ++escapeEnd;
-                break;
-
-            case L'f': // form feed
-                replacement = 0x000C;
-                ++escapeEnd;
-                break;
-
+            case 'a':  replacement = 0x0007; escapedText.pop_front(); break; // Alert (Beep, Bell)
+            case 'b':  replacement = 0x0008; escapedText.pop_front(); break; // Backspace
+            case 'f':  replacement = 0x000C; escapedText.pop_front(); break; // Formfeed
+            case 'n':  replacement = 0x000A; escapedText.pop_front(); break; // Newline (Line Feed)
+            case 'r':  replacement = 0x000D; escapedText.pop_front(); break; // Carriage Return
+            case 't':  replacement = 0x0009; escapedText.pop_front(); break; // Horizontal Tab
+            case 'v':  replacement = 0x000B; escapedText.pop_front(); break; // Vertical Tab
+            case '\\': replacement = 0x005C; escapedText.pop_front(); break; // Backslash
+            case '\'': replacement = 0x0027; escapedText.pop_front(); break; // Single quotation mark
+            case '\"': replacement = 0x0022; escapedText.pop_front(); break; // Double quotation mark
+            case '?':  replacement = 0x003F; escapedText.pop_front(); break; // Question mark
             case L'x':
             case L'u':
             case L'U':
-                replacement = (char32_t) wcstoul(ToWChar(escapeStart + 2), OUT ToWChar(&escapeEnd), 16);
+                {
+                    size_t expectedHexSequenceLength = (code == 'U') ? 8 : 4;
+                    char16_t const* escapeStart = escapedText.data() + 1; // Skip the 'x' 'u' 'U'
+                    char16_t const* escapeEnd = std::min(escapeStart + expectedHexSequenceLength, escapedText.data_end());
+                    array_ref<char16_t const> digitSpan = {escapeStart, escapeEnd};
+
+                    // Parse the number.
+                    if (digitSpan.size() >= expectedHexSequenceLength)
+                    {
+                        char32_t hexValue = ReadUnsignedNumericValue(IN OUT digitSpan, 16);
+                        if (digitSpan.empty()) // Completely read the sequence.
+                        {
+                            replacement = hexValue;
+                            escapedText.reset(digitSpan.begin(), escapedText.end());
+                        }
+                    }
+                    // Else parse error. So keep '\' to preserve original text.
+                }
                 break;
 
-            case L'0': case L'1': case L'2': case L'3': case L'4':
-            case L'5': case L'6': case L'7': case L'8': case L'9':
-                // Support decimal here (octal is not supported)
-                replacement = (char32_t) wcstoul(ToWChar(escapeStart + 1), OUT ToWChar(&escapeEnd), 10);
-                break;
-
-            case L'\\':
-                replacement = L'\\';
-                ++escapeEnd;
-                break;
-
-                // Anything else is a question mark.
+            // Anything else yields a '\', preserving the original text.
+            // Silly octal is not supported.
             }
 
             if (IsCharacterBeyondBmp(replacement))
@@ -256,12 +308,143 @@ void UnescapeString(
             {
                 expandedText.push_back(char16_t(replacement));
             }
-            p = escapeEnd;
         }
-        else // Just push ordinary code unit
+        else // Just append ordinary code unit.
         {
-            expandedText.push_back(char16_t(ch));
-            p++;
+            expandedText.push_back(ch);
+        }
+    }
+}
+
+
+void UnescapeHtmlNamedCharacterReferences(array_ref<char16_t const> escapedText, OUT std::u16string& expandedText)
+{
+    expandedText.clear();
+    expandedText.reserve(escapedText.size());
+
+    while (!escapedText.empty())
+    {
+        char16_t ch = escapedText.front();
+        escapedText.pop_front();
+
+        // Check escape codes.
+        if (ch == '&' && !escapedText.empty())
+        {
+            char32_t replacement = L'&';
+            char16_t const* escapeStart = escapedText.data();
+            char16_t const* escapeEnd = escapeStart;
+
+            // Only numeric escapes are supported: &#1234;&#x1A2B;
+            // Not named ones: &amp;
+            if (*escapeStart == '#')
+            {
+                uint32_t radix = 10; // Assume decimal, unless 'x' follows.
+                ++escapeStart;
+                if (escapeStart < escapedText.data_end() && *escapeStart == 'x')
+                {
+                    radix = 16; // Hexadecimal.
+                    ++escapeStart;
+                }
+
+                // Parse the number, and replacing on error with just a '\' to preserve original text.
+                array_ref<char16_t const> digitSpan = {escapeStart, escapedText.end()};
+                replacement = ReadUnsignedNumericValue(IN OUT digitSpan, radix);
+
+                // Successful if the digits were not empty and a semicolon was present.
+                if (digitSpan.begin() > escapedText.begin() && !digitSpan.empty() && digitSpan.front() == ';')
+                {
+                    escapedText.reset(digitSpan.begin() + 1, escapedText.end()); // After the semicolon.
+                }
+                else // Parse error. So restore '\' to preserve original text.
+                {
+                    replacement = L'\\';
+                }
+            }
+
+            if (IsCharacterBeyondBmp(replacement))
+            {
+                expandedText.push_back(GetLeadingSurrogate(replacement));
+                expandedText.push_back(GetTrailingSurrogate(replacement));
+            }
+            else
+            {
+                expandedText.push_back(char16_t(replacement));
+            }
+        }
+        else // Just append ordinary code unit.
+        {
+            expandedText.push_back(ch);
+        }
+    }
+}
+
+
+void EscapeCppUniversalCharacterNames(
+    array_ref<char16_t const> text,
+    OUT std::u16string& escapedText
+    )
+{
+    constexpr size_t escapePrefixLength = 2; // \u or \U
+    constexpr size_t shortEscapeDigitLength = 4;
+    constexpr size_t longEscapeDigitLength = 8;
+    char16_t shortEscapedSequence[6] = { '\\','u','0','0','0','0' };
+    char16_t longEscapedSequence[10] = { '\\','U','0','0','0','0','0','0','0','0' };
+
+    escapedText.clear();
+    escapedText.reserve(text.size() * std::size(shortEscapedSequence));
+    array_ref<char16_t> shortDigitRange(&shortEscapedSequence[escapePrefixLength], &shortEscapedSequence[escapePrefixLength + shortEscapeDigitLength]);
+    array_ref<char16_t> longDigitRange(&longEscapedSequence[escapePrefixLength], &longEscapedSequence[escapePrefixLength + longEscapeDigitLength]);
+
+    for (UnicodeCharacterReader reader(text.data(), text.data_end()); !reader.IsAtEnd(); )
+    {
+        char32_t ch = reader.ReadNext();
+
+        if (IsCharacterBeyondBmp(ch))
+        {
+            // Write surrogate pair.
+            WriteZeroPaddedHexNum(ch, OUT longDigitRange);
+            escapedText.insert(escapedText.size(), longEscapedSequence, std::size(longEscapedSequence));
+        }
+        else // Single UTF-16 code unit.
+        {
+            WriteZeroPaddedHexNum(ch, OUT shortDigitRange);
+            escapedText.insert(escapedText.size(), shortEscapedSequence, std::size(shortEscapedSequence));
+        }
+    }
+}
+
+
+void EscapeHtmlNamedCharacterReferences(
+    array_ref<char16_t const> text,
+    OUT std::u16string& escapedText
+    )
+{
+    constexpr size_t escapePrefixLength = 3; // &#x
+    constexpr size_t shortEscapeDigitLength = 4;
+    constexpr size_t longEscapeDigitLength = 8;
+    constexpr size_t escapeSuffixLength = 1; // ;
+    char16_t shortEscapedSequence[8] = { '&','#','x','0','0','0','0',';' };
+    char16_t longEscapedSequence[12] = { '&','#','x','0','0','0','0','0','0','0','0',';' };
+
+    escapedText.clear();
+    escapedText.reserve(text.size() * std::size(shortEscapedSequence));
+    array_ref<char16_t> shortDigitRange(shortEscapedSequence + escapePrefixLength, shortEscapedSequence + escapePrefixLength + shortEscapeDigitLength);
+    array_ref<char16_t> longDigitRange(longEscapedSequence + escapePrefixLength, longEscapedSequence + escapePrefixLength + longEscapeDigitLength);
+
+    for (UnicodeCharacterReader reader(text.data(), text.data_end()); !reader.IsAtEnd(); )
+    {
+        char32_t ch = reader.ReadNext();
+
+        if (IsCharacterBeyondBmp(ch))
+        {
+            // Write surrogate pair.
+            WriteZeroPaddedHexNum(ch, OUT longDigitRange);
+            escapedText.insert(escapedText.size(), longEscapedSequence, std::size(longEscapedSequence));
+        }
+        else // Single UTF-16 code unit.
+        {
+            WriteZeroPaddedHexNum(ch, OUT shortDigitRange);
+            escapedText.insert(escapedText.size(), shortEscapedSequence, std::size(shortEscapedSequence));
         }
     }
 }
@@ -274,37 +457,29 @@ size_t ConvertTextUtf16ToUtf32(
     _Out_opt_ size_t* sourceCount
     ) throw()
 {
-    // Can have more UTF16 characters than UTF32,
-    // but never the other way around.
+    // Convert all code points, substituting the replacement character for unpaired surrogates.
 
-    size_t const utf16count = utf16text.size();
-    size_t const utf32count = utf32text.size();
+    UnicodeCharacterReader reader(utf16text.data(), utf16text.data_end());
+    size_t utf32count = utf32text.size();
+    size_t utf32index = 0;
 
-    size_t utf16index = 0, utf32index = 0;
-    while (utf32index < utf32count && utf16index < utf16count)
+    for (; !reader.IsAtEnd() && utf32index < utf32count; ++utf32index)
     {
-        char32_t ch2, ch = utf16text[utf16index++];
+        char32_t ch = reader.ReadNext();
 
-        // If surrogate code point, combine this code unit with the next.
-        // Otherwise just return the current character.
         if (IsSurrogate(ch))
         {
-            if (utf16index < utf16count && (ch2 = utf16text[utf16index], IsTrailingSurrogate(ch2)))
-            {
-                ++utf16index;
-                ch = MakeUnicodeCodePoint(ch, ch2);
-            }
-            else
-            {
-                // Illegal unpaired surrogate. Substitute with replacement char.
-                ch = UnicodeReplacementCharacter;
-            }
+            // Illegal unpaired surrogate. Substitute with replacement char.
+            ch = UnicodeReplacementCharacter;
         }
-        utf32text[utf32index++] = ch;
+        utf32text[utf32index] = ch;
     }
 
+    // Return how many UTF-16 code units and UTF-32 units were read/written.
+    // Might have more UTF16 code units than UTF32, but never the other way around.
+
     if (sourceCount != nullptr)
-        *sourceCount = utf16index;
+        *sourceCount = reader.size();
 
     return utf32index;
 }
@@ -320,18 +495,17 @@ size_t ConvertTextUtf16ToUtf32NoReplacement(
     // Can have more UTF16 characters than UTF32,
     // but never the other way around.
 
-    size_t const utf16count = utf16text.size();
+    UnicodeCharacterReader reader(utf16text.data(), utf16text.data_end());
     size_t const utf32count = utf32text.size();
-
-    UnicodeCharacterReader reader = { utf16text.data(), utf16text.data() + utf16count };
     size_t utf32index = 0;
+
     for (; !reader.IsAtEnd() && utf32index < utf32count; ++utf32index)
     {
         utf32text[utf32index] = reader.ReadNext();
     }
 
     if (sourceCount != nullptr)
-        *sourceCount = reader.end - reader.current;
+        *sourceCount = reader.size();
 
     return utf32index;
 }
@@ -356,7 +530,7 @@ size_t ConvertUtf32ToUtf16(
 
         char32_t ch = utf32text[si];
 
-        if (ch > 0xFFFF && dc - di >= 2)
+        if (IsCharacterBeyondBmp(ch) && dc - di >= 2)
         {
             // Split into leading and trailing surrogatse.
             // From http://unicode.org/faq/utf_bom.html#35

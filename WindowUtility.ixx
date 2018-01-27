@@ -1190,11 +1190,13 @@ int MapScrollBarCodeToPosition(HWND hwnd, int barType, UINT code, int smallStep,
 int TrackPopupMenu(
     array_ref<TrackPopupMenu_Item const> items,
     HWND controlHwnd,
-    HWND parentHwnd
+    HWND parentHwnd,
+    uint32_t defaultMenuItemId
     )
 {
     // Insert an array of menu items, or a separator if '-'.
     HMENU menu = CreatePopupMenu();
+
     for (auto const& item : items)
     {
         if (item.name[0] == '-')
@@ -1206,6 +1208,12 @@ int TrackPopupMenu(
             AppendMenu(menu, MF_STRING, item.id, ToWChar(item.name));
         }
     }
+
+    if (defaultMenuItemId != ~0)
+    {
+        CheckMenuRadioItem(menu, 0, 0xFFFF, defaultMenuItemId, MF_BYCOMMAND);
+    }
+
     auto menuId = TrackPopupMenu(menu, controlHwnd, parentHwnd);
     DestroyMenu(menu);
     return menuId;

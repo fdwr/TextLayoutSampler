@@ -174,7 +174,7 @@ public:
     ////////////////////
     // Helpers
     static DrawableObject* Create(DrawableObjectFunction functionId);
-    static void GenerateLabel(IAttributeSource& attributeSource, _Inout_ std::u16string& label);
+    static void GenerateLabel(IAttributeSource& attributeSource, _Out_ std::u16string& label);
     static HRESULT GetDWriteFontFace(IAttributeSource& attributeSource, DrawingCanvas& drawingCanvas, _COM_Outptr_ IDWriteFontFace** fontFace);
     static HRESULT SaveFontFile(IAttributeSource& attributeSource, DrawingCanvas& drawingCanvas, char16_t const* filePath);
     static HRESULT ExportFontGlyphData(IAttributeSource& attributeSource, DrawingCanvas& drawingCanvas, array_ref<char16_t const> filePath);
@@ -185,6 +185,7 @@ public:
     static const Attribute::PredefinedValue functions[12];
     static const Attribute::PredefinedValue visibilities[2];
     static const Attribute::PredefinedValue enabledValues[2];
+    static const Attribute::PredefinedValue labelDefaults[2];
     static const Attribute::PredefinedValue textDefaults[68];
     static const Attribute::PredefinedValue readingDirections[8];
     static const Attribute::PredefinedValue glyphDefaults[3];

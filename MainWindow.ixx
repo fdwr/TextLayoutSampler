@@ -1248,7 +1248,7 @@ MainWindow::DialogProcResult CALLBACK MainWindow::OnDragAndDrop(HWND hwnd, UINT 
     DragFinish(hDrop);
 
     if (hr == HRESULT_FROM_WIN32(ERROR_BAD_FORMAT))
-        ShowMessageAndAppendLog(u"Unknown file format '%s', 0x%08X", fileName.c_str(), hr);
+        ShowMessageAndAppendLog(u"Unknown file format '%s' (TextLayoutSamplerSettings, txt, ttf, otf, tte, ttc, otc), 0x%08X", fileName.c_str(), hr);
     else if (FAILED(hr))
         ShowMessageAndAppendLog(u"Failed to load file '%s', 0x%08X", fileName.c_str(), hr);
 
@@ -1267,6 +1267,11 @@ std::vector<uint32_t> MainWindow::GetSelectedDrawableObjectIndices()
     {
         selectedIndices.resize(drawableObjects_.size());
         std::iota(selectedIndices.begin(), selectedIndices.end(), 0);
+    }
+    else // Validate the indices, just in case the UI somehow became out of sync.
+    {
+        auto const drawableObjectsTotal = drawableObjects_.size();
+        selectedIndices.erase(std::remove_if(selectedIndices.begin(), selectedIndices.end(), [=](auto i) {return i >= drawableObjectsTotal; }), selectedIndices.end());
     }
 
     return selectedIndices;
@@ -1484,9 +1489,6 @@ HRESULT MainWindow::UpdateDrawableObjectsFromFontFamilyNameProperties(FontFamily
 
     for (auto drawableObjectIndex : selectedDrawableObjectIndices)
     {
-        if (drawableObjectIndex >= drawableObjectsTotal)
-            continue;
-
         auto& drawableObject = drawableObjects_[drawableObjectIndex];
         DrawableObjectFunction function = drawableObject.GetValue(DrawableObjectAttributeFunction, DrawableObjectFunctionNop);
         bool isGdiOrGdiPlusFunction = DrawableObject::IsGdiOrGdiPlusFunction(function);
@@ -2112,9 +2114,6 @@ HRESULT MainWindow::AutofitDrawableObjects(bool useMaximumWidth, bool useMaximum
     // The first pass gets the sizes of all the objects.
     for (auto drawableObjectIndex : drawableObjectIndices)
     {
-        if (drawableObjectIndex >= drawableObjectsTotal)
-            continue;
-
         auto& drawableObject = drawableObjects_[drawableObjectIndex];
 
         D2D_RECT_F layoutBounds, contentBounds;
@@ -2132,9 +2131,6 @@ HRESULT MainWindow::AutofitDrawableObjects(bool useMaximumWidth, bool useMaximum
     // The second pass updates them, considering whether to maximize them to the largest object found.
     for (auto drawableObjectIndex : drawableObjectIndices)
     {
-        if (drawableObjectIndex >= drawableObjectsTotal)
-            continue;
-
         auto& drawableObject = drawableObjects_[drawableObjectIndex];
         D2D_SIZE_F& size = sizes[drawableObjectIndex];
         if (size.width > 0 && size.height > 0)
@@ -2143,6 +2139,33 @@ HRESULT MainWindow::AutofitDrawableObjects(bool useMaximumWidth, bool useMaximum
             drawableObject.Set(DrawableObjectAttributeHeight, uint32_t(useMaximumHeight ? std::max(maximumHeight, size.height) : size.height));
             drawableObject.Update();
         }
+    }
+
+    DeferUpdateUi(
+        NeededUiUpdateDrawableObjectsListView |
+        NeededUiUpdateAttributesListView |
+        NeededUiUpdateAttributeValuesListView |
+        NeededUiUpdateAttributeValuesEdit |
+        NeededUiUpdateAttributeValuesSlider |
+        NeededUiUpdateDrawableObjectsCanvas |
+        NeededUiUpdateTextEdit
+    );
+
+    return S_OK;
+}
+
+
+HRESULT MainWindow::SetNoLineWrapOnDrawableObjects()
+{
+    // Reduce all selected drawable objects to 1x1, and set no wrapping.
+    std::vector<uint32_t> drawableObjectIndices = GetSelectedDrawableObjectIndices();
+    for (auto drawableObjectIndex : drawableObjectIndices)
+    {
+        auto& drawableObject = drawableObjects_[drawableObjectIndex];
+        drawableObject.Set(DrawableObjectAttributeLineWrappingMode, LineWrappingModeNone);
+        drawableObject.Set(DrawableObjectAttributeWidth,  1);
+        drawableObject.Set(DrawableObjectAttributeHeight, 1);
+        drawableObject.Update();
     }
 
     DeferUpdateUi(
@@ -2184,11 +2207,11 @@ HRESULT MainWindow::StoreDrawableObjectsSettings()
     }
     if (hr == HRESULT_FROM_WIN32(ERROR_BAD_FORMAT)) // Consolidate this repeated error message.
     {
-        ShowMessageAndAppendLog(u"Unknown file format '%s', 0x%08X", filePath.c_str(), hr);
+        ShowMessageAndAppendLog(u"Unknown sampler settings file format '%s', 0x%08X", filePath.c_str(), hr);
     }
     else if (FAILED(hr))
     {
-        ShowMessageAndAppendLog(u"Failed to save to file '%s', 0x%08X", filePath.c_str(), hr);
+        ShowMessageAndAppendLog(u"Failed to save to sampler settings file '%s', 0x%08X", filePath.c_str(), hr);
     }
 
     return hr;
@@ -2983,8 +3006,9 @@ void MainWindow::OnAssortedActions(HWND anchorControl)
         {IdcGetAllColorFontCharacters, u"Get all color font characters"},
         {IdcCopyAllFontCharacters, u"Copy all font characters to clipboard"},
         {0, u"-"},
-        { IdcAutofitDrawableObjects, u"Autofit drawable objects" },
+        {IdcAutofitDrawableObjects, u"Autofit drawable objects" },
         {IdcAutofitDrawableObjectsUniformly, u"Autofit drawable objects uniformly" },
+        {IdcSetNoLineWrapOnDrawableObjects, u"Reduce drawable objects size with no wrap"}
     };
 
     int menuId = TrackPopupMenu(make_array_ref(items, countof(items)), anchorControl, hwnd_);
@@ -2999,6 +3023,7 @@ void MainWindow::OnAssortedActions(HWND anchorControl)
     case IdcExportGlyphImageData: ExportFontGlyphData(); break;
     case IdcAutofitDrawableObjects: AutofitDrawableObjects(/*useMaximumWidth*/false, /*useMaximumHeight*/false); break;
     case IdcAutofitDrawableObjectsUniformly: AutofitDrawableObjects(/*useMaximumWidth*/true, /*useMaximumHeight*/true); break;
+    case IdcSetNoLineWrapOnDrawableObjects: SetNoLineWrapOnDrawableObjects(); break;
     }
 }
 

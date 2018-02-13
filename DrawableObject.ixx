@@ -41,7 +41,7 @@ const Attribute DrawableObject::attributeList[DrawableObjectAttributeTotal] =
 {
     {Attribute::TypeUInteger32,     Attribute::SemanticEnumExclusive,CategoryLight, DrawableObjectAttributeFunction, u"function", u"Function", u"IDWriteTextLayout", functions },
     {Attribute::TypeBool8,          Attribute::SemanticEnumExclusive,0            , DrawableObjectAttributeVisibility, u"visible", u"Visible", u"visible", visibilities },
-    {Attribute::TypeString16,       Attribute::SemanticNone,         0            , DrawableObjectAttributeLabel, u"label", u"Label", u"", {} },
+    {Attribute::TypeString16,       Attribute::SemanticNone,         0            , DrawableObjectAttributeLabel, u"label", u"Label", u"", labelDefaults },
     {Attribute::TypeString16,       Attribute::SemanticLongText,     CategoryLight, DrawableObjectAttributeText, u"text", u"Text", u"This is a text", textDefaults },
     {Attribute::TypeArrayUInteger16,Attribute::SemanticNone,         0            , DrawableObjectAttributeGlyphs, u"glyphs", u"Glyphs", u"0 1 2 3 4", glyphDefaults },
     {Attribute::TypeArrayFloat32,   Attribute::SemanticNone,         0            , DrawableObjectAttributeAdvances, u"advances", u"Advances", u"",{} },
@@ -127,6 +127,11 @@ const Attribute::PredefinedValue DrawableObject::visibilities[] = {
 const Attribute::PredefinedValue DrawableObject::enabledValues[] = {
     {0, u"off" },
     {1, u"on"},
+};
+
+const Attribute::PredefinedValue DrawableObject::labelDefaults[] = {
+    {0, u"", u"" },
+    {0, u"", u"Family = $(font_family), Font size = $(font_size)"},
 };
 
 const Attribute::PredefinedValue DrawableObject::textDefaults[] = {
@@ -975,13 +980,71 @@ DrawableObject* DrawableObject::Create(DrawableObjectFunction functionType)
 }
 
 
-void DrawableObject::GenerateLabel(IAttributeSource& attributeSource, _Inout_ std::u16string& label)
+void DrawableObject::GenerateLabel(IAttributeSource& attributeSource, _Out_ std::u16string& label)
 {
     // Update the current label, either using the explicit one or generating
     // one dynamically according to set attributes.
+
+    const char16_t escapeCharacter = '$';
+
     array_ref<char16_t const> defaultLabel = attributeSource.GetString(DrawableObjectAttributeLabel);
-    if (!defaultLabel.empty())
+
+    if (wcschr(ToWChar(defaultLabel.data()), escapeCharacter) != nullptr)
     {
+        // Generate a label using the field names.
+        label.clear();
+
+        std::map<std::u16string, uint32_t> attributeNameMap;
+        for (auto const& attribute : DrawableObject::attributeList)
+        {
+            attributeNameMap[attribute.name] = attribute.id;
+        }
+        const auto attributeNameMapEnd = attributeNameMap.end();
+        std::u16string fieldName;
+
+        // Walk string looking for replaceable parts. e.g. "Family name = $(font_family), Weight = ($weight)"
+        for (auto current = defaultLabel.begin(); current != defaultLabel.end();)
+        {
+            char16_t const* next = std::find(current, defaultLabel.end(), escapeCharacter);
+            label.append(current, next);
+
+            if (next == defaultLabel.end())
+                break;
+
+            ++next; // Skip '$'.
+            if (next == defaultLabel.end())
+                break;
+
+            if (*next == escapeCharacter)
+            {
+                // '$$' maps to just '$'.
+                label.push_back(escapeCharacter);
+                ++next;
+            }
+            else if (*next == '(')
+            {
+                // $(namedField) substitutes the string with that attribute's value.
+                ++next; // Skip '('.
+                char16_t const* endOfEscape = std::find(next, defaultLabel.end(), ')');
+                if (endOfEscape == defaultLabel.end())
+                    break;
+
+                fieldName.assign(next, endOfEscape);
+                auto nameMapResult = attributeNameMap.find(fieldName);
+                if (nameMapResult != attributeNameMapEnd)
+                {
+                    array_ref<char16_t const> text = attributeSource.GetString(DrawableObjectAttribute(nameMapResult->second));
+                    label.append(text.begin(), text.end());
+                }
+                next = endOfEscape + 1; // Skip ')'.
+            }
+
+            current = next;
+        }
+    }
+    else if (!defaultLabel.empty())
+    {
+        // Just assign the label directly.
         if (wcscmp(ToWChar(defaultLabel.data()), ToWChar(label.c_str())) != 0)
         {
             label.assign(defaultLabel.data(), defaultLabel.size());

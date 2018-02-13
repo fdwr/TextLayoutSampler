@@ -441,7 +441,10 @@ void DrawableObjectAndValues::Load(
 
     for (TextTree::NodePointer objectNode = objectsNode.begin(), objectNodeEnd = objectsNode.end(); objectNode != objectNodeEnd; ++objectNode)
     {
-        // Add another object, or fill in the shared object if first entry.
+        // The very first object definition in the file is actually a shared object that factors
+        // out all common attributes between objects (to avoid repeating them every time in each
+        // object that uses them). So if reading the first object, just update the shared object,
+        // otherwise the first real drawable object is the second object in the file.
         if (!isFirstObject)
         {
             drawableObjects.push_back(sharedDrawableObject);

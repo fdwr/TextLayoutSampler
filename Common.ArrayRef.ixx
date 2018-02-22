@@ -9,6 +9,7 @@
 #include <initializer_list>
 #include <vector>
 #include <string>
+#include <cassert>
 
 module Common.ArrayRef;
 export

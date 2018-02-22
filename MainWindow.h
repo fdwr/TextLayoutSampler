@@ -79,6 +79,7 @@ public:
     HRESULT SaveSelectedFontFile();
     HRESULT SaveUnpackedWoffFontFile();
     HRESULT ExportFontGlyphData();
+    void    SetWindowTranslucency(uint32_t alpha);
     HRESULT AutofitDrawableObjects(bool useMaximumWidth, bool useMaximumHeight);
     HRESULT SetNoLineWrapOnDrawableObjects();
     HRESULT GetSelectedDrawableObject(_Out_ uint32_t& selectedDrawableObject); // S_FALSE and ~0 if none.

@@ -405,16 +405,6 @@ INT_PTR MainWindow::InitializeMainDialog()
     DefWindowProc(hwnd_, WM_SETICON, ICON_BIG, LPARAM(LoadIcon(Application::g_hModule, MAKEINTRESOURCE(1))));
     SetWindowText(hwnd_, BUILD_TITLE_STRING);
 
-    #if 0 // todo::: delete
-    SetWindowStyleEx(g_mainHwnd, GetWindowLong(g_mainHwnd, GWL_EXSTYLE) | WS_EX_LAYERED);
-    SetLayeredWindowAttributes(
-        g_mainHwnd,
-        0,
-        128,
-        LWA_ALPHA
-        );
-    #endif
-
     Edit_LimitText(GetWindowFromId(hwnd_, IdcLog), 1048576);
 
     // Subclass the values edit box for a few reasons.
@@ -2099,6 +2089,30 @@ HRESULT MainWindow::ExportFontGlyphData()
 }
 
 
+void MainWindow::SetWindowTranslucency(uint32_t alpha)
+{
+    #ifndef SetWindowExStyle
+    #define SetWindowExStyle(hwnd, value)  ((DWORD)SetWindowLong(hwnd, GWL_EXSTYLE, value))
+    #endif
+
+    uint32_t previousExStyle = GetWindowExStyle(hwnd_);
+    if (alpha >= 255) // Opaque.
+    {
+        SetWindowExStyle(hwnd_, previousExStyle & ~WS_EX_LAYERED);
+    }
+    else // Translucent.
+    {
+        SetWindowExStyle(hwnd_, previousExStyle | WS_EX_LAYERED);
+        SetLayeredWindowAttributes(
+            hwnd_,
+            0,
+            alpha,
+            LWA_ALPHA
+        );
+    }
+}
+
+
 HRESULT MainWindow::AutofitDrawableObjects(bool useMaximumWidth, bool useMaximumHeight)
 {
     // Autofit all the selected objects to their actual contents, looping through and asking each
@@ -3008,7 +3022,10 @@ void MainWindow::OnAssortedActions(HWND anchorControl)
         {0, u"-"},
         {IdcAutofitDrawableObjects, u"Autofit drawable objects" },
         {IdcAutofitDrawableObjectsUniformly, u"Autofit drawable objects uniformly" },
-        {IdcSetNoLineWrapOnDrawableObjects, u"Reduce drawable objects size with no wrap"}
+        {IdcSetNoLineWrapOnDrawableObjects, u"Reduce drawable objects size with no wrap"},
+        {0, u"-"},
+        {IdcSetWindowTranslucent, u"Make window translucent"},
+        {IdcSetWindowOpaque, u"Make window opaque"},
     };
 
     int menuId = TrackPopupMenu(make_array_ref(items, countof(items)), anchorControl, hwnd_);
@@ -3024,6 +3041,8 @@ void MainWindow::OnAssortedActions(HWND anchorControl)
     case IdcAutofitDrawableObjects: AutofitDrawableObjects(/*useMaximumWidth*/false, /*useMaximumHeight*/false); break;
     case IdcAutofitDrawableObjectsUniformly: AutofitDrawableObjects(/*useMaximumWidth*/true, /*useMaximumHeight*/true); break;
     case IdcSetNoLineWrapOnDrawableObjects: SetNoLineWrapOnDrawableObjects(); break;
+    case IdcSetWindowTranslucent: SetWindowTranslucency(128); break;
+    case IdcSetWindowOpaque: SetWindowTranslucency(255); break;
     }
 }
 

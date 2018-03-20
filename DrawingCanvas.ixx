@@ -278,11 +278,10 @@ bool DrawingCanvas::PaintFinish(HDC displayHdc, RECT const& rect)
     auto oldMode = SetGraphicsMode(memoryHdc, GM_COMPATIBLE);
     BitBlt(
         displayHdc,
-        //0,0,
         rect.left, rect.top,
         rect.right, rect.bottom,
         memoryHdc,
-        0,0, 
+        rect.left, rect.top,
         SRCCOPY
         );
     SetGraphicsMode(memoryHdc, oldMode);

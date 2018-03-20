@@ -33,7 +33,7 @@ uint32_t IntLen(_In_z_ char16_t const* text)
 }
 
 
-char16_t const* SkipSpaces(_In_z_ char16_t const* stringValue) throw()
+char16_t const* SkipSpaces(_In_z_ char16_t const* stringValue) noexcept
 {
     for (char16_t ch; ch = *stringValue, ch != '\0' && ch == ' '; ++stringValue)
     { }
@@ -41,7 +41,7 @@ char16_t const* SkipSpaces(_In_z_ char16_t const* stringValue) throw()
 }
 
 
-char16_t const* SkipToNextWord(_In_z_ char16_t const* stringValue) throw()
+char16_t const* SkipToNextWord(_In_z_ char16_t const* stringValue) noexcept
 {
     for (char16_t ch; ch = *stringValue, ch != '\0' && (ch != ' ' && ch != ','); ++stringValue)
     { }
@@ -55,7 +55,7 @@ char16_t const* SkipToNextWord(_In_z_ char16_t const* stringValue) throw()
 }
 
 
-char16_t const* SkipToEnd(_In_z_ char16_t const* stringValue) throw()
+char16_t const* SkipToEnd(_In_z_ char16_t const* stringValue) noexcept
 {
     for (char16_t ch; (ch = *stringValue, ch != '\0'); ++stringValue)
     { }
@@ -63,7 +63,7 @@ char16_t const* SkipToEnd(_In_z_ char16_t const* stringValue) throw()
 }
 
 
-void RemoveTrailingZeroes(std::u16string& text) throw()
+void RemoveTrailingZeroes(std::u16string& text) noexcept
 {
     while (!text.empty() && text.back() == '0')
     {
@@ -455,7 +455,7 @@ size_t ConvertTextUtf16ToUtf32(
     array_ref<char16_t const> utf16text,
     OUT array_ref<char32_t> utf32text,
     _Out_opt_ size_t* sourceCount
-    ) throw()
+    ) noexcept
 {
     // Convert all code points, substituting the replacement character for unpaired surrogates.
 
@@ -490,7 +490,7 @@ size_t ConvertTextUtf16ToUtf32NoReplacement(
     array_ref<char16_t const> utf16text,
     OUT array_ref<char32_t> utf32text,
     _Out_opt_ size_t* sourceCount
-    ) throw()
+    ) noexcept
 {
     // Can have more UTF16 characters than UTF32,
     // but never the other way around.
@@ -515,7 +515,7 @@ _Out_range_(0, destMax)
 size_t ConvertUtf32ToUtf16(
     array_ref<char32_t const> utf32text,
     OUT array_ref<char16_t> utf16text
-    ) throw()
+    ) noexcept
 {
     size_t si = 0, di = 0;
     size_t sc = utf32text.size(), dc = utf16text.size();

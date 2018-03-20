@@ -27,7 +27,7 @@ export
 
 ////////////////////////////////////////
 
-HRESULT ReadTextFile(const char16_t* filename, OUT std::u16string& text) throw()
+HRESULT ReadTextFile(const char16_t* filename, OUT std::u16string& text) noexcept
 {
     unsigned long bytesRead;
     std::vector<char> fileData;
@@ -84,7 +84,7 @@ HRESULT ReadTextFile(const char16_t* filename, OUT std::u16string& text) throw()
 HRESULT WriteTextFile(
     const char16_t* filename,
     array_ref<char16_t const> text
-    ) throw()
+    ) noexcept
 {
     return WriteTextFile(filename, text.data(), static_cast<uint32_t>(text.size()));
 }
@@ -94,7 +94,7 @@ HRESULT WriteTextFile(
     char16_t const* filename,
     __in_ecount(textLength) char16_t const* text,
     uint32_t textLength
-    ) throw()
+    ) noexcept
 {
     std::string fileData;
 

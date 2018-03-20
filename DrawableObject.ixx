@@ -912,7 +912,7 @@ const Attribute::PredefinedValue DrawableObject::trimmingDelimiters[] = {
 };
 
 
-bool DrawableObject::IsGdiOrGdiPlusFunction(DrawableObjectFunction functionType) throw()
+bool DrawableObject::IsGdiOrGdiPlusFunction(DrawableObjectFunction functionType) noexcept
 {
     // Check whether it's a GDI/GDI+ or DWrite based function.
     static_assert(DrawableObjectFunctionTotal == 12, "Update this switch statement.");
@@ -1362,7 +1362,7 @@ public:
         RemoveFontResourceEx(ToWChar(filePath_.data()), FR_PRIVATE | FR_NOT_ENUM, nullptr);
     }
 
-    virtual HRESULT STDMETHODCALLTYPE QueryInterface(IID const& iid, _Out_ void** object) throw() override
+    virtual HRESULT STDMETHODCALLTYPE QueryInterface(IID const& iid, _Out_ void** object) noexcept override
     {
         COM_BASE_RETURN_INTERFACE(iid, GdiAddedFontResource, object);
         COM_BASE_RETURN_INTERFACE(iid, IUnknown, object);

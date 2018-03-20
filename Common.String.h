@@ -5,30 +5,30 @@
 #pragma once
 
 
-inline bool IsSurrogate(char32_t ch) throw()
+inline bool IsSurrogate(char32_t ch) noexcept
 {
     // 0xD800 <= ch <= 0xDFFF
     return (ch & 0xF800) == 0xD800;
 }
 
-inline bool IsLeadingSurrogate(char32_t ch) throw()
+inline bool IsLeadingSurrogate(char32_t ch) noexcept
 {
     // 0xD800 <= ch <= 0xDBFF
     return (ch & 0xFC00) == 0xD800;
 }
 
-inline bool IsTrailingSurrogate(char32_t ch) throw()
+inline bool IsTrailingSurrogate(char32_t ch) noexcept
 {
     // 0xDC00 <= ch <= 0xDFFF
     return (ch & 0xFC00) == 0xDC00;
 }
 
-inline bool IsCharacterBeyondBmp(char32_t ch) throw()
+inline bool IsCharacterBeyondBmp(char32_t ch) noexcept
 {
     return ch >= 0x10000;
 }
 
-inline char32_t MakeUnicodeCodePoint(char32_t high, char32_t low) throw()
+inline char32_t MakeUnicodeCodePoint(char32_t high, char32_t low) noexcept
 {
     return ((high & 0x03FF) << 10 | (low & 0x03FF)) + 0x10000;
 }
@@ -45,7 +45,7 @@ inline char16_t GetTrailingSurrogate(char32_t ch)
     return char16_t(0xDC00 + (ch & 0x3FF));
 }
 
-inline bool IsHexDigit(char32_t ch) throw()
+inline bool IsHexDigit(char32_t ch) noexcept
 {
     return (ch >= '0' && ch <= '9') || (ch &= ~32, ch >= 'A' && ch <= 'F');
 }
@@ -65,9 +65,9 @@ enum UnicodeCodePoint
     UnicodeTotal                    = 0x110000,
 };
 
-char16_t const* SkipSpaces(_In_z_ char16_t const* stringValue) throw();
-char16_t const* SkipToNextWord(_In_z_ char16_t const* stringValue) throw();
-char16_t const* SkipToEnd(_In_z_ char16_t const* stringValue) throw();
+char16_t const* SkipSpaces(_In_z_ char16_t const* stringValue) noexcept;
+char16_t const* SkipToNextWord(_In_z_ char16_t const* stringValue) noexcept;
+char16_t const* SkipToEnd(_In_z_ char16_t const* stringValue) noexcept;
 
 // Replaces unpaired surrogates with U+FFFD.
 _Out_range_(0, utf32text.end_ - utf32text.begin_)
@@ -75,7 +75,7 @@ size_t ConvertTextUtf16ToUtf32(
     array_ref<char16_t const> utf16text,
     OUT array_ref<char32_t> utf32text,
     _Out_opt_ size_t* sourceCount
-    ) throw();
+    ) noexcept;
 
 // Carries unpaired surrogates through, for testing of API behavior.
 _Out_range_(0, utf32text.end_ - utf32text.begin_)
@@ -83,13 +83,13 @@ size_t ConvertTextUtf16ToUtf32NoReplacement(
     array_ref<char16_t const> utf16text,
     OUT array_ref<char32_t> utf32text,
     _Out_opt_ size_t* sourceCount
-    ) throw();
+    ) noexcept;
 
 _Out_range_(0, return)
 size_t ConvertUtf32ToUtf16(
     array_ref<char32_t const> utf32text,
     OUT array_ref<char16_t> utf16text
-    ) throw();
+    ) noexcept;
 
 // Consumes the byte order mark.
 void ConvertTextUtf8ToUtf16(
@@ -113,7 +113,7 @@ void UnescapeCppUniversalCharacterNames(array_ref<char16_t const> escapedText, O
 void UnescapeHtmlNamedCharacterReferences(array_ref<char16_t const> escapedText, OUT std::u16string& expandedText);
 void EscapeCppUniversalCharacterNames(array_ref<char16_t const> text, OUT std::u16string& escapedText);
 void EscapeHtmlNamedCharacterReferences(array_ref<char16_t const> text, OUT std::u16string& escapedText);
-void RemoveTrailingZeroes(_Inout_ std::u16string& text) throw();
+void RemoveTrailingZeroes(_Inout_ std::u16string& text) noexcept;
 void WriteZeroPaddedHexNum(uint32_t value, OUT array_ref<char16_t> buffer);
 uint32_t ReadUnsignedNumericValue(_Inout_ array_ref<char16_t const>& text, uint32_t base); // Unlike wcstoul, respects length limit, and doesn't throw exception!
 array_ref<wchar_t> ToWString(int32_t value, OUT array_ref<wchar_t> s);

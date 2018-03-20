@@ -56,7 +56,7 @@ namespace
 
 
 // Maps exceptions to equivalent HRESULTs,
-HRESULT ExceptionToHResult() throw()
+HRESULT ExceptionToHResult() noexcept
 {
     try
     {

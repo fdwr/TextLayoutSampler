@@ -20,7 +20,7 @@ class ListSubstringPrioritizer
         uint32_t index;
         WeightValue weight;
 
-        bool operator < (IndexAndWeight const& other) const throw()
+        bool operator < (IndexAndWeight const& other) const noexcept
         {
             return weight < other.weight;
         }

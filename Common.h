@@ -36,9 +36,9 @@ template<typename T> void ZeroStructure(T& structure)
     memset(&structure, 0, sizeof(T));
 }
 
-bool TestBit(void const* memoryBase, uint32_t bitIndex) throw();
-bool ClearBit(void* memoryBase, uint32_t bitIndex) throw();
-bool SetBit(void* memoryBase, uint32_t bitIndex) throw();
+bool TestBit(void const* memoryBase, uint32_t bitIndex) noexcept;
+bool ClearBit(void* memoryBase, uint32_t bitIndex) noexcept;
+bool SetBit(void* memoryBase, uint32_t bitIndex) noexcept;
 
 template<typename T>
 T* PtrAddByteOffset(T* p, size_t offset)
@@ -215,12 +215,12 @@ public:
         return E_NOINTERFACE;
     }
 
-    virtual ULONG STDMETHODCALLTYPE AddRef() throw() override
+    virtual ULONG STDMETHODCALLTYPE AddRef() noexcept override
     {
         return InterlockedIncrement(&refCount_);
     }
 
-    virtual ULONG STDMETHODCALLTYPE Release() throw() override
+    virtual ULONG STDMETHODCALLTYPE Release() noexcept override
     {
         auto newRefCount = InterlockedDecrement(&refCount_);
         if (newRefCount == 0)

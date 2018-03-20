@@ -26,10 +26,10 @@ public:
     WrapperType(ResourceType resource) : resource_(resource) {}
     WrapperType(WrapperType<ResourceType> const& other) : resource_(other.resource_) {}
     inline WrapperType() { resource_ = 0; }
-    inline operator ResourceType() const throw() { return resource_; }
-    inline operator ResourceType&() throw() { return resource_; }
-    inline ResourceType* operator&() throw() { return &resource_; }
-    inline ResourceType operator->() const throw() { return resource_; }
+    inline operator ResourceType() const noexcept { return resource_; }
+    inline operator ResourceType&() noexcept { return resource_; }
+    inline ResourceType* operator&() noexcept { return &resource_; }
+    inline ResourceType operator->() const noexcept { return resource_; }
     inline WrapperType& operator=(ResourceType resource) { resource_ = resource; return *this; }
 
     ResourceType resource_;

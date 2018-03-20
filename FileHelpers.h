@@ -7,9 +7,9 @@
 //----------------------------------------------------------------------------
 #pragma once
 
-HRESULT ReadTextFile(const char16_t* filename, OUT std::u16string& text) throw(); // Read UTF-8 or ASCII
-HRESULT WriteTextFile(const char16_t* filename, array_ref<char16_t const> text) throw();
-HRESULT WriteTextFile(const char16_t* filename, __in_ecount(textLength) const char16_t* text, uint32_t textLength) throw(); // Write as UTF-8
+HRESULT ReadTextFile(const char16_t* filename, OUT std::u16string& text) noexcept; // Read UTF-8 or ASCII
+HRESULT WriteTextFile(const char16_t* filename, array_ref<char16_t const> text) noexcept;
+HRESULT WriteTextFile(const char16_t* filename, __in_ecount(textLength) const char16_t* text, uint32_t textLength) noexcept; // Write as UTF-8
 HRESULT ReadBinaryFile(const char16_t* filename, OUT std::vector<uint8_t>& fileBytes);
 HRESULT WriteBinaryFile(const char16_t* filename, const std::vector<uint8_t>& fileData);
 HRESULT WriteBinaryFile(const char16_t* filename, array_ref<uint8_t const> fileData);

@@ -37,7 +37,7 @@ HRESULT LoadDWrite(
     DWRITE_FACTORY_TYPE factoryType, // DWRITE_FACTORY_TYPE_SHARED
     _COM_Outptr_ IDWriteFactory** factory,
     _Out_ HMODULE& moduleHandle
-    ) throw();
+    ) noexcept;
 
 HRESULT CreateFontFaceFromFile(
     IDWriteFactory* factory,
@@ -47,12 +47,12 @@ HRESULT CreateFontFaceFromFile(
     DWRITE_FONT_SIMULATIONS fontSimulations,  // usually just DWRITE_FONT_SIMULATIONS_NONE
     array_ref<DWRITE_FONT_AXIS_VALUE> fontAxisValues,
     _COM_Outptr_ IDWriteFontFace** fontFace
-    ) throw();
+    ) noexcept;
 
 HRESULT CreateFontFaceFromTextFormat(
     IDWriteTextFormat* textFormat,
     _COM_Outptr_ IDWriteFontFace** fontFace
-    ) throw();
+    ) noexcept;
 
 HRESULT CreateFontFace(
     IDWriteFontCollection* fontCollection,
@@ -77,7 +77,7 @@ HRESULT CreateFontCollection(
     _In_bytecount_(fontFileNamesSize) const wchar_t* fontFileNames,
     _In_ uint32_t fontFileNamesSize, // Number of wchar_t's, not number file name count
     _COM_Outptr_ IDWriteFontCollection** fontCollection
-    ) throw();
+    ) noexcept;
 
 HRESULT CreateFontCollection(
     _In_ IDWriteFactory* factory,
@@ -85,17 +85,17 @@ HRESULT CreateFontCollection(
     _In_reads_(fontFilesCount) IDWriteFontFile* const* fontFiles,
     uint32_t fontFilesCount,
     _COM_Outptr_ IDWriteFontCollection** fontCollection
-    ) throw();
+    ) noexcept;
 
 HRESULT GetFilePath(
     IDWriteFontFile* fontFile,
     OUT std::u16string& filePath
-    ) throw();
+    ) noexcept;
 
 HRESULT GetFilePath(
     IDWriteFontFace* fontFace,
     OUT std::u16string& filePath
-    ) throw();
+    ) noexcept;
 
 HRESULT GetFontFile(
     IDWriteFontFace* fontFace,
@@ -105,7 +105,7 @@ HRESULT GetFontFile(
 HRESULT GetFileModifiedDate(
     IDWriteFontFace* fontFace,
     _Out_ FILETIME& fileTime
-    ) throw();
+    ) noexcept;
 
 HRESULT SaveDWriteFontFile(
     IDWriteFontFileStream* fontFileStream,
@@ -127,14 +127,14 @@ HRESULT CreateTextLayout(
     float maxHeight,
     DWRITE_MEASURING_MODE measuringMode,
     _Out_ IDWriteTextLayout** textLayout
-    ) throw();
+    ) noexcept;
 
 HRESULT GetFontFaceMetrics(
     IDWriteFontFace* fontFace,
     float fontEmSize,
     DWRITE_MEASURING_MODE measuringMode,
     _Out_ DWRITE_FONT_METRICS* fontMetrics
-    ) throw();
+    ) noexcept;
 
 HRESULT GetFontFaceAdvances(
     IDWriteFontFace* fontFace,
@@ -143,7 +143,7 @@ HRESULT GetFontFaceAdvances(
     DWRITE_MEASURING_MODE measuringMode,
     bool isSideways,
     _Out_ array_ref<float> glyphAdvances
-    ) throw();
+    ) noexcept;
 
 // The glyph advances remain in font design units and are not scaled by the size.
 // The size is merely for the sake of grid-fitting in non-ideal measuring modes.
@@ -154,13 +154,13 @@ HRESULT GetFontFaceDesignAdvances(
     DWRITE_MEASURING_MODE measuringMode,
     bool isSideways,
     _Out_ array_ref<int32_t> glyphAdvances
-    ) throw();
+    ) noexcept;
 
 HRESULT GetLocalizedStringLanguage(
     IDWriteLocalizedStrings* strings,
     uint32_t stringIndex,
     OUT std::u16string& value
-    ) throw();
+    ) noexcept;
 
 // Try to get the string in the preferred language, else English, else the first index.
 // The function does not return an error if the string does exist, just empty string.
@@ -168,7 +168,7 @@ HRESULT GetLocalizedString(
     IDWriteLocalizedStrings* strings,
     _In_opt_z_ const wchar_t* preferredLanguage,
     OUT std::u16string& value
-    ) throw();
+    ) noexcept;
 
 // Get the string from the given index.
 // The function does not return an error if the string does exist, just empty string.
@@ -176,7 +176,7 @@ HRESULT GetLocalizedString(
     IDWriteLocalizedStrings* strings,
     uint32_t stringIndex,
     OUT std::u16string& value
-    ) throw();
+    ) noexcept;
 
 HRESULT GetFontFaceName(
     IDWriteFont* font,
@@ -232,7 +232,7 @@ float GetFontAxisValue(
     float defaultValue
     );
 
-bool IsKnownFontFileExtension(_In_z_ const wchar_t* fileExtension) throw();
+bool IsKnownFontFileExtension(_In_z_ const wchar_t* fileExtension) noexcept;
 
 // Draw a text layout to a bitmap render target.
 HRESULT DrawTextLayout(
@@ -245,7 +245,7 @@ HRESULT DrawTextLayout(
     COLORREF textColor = 0,
     uint32_t colorPaletteIndex = 0, // Use 0xFFFFFFFF if no palette (monochrome)
     bool enablePixelSnapping = true
-    );
+    ) noexcept;
 
 HRESULT DrawColorGlyphRun(
     IDWriteFactory* dwriteFactory,
@@ -258,7 +258,7 @@ HRESULT DrawColorGlyphRun(
     IDWriteRenderingParams* renderingParams,
     COLORREF textColor = 0x00000000,
     uint32_t paletteIndex = 0 // Use 0xFFFFFFFF if no palette (monochrome)
-    );
+    ) noexcept;
 
 HRESULT DrawColorGlyphRun(
     IDWriteFactory* dwriteFactory,
@@ -270,7 +270,7 @@ HRESULT DrawColorGlyphRun(
     float baselineOriginY,
     ID2D1Brush* brush,
     uint32_t colorPalette // 0xFFFFFFFF if none
-    );
+    ) noexcept;
 
 HRESULT GetFontCharacterCoverageCounts(
     array_ref<IDWriteFontFace* const> fontFaces,
@@ -299,7 +299,7 @@ HRESULT PlacementsToAbsolutePoints(
     _In_reads_(glyphCount) const float* glyphAdvances,
     _In_reads_opt_(glyphCount) const DWRITE_GLYPH_OFFSET* glyphOffsets,
     _Out_writes_(glyphCount) D2D_POINT_2F* absoluteGlyphOffsets
-    );
+    ) noexcept;
 
 HRESULT PlacementsToAbsoluteOffsets(
     IDWriteFontFace* fontFace,
@@ -314,7 +314,7 @@ HRESULT PlacementsToAbsoluteOffsets(
     _In_reads_(glyphCount) const float* glyphAdvances,
     _In_reads_opt_(glyphCount) const DWRITE_GLYPH_OFFSET* glyphOffsets,
     _Out_writes_(glyphCount) DWRITE_GLYPH_OFFSET* absoluteGlyphOffsets
-    );
+    ) noexcept;
 
 D2D1_RECT_F GetBlackBox(
     const DWRITE_OVERHANG_METRICS& overhangMetrics,

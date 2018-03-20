@@ -123,7 +123,7 @@ HRESULT LoadDWrite(
     DWRITE_FACTORY_TYPE factoryType, // DWRITE_FACTORY_TYPE_SHARED
     _COM_Outptr_ IDWriteFactory** factory,
     _Out_ HMODULE& moduleHandle
-    ) throw()
+    ) noexcept
 {
     using DWriteCreateFactory_t = HRESULT (__stdcall)(
         __in DWRITE_FACTORY_TYPE,
@@ -198,20 +198,20 @@ HRESULT LoadDWrite(
 class RefCountBase
 {
 public:
-    explicit RefCountBase() throw()
+    explicit RefCountBase() noexcept
         :   refValue_()
     { }
 
-    explicit RefCountBase(ULONG refValue) throw()
+    explicit RefCountBase(ULONG refValue) noexcept
         :   refValue_(refValue)
     { }
 
-    unsigned long IncrementRef() throw()
+    unsigned long IncrementRef() noexcept
     {
         return InterlockedIncrement(&refValue_);
     }
 
-    unsigned long DecrementRef() throw()
+    unsigned long DecrementRef() noexcept
     {
         ULONG newCount = InterlockedDecrement(&refValue_);
         if (newCount == 0)
@@ -233,18 +233,18 @@ class RefCountBaseStatic : public RefCountBase
 public:
     using Base = RefCountBase;
 
-    explicit RefCountBaseStatic() throw()
+    explicit RefCountBaseStatic() noexcept
     :   Base()
     { }
 
-    explicit RefCountBaseStatic(ULONG refValue) throw()
+    explicit RefCountBaseStatic(ULONG refValue) noexcept
     :   Base(refValue)
     { }
 
     // Just use inherited IncrementRef.
 
     // Do not delete the reference.
-    unsigned long DecrementRef() throw()
+    unsigned long DecrementRef() noexcept
     {
         return InterlockedDecrement(&refValue_);
     }
@@ -317,7 +317,7 @@ public:
         _In_ IDWriteFactory* factory,
         _In_reads_(fontFileNamesSize) const wchar_t* fontFileNames,
         uint32_t fontFileNamesSize
-        ) throw()
+        ) noexcept
     {  
         if (factory == nullptr || fontFileNames == nullptr || !fontFileNames[0])
             return E_INVALIDARG;
@@ -443,7 +443,7 @@ public:
         _In_ IDWriteFactory* factory,
         _In_reads_(fontFilesCount) IDWriteFontFile* const* fontFiles,
         uint32_t fontFilesCount
-        ) throw()
+        ) noexcept
     {  
         if (factory == nullptr || (fontFiles == nullptr && fontFilesCount > 0))
             return E_INVALIDARG;
@@ -522,7 +522,7 @@ HRESULT CreateFontCollection(
     DWRITE_FONT_FAMILY_MODEL fontFamilyModel,
     IDWriteFontFileEnumerator* fontFileEnumerator,
     _COM_Outptr_ IDWriteFontCollection** fontCollection
-    ) throw()
+    ) noexcept
 {
     RETURN_ON_ZERO(CustomFontCollectionLoader::GetInstance(), E_FAIL);
 
@@ -564,7 +564,7 @@ HRESULT CreateFontCollection(
     _In_reads_(fontFileNamesSize) const wchar_t* fontFileNames,
     _In_ uint32_t fontFileNamesSize,
     _COM_Outptr_ IDWriteFontCollection** fontCollection
-    ) throw()
+    ) noexcept
 {  
     RETURN_ON_ZERO(CustomFontCollectionLoader::GetInstance(), E_FAIL);
 
@@ -583,7 +583,7 @@ HRESULT CreateFontCollection(
     _In_reads_(fontFilesCount) IDWriteFontFile* const* fontFiles,
     uint32_t fontFilesCount,
     _COM_Outptr_ IDWriteFontCollection** fontCollection
-    )
+    ) noexcept
 {  
     RETURN_ON_ZERO(CustomFontCollectionLoader::GetInstance(), E_FAIL);
 
@@ -763,7 +763,7 @@ HRESULT CreateFontFaceFromFile(
     DWRITE_FONT_SIMULATIONS fontSimulations,
     array_ref<DWRITE_FONT_AXIS_VALUE> fontAxisValues,
     _COM_Outptr_ IDWriteFontFace** fontFace
-    ) throw()
+    ) noexcept
 {
     ComPtr<IDWriteFontFile> fontFile;
 
@@ -851,7 +851,7 @@ HRESULT CreateFontFaceFromFile(
 HRESULT CreateFontFaceFromTextFormat(
     IDWriteTextFormat* textFormat,
     _COM_Outptr_ IDWriteFontFace** fontFace
-    ) throw()
+    ) noexcept
 {
     // Get font family name
     uint32_t const fontFamilyNameLength = textFormat->GetFontFamilyNameLength();
@@ -954,7 +954,7 @@ HRESULT CreateTextLayout(
     float maxHeight,
     DWRITE_MEASURING_MODE measuringMode,
     __out IDWriteTextLayout** textLayout
-    ) throw()
+    ) noexcept
 {
     if (measuringMode == DWRITE_MEASURING_MODE_NATURAL)
     {
@@ -989,7 +989,7 @@ HRESULT GetFontFaceMetrics(
     float fontEmSize,
     DWRITE_MEASURING_MODE measuringMode,
     __out DWRITE_FONT_METRICS* fontMetrics
-    ) throw()
+    ) noexcept
 {
     switch (measuringMode)
     {
@@ -1017,7 +1017,7 @@ HRESULT GetFontFaceDesignAdvances(
     DWRITE_MEASURING_MODE measuringMode,
     bool isSideways,
     _Out_ array_ref<int32_t> glyphAdvances
-    ) throw()
+    ) noexcept
 {
     if (glyphIds.size() != glyphAdvances.size())
         return E_INVALIDARG;
@@ -1095,7 +1095,7 @@ HRESULT GetFontFaceAdvances(
     DWRITE_MEASURING_MODE measuringMode,
     bool isSideways,
     _Out_ array_ref<float> glyphAdvances
-    ) throw()
+    ) noexcept
 {
     std::vector<int32_t> glyphAdvancesBuffer(glyphIds.size());
     IFR(GetFontFaceDesignAdvances(
@@ -1133,7 +1133,7 @@ HRESULT PlacementsToAbsolutePoints(
     _In_reads_(glyphCount) const float* glyphAdvances,
     _In_reads_opt_(glyphCount) const DWRITE_GLYPH_OFFSET* glyphOffsets,
     _Out_writes_(glyphCount) D2D_POINT_2F* absoluteGlyphPoints
-    )
+    ) noexcept
 {
     static_assert(sizeof(D2D_POINT_2F) == sizeof(DWRITE_GLYPH_OFFSET), "");
 
@@ -1166,7 +1166,7 @@ HRESULT PlacementsToAbsoluteOffsets(
     _In_reads_(glyphCount) const float* glyphAdvances,
     _In_reads_opt_(glyphCount) const DWRITE_GLYPH_OFFSET* glyphOffsets,
     _Out_writes_(glyphCount) DWRITE_GLYPH_OFFSET* absoluteGlyphOffsets
-    )
+    ) noexcept
 {
     // isSideways does not affect the interpretation of the u,v offsets.
 
@@ -1256,7 +1256,7 @@ HRESULT GetLocalFileLoaderAndKey(
 HRESULT GetFilePath(
     IDWriteFontFile* fontFile,
     OUT std::u16string& filePath
-    ) throw()
+    ) noexcept
 {
     std::u16string tempFilePath;
     std::swap(tempFilePath, filePath);
@@ -1328,7 +1328,7 @@ HRESULT GetFontFile(
 HRESULT GetFilePath(
     IDWriteFontFace* fontFace,
     OUT std::u16string& filePath
-    ) throw()
+    ) noexcept
 {
     filePath.clear();
 
@@ -1345,7 +1345,7 @@ HRESULT GetFilePath(
 HRESULT GetFileModifiedDate(
     IDWriteFontFace* fontFace,
     _Out_ FILETIME& fileTime
-    ) throw()
+    ) noexcept
 {
     const static FILETIME zeroFileTime = {};
     fileTime = zeroFileTime;
@@ -1405,7 +1405,7 @@ HRESULT GetLocalizedStringLanguage(
     IDWriteLocalizedStrings* strings,
     uint32_t stringIndex,
     OUT std::u16string& stringValue
-    )
+    ) noexcept
 {
     stringValue.clear();
 
@@ -1433,7 +1433,7 @@ HRESULT GetLocalizedString(
     IDWriteLocalizedStrings* strings,
     _In_opt_z_ const wchar_t* preferredLanguage,
     OUT std::u16string& stringValue
-    )
+    ) noexcept
 {
     stringValue.clear();
 
@@ -1465,7 +1465,7 @@ HRESULT GetLocalizedString(
     IDWriteLocalizedStrings* strings,
     uint32_t stringIndex,
     OUT std::u16string& stringValue
-    )
+    ) noexcept
 {
     stringValue.clear();
     if (strings == nullptr || strings->GetCount() == 0)
@@ -1653,7 +1653,7 @@ float GetFontAxisValue(
 }
 
 
-bool IsKnownFontFileExtension(_In_z_ const wchar_t* fileExtension) throw()
+bool IsKnownFontFileExtension(_In_z_ const wchar_t* fileExtension) noexcept
 {
     return (_wcsicmp(fileExtension, L".otf") == 0
         ||  _wcsicmp(fileExtension, L".ttf") == 0
@@ -1669,7 +1669,7 @@ void GetGlyphOrientationTransform(
     float originX,
     float originY,
     _Out_ DWRITE_MATRIX* transform
-    ) throw()
+    ) noexcept
 {
     uint32_t quadrant = glyphOrientationAngle;
     if (isSideways)
@@ -1775,7 +1775,7 @@ public:
         _In_ DWRITE_GLYPH_RUN const* glyphRun,
         _In_ DWRITE_GLYPH_RUN_DESCRIPTION const* glyphRunDescription,
         _In_ IUnknown* clientDrawingEffect
-        ) throw() override
+        ) noexcept override
     {
         // Forward to newer overload.
         return DrawGlyphRun(
@@ -1799,7 +1799,7 @@ public:
         _In_ DWRITE_GLYPH_RUN const* glyphRun,
         _In_ DWRITE_GLYPH_RUN_DESCRIPTION const* glyphRunDescription,
         _In_ IUnknown* clientDrawingEffect
-        ) throw() override
+        ) noexcept override
     {
         if (glyphRun->glyphCount <= 0)
             return S_OK;
@@ -1841,7 +1841,7 @@ public:
         _In_ DWRITE_GLYPH_ORIENTATION_ANGLE orientationAngle,
         _In_ DWRITE_UNDERLINE const* underline,
         _In_ IUnknown* clientDrawingEffect
-        ) throw() override
+        ) noexcept override
     {
         DrawLine(
             clientDrawingContext,
@@ -1864,7 +1864,7 @@ public:
         _In_ float baselineOriginY,
         _In_ DWRITE_UNDERLINE const* underline,
         _In_ IUnknown* clientDrawingEffect
-        ) throw() override
+        ) noexcept override
     {
         return DrawUnderline(
             clientDrawingContext,
@@ -1883,7 +1883,7 @@ public:
         _In_ DWRITE_GLYPH_ORIENTATION_ANGLE orientationAngle,
         _In_ DWRITE_STRIKETHROUGH const* strikethrough,
         _In_ IUnknown* clientDrawingEffect
-        ) throw() override
+        ) noexcept override
     {
         DrawLine(
             clientDrawingContext,
@@ -1905,7 +1905,7 @@ public:
         _In_ float baselineOriginY,
         _In_ DWRITE_STRIKETHROUGH const* strikethrough,
         _In_ IUnknown* clientDrawingEffect
-        ) throw() override
+        ) noexcept override
     {
         return DrawStrikethrough(
             clientDrawingContext,
@@ -1926,7 +1926,7 @@ public:
         _In_ BOOL isSideways,
         _In_ BOOL isRightToLeft,
         _In_ IUnknown* clientDrawingEffect
-        ) throw() override
+        ) noexcept override
     {
         return inlineObject->Draw(clientDrawingContext, this, originX, originY, isSideways, isRightToLeft, clientDrawingEffect);
     }
@@ -1939,7 +1939,7 @@ public:
         _In_ BOOL isSideways,
         _In_ BOOL isRightToLeft,
         _In_ IUnknown* clientDrawingEffect
-        ) throw() override
+        ) noexcept override
     {
         return inlineObject->Draw(clientDrawingContext, this, originX, originY, isSideways, isRightToLeft, clientDrawingEffect);
     }
@@ -1989,7 +1989,7 @@ public:
     HRESULT STDMETHODCALLTYPE IsPixelSnappingDisabled(
         _In_opt_ void* clientDrawingContext,
         _Out_ BOOL* isDisabled
-        ) throw() override
+        ) noexcept override
     {
         *isDisabled = !enablePixelSnapping_;
         return S_OK;
@@ -1998,7 +1998,7 @@ public:
     HRESULT STDMETHODCALLTYPE GetCurrentTransform(
         _In_opt_ void* clientDrawingContext,
         _Out_ DWRITE_MATRIX* transform
-        ) throw() override
+        ) noexcept override
     {
         *transform = g_identityTransform.dwrite;
         return S_OK;
@@ -2007,13 +2007,13 @@ public:
     HRESULT STDMETHODCALLTYPE GetPixelsPerDip(
         _In_opt_ void* clientDrawingContext,
         _Out_ float* pixelsPerDip
-        ) throw() override
+        ) noexcept override
     {
         *pixelsPerDip = 1.0;
         return S_OK;
     }
 
-    HRESULT STDMETHODCALLTYPE QueryInterface(IID const& iid, _Out_ void** object) throw() override
+    HRESULT STDMETHODCALLTYPE QueryInterface(IID const& iid, _Out_ void** object) noexcept override
     {
         if (iid == __uuidof(IDWriteTextRenderer1)
         ||  iid == __uuidof(IDWriteTextRenderer)
@@ -2028,12 +2028,12 @@ public:
         return E_NOINTERFACE;
     }
 
-    unsigned long STDMETHODCALLTYPE AddRef() throw() override
+    unsigned long STDMETHODCALLTYPE AddRef() noexcept override
     {
         return 1; // Static stack class
     }
 
-    unsigned long STDMETHODCALLTYPE Release() throw() override
+    unsigned long STDMETHODCALLTYPE Release() noexcept override
     {
         return 1; // Static stack class
     }
@@ -2057,7 +2057,7 @@ HRESULT DrawTextLayout(
     COLORREF textColor,
     uint32_t colorPaletteIndex,
     bool enablePixelSnapping
-    )
+    ) noexcept
 {
     if (renderTarget == nullptr || renderingParams == nullptr || textLayout == nullptr)
         return E_INVALIDARG;
@@ -2156,7 +2156,7 @@ HRESULT DrawColorGlyphRun(
     IDWriteRenderingParams* renderingParams,
     COLORREF textColor,
     uint32_t colorPalette // 0xFFFFFFFF if none
-    )
+    ) noexcept
 {
     textColor &= 0x00FFFFFF; // GDI may render nothing in outline mode if alpha byte is set.
 
@@ -2253,7 +2253,7 @@ HRESULT DrawColorGlyphRun(
     float baselineOriginY,
     ID2D1Brush* brush,
     uint32_t colorPalette // 0xFFFFFFFF if none
-    )
+    ) noexcept
 {
     ComPtr<IDWriteColorGlyphRunEnumerator> colorLayers;
     auto hr = GetColorGlyphRunEnumerator(
@@ -2322,7 +2322,7 @@ HRESULT GetFontCharacterCoverageCounts(
     bool getOnlyColorFontCharacters,
     std::function<void(uint32_t i, uint32_t total)> progress,
     _Out_ std::vector<uint16_t>& coverageCounts
-    )
+    ) // todo: make noexcept.
 {
     coverageCounts.clear();
 
@@ -2397,7 +2397,7 @@ HRESULT GetStringFromCoverageCount(
     uint32_t lowCount,
     uint32_t highCount,
     _Out_ std::u16string& text
-    )
+    ) // todo: make noexcept.
 {
     // Calculate size first, determining needed size for UTF-16.
     uint32_t countsSize = static_cast<uint32_t>(characterCounts.size());
@@ -2490,7 +2490,7 @@ HRESULT GetGlyphMetrics(
 }
 
 
-DWRITE_GLYPH_ORIENTATION_ANGLE GetRelativeOrientation(bool isSideways, bool isFlippedOrientation) throw()
+DWRITE_GLYPH_ORIENTATION_ANGLE GetRelativeOrientation(bool isSideways, bool isFlippedOrientation) noexcept
 {
     // Determine a relative angle from the flags.
     //
@@ -2577,7 +2577,7 @@ void RotateRect(
 
 
 // Checks whether a glyph has a non-empty black box.
-inline bool GlyphHasSize(DWRITE_GLYPH_METRICS const& glyphMetrics) throw()
+inline bool GlyphHasSize(DWRITE_GLYPH_METRICS const& glyphMetrics) noexcept
 {
     return static_cast<int64_t>(glyphMetrics.advanceWidth)  - glyphMetrics.leftSideBearing - glyphMetrics.rightSideBearing  > 0
         && static_cast<int64_t>(glyphMetrics.advanceHeight) - glyphMetrics.topSideBearing  - glyphMetrics.bottomSideBearing > 0;

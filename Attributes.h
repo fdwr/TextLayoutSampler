@@ -140,9 +140,9 @@ struct Attribute
     static bool IsTypeParsable(Attribute::Type type); // Requires parsing, not just a string of characters.
     static Type GetBaseType(Attribute::Type type);
 
-    bool IsTypeArray() const throw() { return IsTypeArray(this->type); }
-    bool AreCompatibleTypes(Attribute::Type type2) const throw() { return AreCompatibleTypes(this->type, type2); }
-    size_t GetTypeSizeof() const throw() { return GetTypeSizeof(this->type); }
+    bool IsTypeArray() const noexcept { return IsTypeArray(this->type); }
+    bool AreCompatibleTypes(Attribute::Type type2) const noexcept { return AreCompatibleTypes(this->type, type2); }
+    size_t GetTypeSizeof() const noexcept { return GetTypeSizeof(this->type); }
 
     char16_t const* GetPredefinedValueName(uint32_t valueIndex) const;
 

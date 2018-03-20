@@ -81,7 +81,7 @@ public:
         uint32_t length;                // Character count of identifier/value/data.
         uint32_t level;                 // Nesting level. The first node is zero.
 
-        inline Type GetGenericType() const throw();
+        inline Type GetGenericType() const noexcept;
 
         // To get the text, the node forwards the request onto the text tree,
         // as node itself does not actually hold the text. The function here
@@ -165,8 +165,8 @@ public:
 
 public:
     void Clear();
-    uint32_t GetNodeCount() const throw();
-    bool empty() const throw(); // Node there exists a virtual root. So after calling ReadNodes, it will be non-empty even if the file was empty.
+    uint32_t GetNodeCount() const noexcept;
+    bool empty() const noexcept; // Node there exists a virtual root. So after calling ReadNodes, it will be non-empty even if the file was empty.
     iterator begin();   // Iterator warks entire tree, top down (pre-order).
     iterator end();
     iterator BeginFirstChild(); // You cannot deference this iterator, but you can use it to search from.
@@ -177,7 +177,7 @@ public:
 
     // Reads the text of a single node, returning a weak pointer that remains
     // valid until the tree is modified. It is not nul-terminated!
-    const char16_t* GetText(const Node& node, __out uint32_t& textLength) const throw();
+    const char16_t* GetText(const Node& node, __out uint32_t& textLength) const noexcept;
 
     // Reads the text of a single node into the string.
     // The node must be one from this tree, retrieved via GetNode.
@@ -682,9 +682,9 @@ public:
         );
 
     // Returns a weak pointer of the entire text which remains valid until the tree is modified. It is not nul-terminated!
-    const char16_t* GetText(__out uint32_t& textLength) const throw();
+    const char16_t* GetText(__out uint32_t& textLength) const noexcept;
 
-    array_ref<char16_t const> GetText() const throw();
+    array_ref<char16_t const> GetText() const noexcept;
 
     // Reads the text into the string.
     void GetText(OUT std::u16string& text) const;
@@ -698,7 +698,7 @@ public:
     static uint32_t GetTextLength(
         __in_ecount(textLength) const char16_t* text,
         uint32_t textLength = 0xFFFFFFFF
-        ) throw();
+        ) noexcept;
 
 protected:
     std::u16string text_; // Starts empty and grows with each written node.

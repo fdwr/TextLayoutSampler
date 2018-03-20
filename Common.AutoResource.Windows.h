@@ -7,7 +7,7 @@ template <
 >
 struct HandleResourceTypePolicy : public DefaultResourceTypePolicy<ResourceType>
 {
-    inline static void Release(ResourceType resource) throw()
+    inline static void Release(ResourceType resource) noexcept
     {
         if (resource != 0)
         {
@@ -21,7 +21,7 @@ struct HandleResourceTypePolicy : public DefaultResourceTypePolicy<ResourceType>
 
 
 // Releasing function for WaitHandleResource to pass to use with HandleResourceTypePolicy.
-inline void WaitHandleUnregister(HANDLE handle) throw()
+inline void WaitHandleUnregister(HANDLE handle) noexcept
 {
     if (handle != nullptr)
     {
@@ -52,7 +52,7 @@ using WaitHandleResource = AutoResource<HANDLE, HandleResourceTypePolicy<HANDLE,
 
 struct ComResourceTypePolicy : public DefaultResourceTypePolicy<IUnknown*>
 {
-    inline static void Acquire(_Inout_opt_ IUnknown* resource) throw()
+    inline static void Acquire(_Inout_opt_ IUnknown* resource) noexcept
     {
         if (resource != nullptr)
         {
@@ -60,7 +60,7 @@ struct ComResourceTypePolicy : public DefaultResourceTypePolicy<IUnknown*>
         }
     }
 
-    inline static void Release(_Inout_opt_ IUnknown* resource) throw()
+    inline static void Release(_Inout_opt_ IUnknown* resource) noexcept
     {
         if (resource != nullptr)
         {

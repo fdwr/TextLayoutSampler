@@ -281,13 +281,13 @@ bool TextTree::NodePointer::SetKeyValue(
 }
 
 
-uint32_t TextTree::GetNodeCount() const throw()
+uint32_t TextTree::GetNodeCount() const noexcept
 {
     return static_cast<uint32_t>(nodes_.size());
 }
 
 
-bool TextTree::empty() const throw()
+bool TextTree::empty() const noexcept
 {
     return nodes_.empty(); // todo: always create empty root.
 }
@@ -321,7 +321,7 @@ void TextTree::Clear()
 }
 
 
-TextTree::Node::Type TextTree::Node::GetGenericType() const throw()
+TextTree::Node::Type TextTree::Node::GetGenericType() const noexcept
 {
     return static_cast<TextTree::Node::Type>(this->type & TypeGenericMask);
 }
@@ -349,7 +349,7 @@ const TextTree::Node& TextTree::GetNode(uint32_t nodeIndex) const
 }
 
 
-const char16_t* TextTree::GetText(const Node& node, __out uint32_t& textLength) const throw()
+const char16_t* TextTree::GetText(const Node& node, __out uint32_t& textLength) const noexcept
 {
     assert(size_t(&node - nodes_.data()) < nodes_.size());
     textLength = node.length;
@@ -2024,13 +2024,13 @@ HRESULT TextTreeWriter::ExitNode()
 }
 
 
-array_ref<char16_t const> TextTreeWriter::GetText() const throw()
+array_ref<char16_t const> TextTreeWriter::GetText() const noexcept
 {
     return text_;
 }
 
 
-const char16_t* TextTreeWriter::GetText(__out uint32_t& textLength) const throw()
+const char16_t* TextTreeWriter::GetText(__out uint32_t& textLength) const noexcept
 {
     textLength = static_cast<uint32_t>(text_.size());
     return text_.c_str();
@@ -2046,7 +2046,7 @@ void TextTreeWriter::GetText(OUT std::u16string& text) const
 uint32_t TextTreeWriter::GetTextLength(
     __in_ecount_opt(textLength) const char16_t* text,
     uint32_t textLength
-    ) throw()
+    ) noexcept
 {
     if (text == nullptr)
         return 0; // Empty string.

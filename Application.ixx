@@ -24,7 +24,7 @@ public:
     static int DisplayError(__in_z const char16_t* message, __in_z_opt const char16_t* formatString, int functionResult);
     static void Fail(__in_z const char16_t* message, __in_z_opt const char16_t* formatString, int functionResult);
     static void DebugLog(const char16_t* logMessage, ...);
-    static HRESULT ExceptionToHResult() throw();
+    static HRESULT ExceptionToHResult() noexcept;
 };
 
 HINSTANCE Application::g_hModule = nullptr;

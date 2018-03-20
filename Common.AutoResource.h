@@ -49,7 +49,7 @@
 template <typename ResourceType = void*> // type of the resource held onto
 struct DefaultResourceTypePolicy
 {
-    inline static void InitializeEmpty(_Out_ ResourceType* resource) throw()
+    inline static void InitializeEmpty(_Out_ ResourceType* resource) noexcept
     {
         // Most resources (pointers to memory, HGLOBALS, HGDIOBJ...)
         // are indicated as empty by setting to 0/NULL. If a resource
@@ -62,17 +62,17 @@ struct DefaultResourceTypePolicy
         *resource = 0;
     }
 
-    inline static bool IsNull(ResourceType resource) throw()
+    inline static bool IsNull(ResourceType resource) noexcept
     {
         return (resource == 0);
     }
 
-    inline static void Acquire(ResourceType resource) throw()
+    inline static void Acquire(ResourceType resource) noexcept
     {
         // Do nothing.
     }
 
-    inline static void Release(ResourceType resource) throw()
+    inline static void Release(ResourceType resource) noexcept
     {
         // Do nothing.
     }
@@ -121,7 +121,7 @@ public:
         ResourceTypePolicy::InitializeEmpty(Cast(&resource_));
     }
 
-    inline ~AutoResource() throw()
+    inline ~AutoResource() noexcept
     {
         // Notice we merely free the resource and do not zero the resource,
         // since we actually prefer to leave the value intact, not because
@@ -137,14 +137,14 @@ public:
 
     // Implicitly promote to the resource type for all the times the resource
     // handle/pointer is passed by value to a function.
-    inline operator ResourceType() const throw()
+    inline operator ResourceType() const noexcept
     {
         return resource_;
     }
 
     // Explicit getter for times when the compiler becomes confused
     // during overload resolution.
-    inline ResourceType Get() const throw()
+    inline ResourceType Get() const noexcept
     {
         return resource_;
     }
@@ -156,7 +156,7 @@ public:
     // since needing the address of a resource is not only for the sake of
     // out params - it's perfectly legitimate as an in param too, such as with
     // WaitForMultipleObjects().
-    inline operator ResourceType&() throw()
+    inline operator ResourceType&() noexcept
     {
         return resource_;
     }
@@ -164,19 +164,19 @@ public:
     // Used when passed as an out parameter to any function,
     // or when the caller needs a pointer to a pointer.
     // If modified directly, the caller is responsible for managing the object.
-    inline ResourceType* operator&() throw()
+    inline ResourceType* operator&() noexcept
     {
         return &resource_;
     }
 
     // Explicitly named form.
-    inline ResourceType* Address() throw()
+    inline ResourceType* Address() noexcept
     {
         return &resource_;
     }
 
     // Explicitly named form.
-    inline ResourceType& Reference() throw()
+    inline ResourceType& Reference() noexcept
     {
         return resource_;
     }
@@ -185,7 +185,7 @@ public:
     //
     // ComPtr<ICat> cat;
     // cat->Meow();
-    inline ResourceType operator->() const throw()
+    inline ResourceType operator->() const noexcept
     {
         return resource_;
     }
@@ -253,7 +253,7 @@ public:
     }
 
     // Abandon the resource without freeing it.
-    inline void Abandon() throw()
+    inline void Abandon() noexcept
     {
         ResourceTypePolicy::InitializeEmpty(Cast(&resource_));
     }
@@ -262,7 +262,7 @@ public:
     // this Attach does not increment the ref count, which is symmetric
     // to Detach().
     // * No self-assignment checking is done here.
-    ResourceType Attach(ResourceType resource) throw()
+    ResourceType Attach(ResourceType resource) noexcept
     {
         DEBUG_ASSERT(resource != resource_);
         std::swap(resource_, resource);
@@ -272,7 +272,7 @@ public:
 
     // Lets go of the resource without freeing it, but returning it
     // to the caller.
-    ResourceType Detach() throw()
+    ResourceType Detach() noexcept
     {
         ResourceType resource = resource_;
         ResourceTypePolicy::InitializeEmpty(Cast(&resource_));
@@ -284,18 +284,18 @@ public:
     //
     //  p1.Attach(p2.Detach())   ->   p1.Steal(p2)
     //
-    inline void Steal(Self& other) throw()
+    inline void Steal(Self& other) noexcept
     {
         swap(other);
         other.Clear();
     }
 
-    inline bool IsNull() const throw()
+    inline bool IsNull() const noexcept
     {
         return ResourceTypePolicy::IsNull(resource_);
     }
 
-    inline bool IsSet() const throw()
+    inline bool IsSet() const noexcept
     {
         return !ResourceTypePolicy::IsNull(resource_);
     }
@@ -308,7 +308,7 @@ public:
         Clear();
     }
 
-    inline void swap(ResourceType& resource) throw()
+    inline void swap(ResourceType& resource) noexcept
     {
         std::swap(resource_, resource);
     }
@@ -353,7 +353,7 @@ namespace std
     void swap(
         AutoResource<ResourceType, ResourceTypePolicy, BaseResourceType>& lhs,
         AutoResource<ResourceType, ResourceTypePolicy, BaseResourceType>& rhs
-        ) throw()
+        ) noexcept
     {
         lhs.swap(rhs);
     }
@@ -387,7 +387,7 @@ using UnownedMemoryPointer = AutoResource<ResourceType*, UnownedMemoryPointerPol
 template <typename ResourceType>
 struct OwnedMemoryPointerPolicy : public DefaultResourceTypePolicy<ResourceType>
 {
-    inline static void Release(ResourceType resource) throw()
+    inline static void Release(ResourceType resource) noexcept
     {
         if (resource != nullptr)
         {

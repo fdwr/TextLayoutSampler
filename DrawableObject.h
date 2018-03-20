@@ -179,7 +179,7 @@ public:
     static HRESULT SaveFontFile(IAttributeSource& attributeSource, DrawingCanvas& drawingCanvas, char16_t const* filePath);
     static HRESULT ExportFontGlyphData(IAttributeSource& attributeSource, DrawingCanvas& drawingCanvas, array_ref<char16_t const> filePath);
     static HRESULT GetFontCharacters(IAttributeSource& attributeSource, DrawingCanvas& drawingCanvas, bool getOnlyColorFontCharacters, _Out_ std::u16string& characters);
-    static bool IsGdiOrGdiPlusFunction(DrawableObjectFunction functionType) throw();
+    static bool IsGdiOrGdiPlusFunction(DrawableObjectFunction functionType) noexcept;
 
     static const Attribute attributeList[DrawableObjectAttributeTotal];
     static const Attribute::PredefinedValue functions[12];

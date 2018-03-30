@@ -215,12 +215,12 @@ public:
         return E_NOINTERFACE;
     }
 
-    virtual ULONG STDMETHODCALLTYPE AddRef() noexcept override
+    virtual ULONG STDMETHODCALLTYPE AddRef() throw() override
     {
         return InterlockedIncrement(&refCount_);
     }
 
-    virtual ULONG STDMETHODCALLTYPE Release() noexcept override
+    virtual ULONG STDMETHODCALLTYPE Release() throw() override
     {
         auto newRefCount = InterlockedDecrement(&refCount_);
         if (newRefCount == 0)

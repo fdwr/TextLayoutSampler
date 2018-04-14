@@ -5,25 +5,11 @@
 //----------------------------------------------------------------------------
 #include "precomp.h"
 
-import Common.ListSubstringPrioritizer;
-import Common.AutoResource;
-import Common.AutoResource.Windows;
-import Common.ArrayRef;
-import Common.String;
-import Attributes;
-import DrawingCanvas;
-import DrawableObject;
-import TextTreeParser;
 
-//module DrawableObjectAndValues;
-//export
-//{
+MODULE(DrawableObjectAndValues)
+EXPORT_BEGIN
     #include "DrawableObjectAndValues.h"
-//}
-
-#if 0 // This shouldn't actually compile without an import Common.ArrayRef statement, and yet it does.
-array_ref<int> a;
-#endif
+EXPORT_END
 
 ////////////////////////////////////////
 

@@ -38,27 +38,10 @@ todo:::
 #include "Application.macros.h"
 #include "WindowUtility.macros.h"
 
-import Common.ArrayRef;
-import Common.String;
-import Common.AutoResource;
-import Common.AutoResource.Windows;
-import Common.ListSubstringPrioritizer;
-import MessageBoxShaded;
-import FileHelpers;
-import DrawingCanvasControl;
-import DrawableObject;
-import Application;
-
-#if CPP_MODULES_ARE_FIXED
-import DrawableObjectAndValues; // Causes internal compiler error crash.
-#else
-import TextTreeParser; // for DrawableObjectAndValues
-#include "DrawableObjectAndValues.h"
-#endif
 
 #pragma comment(lib, "ComCtl32.lib")
 
-module MainWindow;
+MODULE(MainWindow)
 
 #include "MainWindow.h"
 

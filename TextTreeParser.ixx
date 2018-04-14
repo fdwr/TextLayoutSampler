@@ -9,14 +9,18 @@
 //----------------------------------------------------------------------------
 #include "precomp.h"
 
+#if USE_MODULES
 import Common.String;
 import Common.ArrayRef;
+#else
+#include "Common.String.h"
+#include "Common.ArrayRef.h"
+#endif
 
-module TextTreeParser;
-export
-{
+MODULE(TextTreeParser)
+EXPORT_BEGIN
     #include "TextTreeParser.h"
-}
+EXPORT_END
 
 ////////////////////////////////////////
 

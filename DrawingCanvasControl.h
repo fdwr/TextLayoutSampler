@@ -6,6 +6,13 @@
 #pragma once
 
 
+#if USE_MODULES
+import DrawingCanvas;
+#else
+#include "DrawingCanvas.h"
+#endif
+
+
 class DrawingCanvasControl : public DrawingCanvas
 {
 ////////////////////////////////////////

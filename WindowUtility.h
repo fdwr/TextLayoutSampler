@@ -5,6 +5,19 @@
 #pragma once
 
 
+#if USE_MODULES
+import Common.String;
+import Common.ArrayRef;
+import Common.AutoResource;
+import Common.AutoResource.Windows;
+#else
+#include "Common.String.h"
+#include "Common.ArrayRef.h"
+#include "Common.AutoResource.h"
+#include "Common.AutoResource.Windows.h"
+#endif
+
+
 template<typename T>
 T* GetClassFromWindow(HWND hwnd)
 {

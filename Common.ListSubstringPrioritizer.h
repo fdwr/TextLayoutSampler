@@ -5,6 +5,15 @@
 #pragma once
 
 
+#if USE_MODULES
+import Common.ArrayRef;
+import Common.String;
+#else
+#include "Common.ArrayRef.h"
+#include "Common.String.h"
+#endif
+
+
 class ListSubstringPrioritizer
 {
     struct IndexAndWeight

@@ -4,6 +4,25 @@
 //----------------------------------------------------------------------------
 #pragma once
 
+#define USE_MODULES 0
+
+#if USE_MODULES
+#define MODULE(moduleName) export module moduleName;
+#else
+#define MODULE(moduleName)
+#endif
+
+
+#if USE_MODULES
+#define EXPORT export
+#define EXPORT_BEGIN export {
+#define EXPORT_END }
+#else
+#define EXPORT
+#define EXPORT_BEGIN
+#define EXPORT_END
+#endif
+
 
 #ifndef IFR
 #define IFR(hrIn) { HRESULT hrOut = (hrIn); if (FAILED(hrOut)) {return hrOut; } }

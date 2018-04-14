@@ -237,7 +237,7 @@ auto make_array_ref(ContiguousContainer& container) -> array_ref<typename std::r
 {
     // The remove_reference is necessary because decltype retains the reference
     // from std::vector's dereferenced iterator.
-    using ArrayRefType = std::remove_reference<decltype(*std::begin(container))>::type;
+    using ArrayRefType = typename std::remove_reference<decltype(*std::begin(container))>::type;
     return array_ref<ArrayRefType>(container);
 }
 

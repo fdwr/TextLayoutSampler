@@ -1,7 +1,6 @@
 #include "precomp.h"
 
-module Common.AutoResource;
-export
-{
+MODULE(Common.AutoResource)
+EXPORT_BEGIN
     #include "Common.AutoResource.h"
-}
+EXPORT_END

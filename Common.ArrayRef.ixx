@@ -11,11 +11,10 @@
 #include <string>
 #include <cassert>
 
-module Common.ArrayRef;
-export
-{
+MODULE(Common.ArrayRef)
+EXPORT_BEGIN
     #include "Common.ArrayRef.h"
-}
+EXPORT_END
 
 ////////////////////////////////////////
 

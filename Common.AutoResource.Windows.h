@@ -1,5 +1,13 @@
 #pragma once
 
+
+#if USE_MODULES
+import Common.AutoResource;
+#else
+#include "Common.AutoResource.h"
+#endif
+
+
 template <
     typename ResourceType,                      // underlying type of the resource held onto (e.g. HGDIOBJ instead of HFONT)
     typename ResourceReleaserSignature,         // function prototype of the releasing function

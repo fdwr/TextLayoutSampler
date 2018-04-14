@@ -4,17 +4,11 @@
 //----------------------------------------------------------------------------
 #include "precomp.h"
 
-import Common.String;
-import Common.ArrayRef;
-import Common.OptionalValue;
-import Common.ListSubstringPrioritizer;
 
-
-module Attributes;
-export
-{
+MODULE(Attributes)
+EXPORT_BEGIN
     #include "Attributes.h"
-}
+EXPORT_END
 
 ////////////////////////////////////////
 

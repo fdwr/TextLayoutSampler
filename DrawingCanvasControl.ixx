@@ -5,14 +5,11 @@
 //----------------------------------------------------------------------------
 #include "precomp.h"
 
-import DrawingCanvas;
+MODULE(DrawingCanvasControl)
 
-module DrawingCanvasControl;
-
-export
-{
+EXPORT_BEGIN
     #include "DrawingCanvasControl.h"
-}
+EXPORT_END
 
 ////////////////////////////////////////
 

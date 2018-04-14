@@ -6,34 +6,21 @@
 #include <specstrings.h>
 #include "Application.macros.h"
 
-import Common.String;
+MODULE(Application)
+MODULE(DWritEx)
+EXPORT_BEGIN
+    #include "Application.h"
+EXPORT_END
 
-module Application;
-
-
-////////////////////////////////////////
-
-export class Application
-{
-public:
-    static HINSTANCE g_hModule;
-    static MSG g_msg;
-    static HWND g_mainHwnd;
-
-    static void Dispatch();
-    static int DisplayError(__in_z const char16_t* message, __in_z_opt const char16_t* formatString, int functionResult);
-    static void Fail(__in_z const char16_t* message, __in_z_opt const char16_t* formatString, int functionResult);
-    static void DebugLog(const char16_t* logMessage, ...);
-    static HRESULT ExceptionToHResult() noexcept;
-};
-
-HINSTANCE Application::g_hModule = nullptr;
-MSG Application::g_msg;
-HWND Application::g_mainHwnd;
 
 #pragma prefast(disable:__WARNING_HARD_CODED_STRING_TO_UI_FN, "It's an internal test program.")
 
 ////////////////////////////////////////
+
+
+HINSTANCE Application::g_hModule = nullptr;
+MSG Application::g_msg;
+HWND Application::g_mainHwnd;
 
 
 void Application::Dispatch()

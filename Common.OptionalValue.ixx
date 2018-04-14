@@ -1,7 +1,6 @@
 #include "precomp.h"
 
-module Common.OptionalValue;
-export
-{
+MODULE(Common.OptionalValue)
+EXPORT_BEGIN
     #include "Common.OptionalValue.h"
-}
+EXPORT_END

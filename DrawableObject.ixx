@@ -8,20 +8,11 @@
 //----------------------------------------------------------------------------
 #include "precomp.h"
 
-import Common.ArrayRef;
-import Common.String;
-import Common.AutoResource;
-import Common.AutoResource.Windows;
-import FileHelpers;
-import Attributes;
-import DrawingCanvas;
-import DWritEx;
 
-module DrawableObject;
-export
-{
+MODULE(DrawableObject)
+EXPORT_BEGIN
     #include "DrawableObject.h"
-}
+EXPORT_END
 
 ////////////////////////////////////////
 

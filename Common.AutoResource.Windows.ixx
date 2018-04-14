@@ -1,9 +1,6 @@
 #include "precomp.h"
 
-import Common.AutoResource;
-
-module Common.AutoResource.Windows;
-export
-{
+MODULE(Common.AutoResource.Windows)
+EXPORT_BEGIN
     #include "Common.AutoResource.Windows.h"
-}
+EXPORT_END

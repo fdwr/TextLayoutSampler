@@ -15,16 +15,10 @@
 #pragma comment(lib, "GdiPlus.lib")
 #pragma comment(lib, "WindowsCodecs.lib")
 
-import Common.String;
-import Common.AutoResource;
-import Common.AutoResource.Windows;
-import DWritEx;
-
-module DrawingCanvas;
-export
-{
+MODULE(DrawingCanvas)
+EXPORT_BEGIN
     #include "DrawingCanvas.h"
-}
+EXPORT_END
 
 ////////////////////////////////////////
 

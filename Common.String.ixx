@@ -11,13 +11,10 @@
 //----------------------------------------------------------------------------
 #include "precomp.h"
 
-import Common.ArrayRef;
-
-module Common.String;
-export
-{
+MODULE(Common.String)
+EXPORT_BEGIN
     #include "Common.String.h"
-}
+EXPORT_END
 
 ////////////////////////////////////////
 

@@ -7,7 +7,11 @@
 #include <stdint.h>
 #include "Common.h"
 
+#if USE_MODULES
 import Common.String;
+#else
+#include "Common.String.h"
+#endif
 
 
 ////////////////////////////////////////

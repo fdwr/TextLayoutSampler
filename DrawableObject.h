@@ -6,6 +6,27 @@
 #pragma once
 
 
+#if USE_MODULES
+import Common.ArrayRef;
+import Common.String;
+import Common.AutoResource;
+import Common.AutoResource.Windows;
+import FileHelpers;
+import Attributes;
+import DrawingCanvas;
+import DWritEx;
+#else
+#include "Common.ArrayRef.h"
+#include "Common.String.h"
+#include "Common.AutoResource.h"
+#include "Common.AutoResource.Windows.h"
+#include "FileHelpers.h"
+#include "Attributes.h"
+#include "DrawingCanvas.h"
+#include "DWritEx.h"
+#endif
+
+
 ////////////////////////////////////////////////////////////////////////////////
 // Generic attributes and interfaces.
 

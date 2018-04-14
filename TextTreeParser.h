@@ -438,7 +438,7 @@ public:
     template<typename ContiguousSequenceContainer>
     inline void Reset(const ContiguousSequenceContainer& text, Options options)
     {
-        Reset(&(*std::begin(text)), static_cast<uint32_t>(std::end(text) - std::begin(text)), options)
+        Reset(&(*std::begin(text)), static_cast<uint32_t>(std::end(text) - std::begin(text)), options);
     }
 
     // Read a single node, extracting type and text from it.

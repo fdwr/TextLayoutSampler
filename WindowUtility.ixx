@@ -4,16 +4,10 @@
 //----------------------------------------------------------------------------
 #include "precomp.h"
 
-import Common.String;
-import Common.ArrayRef;
-import Common.AutoResource;
-import Common.AutoResource.Windows;
-
-module WindowUtility;
-export
-{
+MODULE(WindowUtility)
+EXPORT_BEGIN
     #include "WindowUtility.h"
-}
+EXPORT_END
 
 ////////////////////////////////////////
 

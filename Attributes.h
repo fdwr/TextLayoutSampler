@@ -5,6 +5,19 @@
 #pragma once
 
 
+#if USE_MODULES
+import Common.String;
+import Common.ArrayRef;
+import Common.OptionalValue;
+import Common.ListSubstringPrioritizer;
+#else
+#include "Common.String.h"
+#include "Common.ArrayRef.h"
+#include "Common.OptionalValue.h"
+#include "Common.ListSubstringPrioritizer.h"
+#endif
+
+
 // Definition of attribute, including the type, name, and default values.
 // The current value is stored separately.
 struct Attribute

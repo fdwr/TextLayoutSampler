@@ -11,17 +11,12 @@
 #include <windows.h>
 #include <Dwrite_3.h>
 
-import Common.ArrayRef;
-import Common.String;
-import FileHelpers;
-
 #pragma comment(lib, "DWrite.lib")
 
-module DWritEx;
-export
-{
+MODULE(DWritEx)
+EXPORT_BEGIN
     #include "DWritEx.h"
-}
+EXPORT_END
 
 ////////////////////////////////////////
 

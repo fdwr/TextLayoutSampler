@@ -12,18 +12,12 @@
 #include <Shlwapi.h>
 #include <stdint.h>
 
-import Common.String;
-import Common.ArrayRef;
-import Common.AutoResource;
-import Common.AutoResource.Windows;
-
 #pragma comment(lib, "Shlwapi.lib")
 
-module FileHelpers;
-export
-{
+MODULE(FileHelpers)
+EXPORT_BEGIN
     #include "FileHelpers.h"
-}
+EXPORT_END
 
 ////////////////////////////////////////
 

@@ -5,6 +5,13 @@
 #pragma once
 
 
+#if USE_MODULES
+import Common.ArrayRef;
+#else
+#include "Common.ArrayRef.h"
+#endif
+
+
 inline bool IsSurrogate(char32_t ch) noexcept
 {
     // 0xD800 <= ch <= 0xDFFF

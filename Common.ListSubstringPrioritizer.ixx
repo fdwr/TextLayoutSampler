@@ -6,14 +6,11 @@
 #include <vector>
 #include <string>
 
-import Common.ArrayRef;
-import Common.String;
 
-module Common.ListSubstringPrioritizer;
-export
-{
+MODULE(Common.ListSubstringPrioritizer)
+EXPORT_BEGIN
     #include "Common.ListSubstringPrioritizer.h"
-}
+EXPORT_END
 
 ////////////////////////////////////////
 

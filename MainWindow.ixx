@@ -37,6 +37,7 @@ todo:::
 #include "resource.h"
 #include "Application.macros.h"
 #include "WindowUtility.macros.h"
+#include "Common.FastVector.h"
 
 
 #pragma comment(lib, "ComCtl32.lib")

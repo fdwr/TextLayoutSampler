@@ -2327,6 +2327,10 @@ HRESULT CachedDWriteTextLayout::EnsureCached(
         textLayout4->SetFontAxisValues(fontAxisValues.data(), uint32_t(fontAxisValues.size()), DWRITE_TEXT_RANGE{ 0, UINT32_MAX });
     }
 
+    // Ensure lazy evaluation is defeated.
+    DWRITE_TEXT_METRICS textMetrics;
+    textLayout->GetMetrics(OUT &textMetrics);
+
     return S_OK;
 };
 
@@ -2924,11 +2928,11 @@ HRESULT MapGdiPlusStatusToHResult(Gdiplus::Status status)
 
 HRESULT CachedGdiPlusStartup::EnsureCached()
 {
-    if (gdiplusToken == NULL)
+    if (gdiplusToken == 0)
     {
         Gdiplus::GdiplusStartupInputEx gdiplusStartupInput(Gdiplus::GdiplusStartupDefault);
         auto status = Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, nullptr);
-        if (gdiplusToken == NULL)
+        if (gdiplusToken == 0)
         {
             return MapGdiPlusStatusToHResult(status);
         }

@@ -18,6 +18,8 @@ EXPORT_END
 
 ////////////////////////////////////////
 
+#ifdef _DEBUG
+
 template <typename ResourceType = void*>
 class WrapperType
 {
@@ -95,8 +97,11 @@ void array_ref_test()
     array_ref<WrapperType<int> > fromWrappedIntVector(wrappedIntVector);
 }
 
+
 struct array_ref_test_class
 {
     array_ref_test_class() { array_ref_test(); }
 };
 array_ref_test_class array_ref_test_class_instance;
+
+#endif // _DEBUG

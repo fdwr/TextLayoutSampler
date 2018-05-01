@@ -54,6 +54,7 @@
 
 //////////////////////////////
 // C RunTime Header Files
+#define _SCL_SECURE_NO_WARNINGS // I hate doing this, but Visual Studio offers no substitute for std::uninitialized_copy.
 #include <stdlib.h>
 #include <malloc.h>
 #include <memory.h>

@@ -140,27 +140,28 @@ public:
     }
 
     // Iterators
-    iterator begin() const                  { return begin_; }
-    iterator end() const                    { return end_; }
-    const_iterator cbegin() const           { return begin_; }
-    const_iterator cend() const             { return end_; };
-    reverse_iterator rbegin() const         { return reverse_iterator(begin_); }
-    reverse_iterator rend() const           { return reverse_iterator(end_); }
-    const_reverse_iterator crbegin() const  { return const_reverse_iterator(begin_); }
-    const_reverse_iterator crend() const    { return const_reverse_iterator(end_); }
+    iterator begin() const noexcept                 { return begin_; }
+    iterator end() const noexcept                   { return end_; }
+    const_iterator cbegin() const noexcept          { return begin_; }
+    const_iterator cend() const noexcept            { return end_; };
+    reverse_iterator rbegin() const noexcept        { return reverse_iterator(begin_); }
+    reverse_iterator rend() const noexcept          { return reverse_iterator(end_); }
+    const_reverse_iterator crbegin() const noexcept { return const_reverse_iterator(begin_); }
+    const_reverse_iterator crend() const noexcept   { return const_reverse_iterator(end_); }
 
     // Capacity
-    size_type size() const                  { return end_ - begin_; }
-    size_type size_in_bytes() const         { return to_byte_pointer(end_) - to_byte_pointer(begin_); }
-    size_type max_size() const              { return SIZE_MAX / sizeof(T); }
-    bool empty() const                      { return begin_ == end_; }
+    size_type size() const noexcept                 { return end_ - begin_; }
+    size_type size_in_bytes() const noexcept        { return to_byte_pointer(end_) - to_byte_pointer(begin_); }
+    size_type capacity() const noexcept             { return end_ - begin_; }
+    constexpr size_type max_size() const noexcept   { return SIZE_MAX / sizeof(T); }
+    bool empty() const noexcept                     { return begin_ == end_; }
 
     // Element access
-    T& operator[](size_t i) const           { return begin_[i]; }
-    T& front() const                        { return *begin_; }
-    T& back() const                         { return *(end_ - 1); }
-    T* data() const                         { return begin_; }
-    T* data_end() const                     { return end_; }
+    T& operator[](size_t i) const noexcept          { return begin_[i]; }
+    T& front() const noexcept                       { return *begin_; }
+    T& back() const noexcept                        { return *(end_ - 1); }
+    T* data() const noexcept                        { return begin_; }
+    T* data_end() const noexcept                    { return end_; }
 
     // Mutators
     void clear()                            { begin_ = end_ = nullptr; }

@@ -1,6 +1,5 @@
 //----------------------------------------------------------------------------
-//  Author:     Dwayne Robinson
-//  History:    2008-02-11 Created
+//  History:    2008-02-11 Dwayne Robinson - Created
 //              2015-06-24 Split into base class and Windows control.
 //----------------------------------------------------------------------------
 #pragma once

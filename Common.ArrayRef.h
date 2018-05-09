@@ -1,6 +1,5 @@
 //----------------------------------------------------------------------------
-//  Author:     Dwayne Robinson
-//  History:    2015-06-19 Created
+//  History:    2015-06-19 Dwayne Robinson - Created
 //              2015-10-20 Forked into stand-alone file and added unit test.
 //----------------------------------------------------------------------------
 #pragma once
@@ -187,6 +186,11 @@ public:
         begin_ = std::min(begin_, end_);
     }
 
+    bool intersects(array_ref<T const> other) const noexcept
+    {
+        return begin_ < other.end_ && end_ > other.begin_;
+    }
+
 protected:
     // Mini-helpers.
     static inline uint8_t const* to_byte_pointer(void const* p) { return reinterpret_cast<uint8_t const*>(p); }
@@ -217,6 +221,12 @@ protected:
     pointer begin_ = nullptr;
     pointer end_ = nullptr;
 };
+
+template <typename T>
+bool operator==(array_ref<const T> lhs, array_ref<const T> rhs) noexcept(T() == T())
+{
+    return lhs.size() == rhs.size() && std::equal(lhs.data(), lhs.data() + lhs.size(), rhs.data());
+}
 
 
 // Wraps multiple contiguous elements. Alternately you could just pass this

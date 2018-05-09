@@ -1,6 +1,5 @@
 ﻿//----------------------------------------------------------------------------
-//  Author:     Dwayne Robinson
-//  History:    2015-06-19 Created
+//  History:    2015-06-19 Dwayne Robinson - Created
 //----------------------------------------------------------------------------
 #include "precomp.h"
 #include <specstrings.h>
@@ -16,7 +15,6 @@ EXPORT_END
 #pragma prefast(disable:__WARNING_HARD_CODED_STRING_TO_UI_FN, "It's an internal test program.")
 
 ////////////////////////////////////////
-
 
 HINSTANCE Application::g_hModule = nullptr;
 MSG Application::g_msg;

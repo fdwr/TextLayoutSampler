@@ -1,9 +1,7 @@
 //+---------------------------------------------------------------------------
+//  Helper for enumerating files.
 //
-//  Contents:   Helper for enumerating files.
-//
-//  History:    2013-10-04   dwayner    Created
-//
+//  History:    2013-10-04   Dwayne Robinson - Created
 //----------------------------------------------------------------------------
 #pragma once
 

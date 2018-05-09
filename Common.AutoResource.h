@@ -1,17 +1,8 @@
 //+---------------------------------------------------------------------------
+//  Automatic resource management helper class.
 //
-//  Copyright (c) Microsoft, 2008. All rights reserved.
-//
-//  Contents:   Automatic resource management.
-//
-//  Author:     Dwayne Robinson (dwayner@microsoft.com)
-//
-//  History:    2007-07-30   dwayner    Created for GDI
-//              2008-02-09   dwayner    Ported to DWrite
-//              2009-12-16   dwayner    Updated to support __cdecl too (fclose)
-//              2010-07-08   dwayner    Updated to handle ref counting policies
-//              2014-10-06   dwayner    Changed to template typedefs
-//
+//  History:    2007-07-30   Dwayne Robinson - Created
+//              2014-10-06   Dwayne Robinson - Changed to template typedefs
 //----------------------------------------------------------------------------
 #pragma once
 

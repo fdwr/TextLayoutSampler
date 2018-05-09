@@ -29,8 +29,7 @@ todo:::
 +Save selected font file
 */
 //----------------------------------------------------------------------------
-//  Author:     Dwayne Robinson
-//  History:    2015-06-19 Created
+//  History:    2015-06-19 Dwayne Robinson - Created
 //----------------------------------------------------------------------------
 
 #include "precomp.h"
@@ -252,7 +251,7 @@ MainWindow::DialogProcResult CALLBACK MainWindow::DialogProc(HWND hwnd, UINT mes
             UpdateUi();
         }
         #if 0
-        else if (wParam == IdcUpdateUi+1)// hack:::
+        else if (wParam == IdcUpdateUi+1)// hack for debugging animating objects.
         {
             RepaintDrawableObjects();
         }
@@ -435,7 +434,7 @@ INT_PTR MainWindow::InitializeMainDialog()
     }
     SetFocus(GetWindowFromId(hwnd_, controlIdToSetFocusTo));
 
-#if 0
+#if 0 // hack for debugging animating objects.
     SetTimer(hwnd_, IdcUpdateUi + 1, 10, nullptr);
 #endif
 
@@ -2953,7 +2952,7 @@ void MainWindow::Resize(int id)
             // Resize the attribute values edit, slider, and list controls.
             RECT attributeValuesRect = windowPositionAttributeValuesList.rect;
             windowPositionAttributeValuesEdit.options &= ~PositionOptionsIgnored;
-            #if 0 // todo::: enable slider
+            #if 0 // todo::: enable slider for variable fonts.
             windowPositionAttributeValuesSlider.options &= ~PositionOptionsIgnored;
             #endif
             windowPositionAttributeValuesList.SetOptions(PositionOptionsFillHeight, PositionOptionsAlignVMask | PositionOptionsUseSlackHeight);

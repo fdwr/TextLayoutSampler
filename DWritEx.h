@@ -1,9 +1,7 @@
 ﻿//+---------------------------------------------------------------------------
+//  DWrite helper functions for commonly needed tasks.
 //
-//  Contents:   DWrite helper functions for commonly needed tasks.
-//
-//  History:    2009-09-09  dwayner
-//
+//  History:    2009-09-09  Dwayne Robinson - Created
 //----------------------------------------------------------------------------
 #pragma once
 

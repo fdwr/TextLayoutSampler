@@ -1,6 +1,5 @@
 //----------------------------------------------------------------------------
-//  Author:         Dwayne Robinson
-//  History:        2015-06-19 Created
+//  History:        2015-06-19 Dwayne Robinson - Created
 //  Description:    Generic drawable object instance with attribute values.
 //----------------------------------------------------------------------------
 #pragma once

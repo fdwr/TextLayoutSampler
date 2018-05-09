@@ -1,11 +1,7 @@
 //----------------------------------------------------------------------------
+//  Generic text tree parser
 //
-//  Contents:   Generic text tree parser
-//
-//  Author:     Dwayne Robinson
-//
-//  History:    2013-08-29   dwayner    Created
-//
+//  History:    2013-08-29   Dwayne Robinson - Created
 //----------------------------------------------------------------------------
 #include "precomp.h"
 

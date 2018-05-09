@@ -1,6 +1,5 @@
 //----------------------------------------------------------------------------
-//  Author:     Dwayne Robinson
-//  History:    2018-04-30 Created
+//  History:    2018-04-30 Dwayne Robinson - Created
 //----------------------------------------------------------------------------
 #pragma once
 
@@ -9,21 +8,49 @@
 import Common.ArrayRef;
 #else
 #include "Common.ArrayRef.h"
+// gsl::span may be substituted instead.
 #endif
 
-
-// See fast_vector below for the common case which includes a fixed size array.
-// The base class is separated out for the possibility of associating specific
-// default memory, and also to avoid bloating additional template permutations
-// solely due to differing array sizes.
+// fast_vector is a substitute for std::vector which:
+// (1) avoids heap allocations when the element count fits within the fixed-size capacity.
+// (2) avoids unnecessarily initializing elements if ShouldInitializeElements == false.
+//     This is useful for large buffers which will just be overwritten soon anyway.
+// (3) supports most vector methods except insert/erase/emplace.
+//
+// The caller can supply a given fixed-size buffer to use until exceeding capacity.
+// See fast_vector below for the common case which includes a fixed size array as
+// a template parameter like std::array.
+//
+// Template parameters:
+// - DefaultArraySize - passing 0 means it is solely heap allocated. Passing > 0
+//   reserves that much element capacity before allocating heap memory.
+//
+// - ShouldInitializeElements - ensures elements are constructed when resizing, and
+//   it must be true for objects with non-trivial constructors, but it can be set
+//   false for large buffers to avoid unnecessarily initializing memory which will
+//   just be overwritten soon later anyway.
+//
+// Examples:
+//  fast_vector<int, 20> axes        - up to 20 integers before heap allocation.
+//  fast_vector<int, 0, false> axes  - always heap allocated but never initialized.
 
 template<typename T, size_t DefaultArraySize = 0, bool ShouldInitializeElements = true>
 class fast_vector;
 
+enum fast_vector_use_memory_buffer_enum
+{
+    fast_vector_use_memory_buffer
+};
+
 template<typename T, bool ShouldInitializeElements>
 class fast_vector<T, 0, ShouldInitializeElements>
 {
+    // The base class is separated out for the customization of passing specific
+    // memory, and to avoid bloating additional template permutations solely due to
+    // differing array sizes.
+
     static_assert(ShouldInitializeElements || std::is_trivial<T>::value);
+    using self = fast_vector<T, 0, ShouldInitializeElements>;
 
 public:
     // Types
@@ -38,17 +65,13 @@ public:
     using size_type = size_t;
     using difference_type = ptrdiff_t;
 
-    enum use_memory_buffer_enum
-    {
-        use_memory_buffer
-    };
-
 public:
     fast_vector()
     {
     }
 
-    fast_vector(use_memory_buffer_enum, array_ref<T> initialBackingArray)
+    // Construct using explicit fixed size memory buffer.
+    fast_vector(fast_vector_use_memory_buffer_enum, array_ref<T> initialBackingArray)
     :   data_(initialBackingArray.data()),
         capacity_(std::size(initialBackingArray))
     {
@@ -64,7 +87,7 @@ public:
         assign(initialValues);
     }
 
-    fast_vector(array_ref<const T> initialValues, use_memory_buffer_enum, array_ref<T> initialBackingArray)
+    fast_vector(fast_vector_use_memory_buffer_enum, array_ref<T> initialBackingArray, array_ref<const T> initialValues)
     :   data_(initialBackingArray.data()),
         capacity_(std::size(initialBackingArray))
     {
@@ -121,17 +144,46 @@ public:
 
     // Element access
     T& operator[](size_t i) const noexcept          { return data_[i]; }
-    T& front() const noexcept                       { return *data_; }
-    T& back() const noexcept                        { return *(data_ + size_ - 1); }
+    T& front() const noexcept                       { return data_[0]; }
+    T& back() const noexcept                        { return data_[size_ - 1]; }
     T* data() const noexcept                        { return data_; }
     T* data_end() const noexcept                    { return data_ + size_; }
 
+    array_ref<T> data_span() noexcept               { return {data_, size_}; }
+    array_ref<T const> data_span() const noexcept   { return {data_, size_}; }
+
+    T& at(size_t i)                                 { return checked_read(i); }
+    T& at(size_t i) const                           { return const_cast<self&>(*this).checked_read(i); }
+
+    T& checked_read(size_t i)
+    {
+        if (i >= size_)
+        {
+            throw std::out_of_range("fast_vector array index out of range.");
+        }
+
+        return data_[i];
+    }
+
     void assign(array_ref<const T> span)
     {
+        assert(!span.intersects(data_span())); // No self intersection.
+
         clear();
         size_t newSize = span.size();
         reserve(newSize);
-        std::uninitialized_copy(span.data(), span.data() + span.size(), /*out*/ data());
+        std::uninitialized_copy(span.data(), span.data() + newSize, /*out*/ data_);
+        size_ = newSize;
+    }
+
+    void assign_move(array_ref<const T> span)
+    {
+        assert(!span.intersects(data_span())); // No self intersection.
+
+        clear();
+        size_t newSize = span.size();
+        reserve(newSize);
+        std::uninitialized_move(span.data(), span.data() + newSize, /*out*/data_);
         size_ = newSize;
     }
 
@@ -153,7 +205,7 @@ public:
                 reserve(newCapacity);
             }
 
-            // Grow data to the new size.
+            // Grow data to the new size, calling the default constructor on each new item.
             if (ShouldInitializeElements)
             {
                 std::uninitialized_value_construct<iterator>(data_ + size_, data_ + newSize);
@@ -163,7 +215,7 @@ public:
         }
         else if (newSize < size_)
         {
-            // Shrink the data to the new size. Capacity remains intact.
+            // Shrink the data to the new size, calling the destructor on each item. Capacity remains intact.
             if (ShouldInitializeElements)
             {
                 std::destroy(data_ + newSize, data_ + size_);
@@ -218,6 +270,65 @@ public:
         ++size_;
     }
 
+    // Returns malloc()'d memory which can be freed with free() or transferred
+    // to another fast_vector. The caller then owns the block and must be careful
+    // to not leak it. If using fixed size memory, the returned span is empty.
+    array_ref<uint8_t> detach_memory()
+    {
+        array_ref<uint8_t> data;
+
+        if (dataIsAllocatedMemory_)
+        {
+            // Only heap allocated memory can be returned, not the fixed size buffer.
+            data = {reinterpret_cast<uint8_t*>(data_), size_ * sizeof(T)};
+            data_ = nullptr;
+            size_ = 0;
+            capacity_ = 0;
+        }
+
+        return data;
+    }
+
+    // Take ownership of the memory, which came from malloc or another fast_vector.
+    // If ShouldInitializeElements == true, then the memory is presumed to contain
+    // valid objects, which will be destructed when the fast_vector dies.
+    void attach_memory(array_ref<uint8_t> data)
+    {
+        assert(data.data() != data_);
+
+        clear(); // Destroy any existing elements.
+
+        // Take ownership of new data.
+        data_ = reinterpret_cast<T*>(data.data());
+        size_ = data.size() / sizeof(T);
+        capacity_ = size_;
+        dataIsAllocatedMemory_ = true;
+    }
+
+    void transfer_from(fast_vector<T, 0, ShouldInitializeElements>& other)
+    {
+        assert(other != *this);
+
+        if (other.dataIsAllocatedMemory_)
+        {
+            clear(); // Destroy any existing elements.
+
+            // Take ownership of new data.
+            data_ = other.data_;         other.data_ = nullptr;
+            size_ = other.size_;         other.size_ = 0;
+            capacity_ = other.capacity_; other.capacity_ = 0;
+            dataIsAllocatedMemory_ = other.dataIsAllocatedMemory_;
+            dataIsAllocatedMemory_ = false;
+        }
+        else
+        {
+            // Copying from a fixed size buffer; so it's unsafe to simply
+            // steal the pointers as that may leave a dangling pointer
+            // when the other fast vector disappears.
+            assign_move(other);
+        }
+    }
+
 protected:
     void ReallocateMemory(size_t newByteSize)
     {
@@ -227,6 +338,7 @@ protected:
         if (dataIsAllocatedMemory_ && std::is_trivially_move_constructible<T>::value)
         {
             // Try to just reallocate the existing memory block.
+            // This is for plain old data types and simple classes.
 
             T* newData = static_cast<T*>(realloc(data_, newByteSize));
             if (newData == nullptr)
@@ -245,7 +357,7 @@ protected:
             T* newData = static_cast<T*>(malloc(newByteSize));
             std::unique_ptr<T, decltype(std::free)*> newDataHolder(newData, &std::free);
 
-            // Copy an any existing elements from fixed size buffer.
+            // Copy an any existing elements from the fixed size buffer.
             std::uninitialized_move(data_, data_ + size_, /*out*/newData);
 
             // Release the existing block, and assign the new one.
@@ -259,9 +371,9 @@ protected:
     }
 
 protected:
-    T* data_ = nullptr; // May point to fixed size array or allocated memory.
-    size_t size_ = 0;
-    size_t capacity_ = 0;
+    T* data_ = nullptr;     // May point to fixed size array or allocated memory, depending on dataIsAllocatedMemory_.
+    size_t size_ = 0;       // Count in elements.
+    size_t capacity_ = 0;   // Count in elements.
     bool dataIsAllocatedMemory_ = false;
 };
 
@@ -279,12 +391,12 @@ public:
     using BaseClass = fast_vector<T, 0, ShouldInitializeElements>;
 
     fast_vector()
-    :   BaseClass(use_memory_buffer, GetArrayData())
+    :   BaseClass(fast_vector_use_memory_buffer, GetArrayData())
     {
     }
 
     fast_vector(array_ref<T> initialValues)
-    :   BaseClass(initialValues, use_memory_buffer, GetArrayData())
+    :   BaseClass(fast_vector_use_memory_buffer, GetArrayData(), initialValues)
     {
     }
 

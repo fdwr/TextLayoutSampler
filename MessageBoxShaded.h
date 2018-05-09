@@ -1,13 +1,7 @@
 ﻿//+---------------------------------------------------------------------------
+//  Window layout functions.
 //
-//  Copyright (c) Microsoft, 2008. All rights reserved.
-//
-//  Contents:   Window layout functions.
-//
-//  Author:     Dwayne Robinson (dwayner@microsoft.com)
-//
-//  History:    2008-02-11   dwayner    Created
-//
+//  History:    2008-02-11   Dwayne Robinson - Created
 //----------------------------------------------------------------------------
 
 //#include "precomp.h"

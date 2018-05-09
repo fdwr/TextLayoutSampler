@@ -1,6 +1,5 @@
 //----------------------------------------------------------------------------
-//  Author:     Dwayne Robinson (dwayner@microsoft.com)
-//  History:    2012-12-14 Created
+//  History:    2012-12-14 Dwayne Robinson - Created
 //----------------------------------------------------------------------------
 #pragma once
 

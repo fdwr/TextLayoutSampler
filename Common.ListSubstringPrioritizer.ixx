@@ -1,6 +1,5 @@
 //----------------------------------------------------------------------------
-//  Author:     Dwayne Robinson
-//  History:    2015-06-19 Created
+//  History:    2015-06-19 Dwayne Robinson - Created
 //----------------------------------------------------------------------------
 #include "precomp.h"
 #include <vector>

@@ -1,6 +1,5 @@
 //----------------------------------------------------------------------------
-//  Author:     Dwayne Robinson
-//  History:    2018-04-30 Created
+//  History:    2018-04-30 Dwayne Robinson - Created
 //----------------------------------------------------------------------------
 #include "precomp.h"
 
@@ -15,6 +14,8 @@ import Common.ArrayRef;
 ////////////////////////////////////////
 
 #ifdef _DEBUG
+
+#define INCLUDE_EXCEPTION_TESTS 0 // Enable for bounds checking via at().
 
 void fast_vector_test_as_parameter(fast_vector<int>& ints)
 {
@@ -157,6 +158,39 @@ void fast_vector_test()
     assert(complexStructs[0] == complexStructs3[0]);
     assert(complexStructs2.size() == complexStructs.size());
     assert(complexStructs2.capacity() >= complexStructs.capacity());
+
+    // Verify that memory can be reassigned.
+    fast_vector<uint32_t, 0, true> detachableMemory(20);
+    fast_vector<uint8_t, 0, false> reattachedMemory;
+    detachableMemory[0] = 42;
+    detachableMemory[19] = 42;
+
+    // Reattach memory and reinterpret it as bytes.
+    reattachedMemory.attach_memory(detachableMemory.detach_memory());
+    assert(reattachedMemory[0 * 4] == 42);
+    assert(reattachedMemory[19 * 4] == 42);
+
+    // Verify that memory can be reassigned.
+    uint32_t memoryBuffer[20] = {10, 11, 12};
+    fast_vector<uint32_t, 0, true> explicitMemory(fast_vector_use_memory_buffer, memoryBuffer);
+    assert(memoryBuffer[0] == 10); // Can access local buffer via vector.
+    explicitMemory.resize(2);
+    assert(memoryBuffer[0] == 0); // First entry should have been wiped.
+    assert(memoryBuffer[2] == 12); // Third entry should be intact.
+
+    #ifdef INCLUDE_EXCEPTION_TESTS // Noisy.
+    fast_vector<uint32_t> shouldThrow;
+    bool didThrow = false;
+    try
+    {
+        shouldThrow.at(0);
+    }
+    catch (std::out_of_range const&)
+    {
+        didThrow = true;
+    }
+    assert(didThrow);
+    #endif // INCLUDE_EXCEPTION_TESTS
 }
 
 

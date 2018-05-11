@@ -10,7 +10,7 @@ import Common.FastVector;
 #include "Common.ArrayRef.h"
 #include "Common.FastVector.h"
 #include <algorithm>
-#include <assert>
+#include <assert.h>
 #endif
 
 ////////////////////////////////////////
@@ -113,11 +113,17 @@ void fast_vector_test()
     ints.resize(32);
     assert(ints.capacity() == newCapacity); // Should not have reallocated again.
 
-    // Clear it completely to verify capacity is reduced.
+    // Clear it completely to verify capacity is reduced and memory freed.
     ints.clear();
     ints.shrink_to_fit();
     assert(ints.capacity() == 0);
     assert(ints.size() == 0);
+    assert(ints.data() == nullptr); // If sized to zero, memory should be deallocated.
+    ints.resize(30);
+    ints.free();
+    assert(ints.capacity() == 0);
+    assert(ints.size() == 0);
+    assert(ints.data() == nullptr); // If sized to zero, memory should be deallocated.
 
     // Append items to list.
     ints.resize(30);

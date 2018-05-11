@@ -5,23 +5,27 @@
 
 
 #if USE_CPP_MODULES
-import std.core;
-import Common.ArrayRef;
+    import std.core;
+    import Common.ArrayRef;
 #else
-#include "Common.ArrayRef.h" // gsl::span may be mostly substituted instead of array_ref, just missing intersects().
-#include <memory> // For uninitialized_move/copy and std::unique_ptr.
-#include <assert.h>
+
+    #ifdef USE_GSL_SPAN_INSTEAD_OF_ARRAY_REF
+        #include <gsl/span>
+        #define array_ref gsl::span
+    #else
+        #include "Common.ArrayRef.h" // gsl::span may be mostly substituted instead of array_ref, just missing intersects().
+    #endif
+
+    #include <memory> // For uninitialized_move/copy and std::unique_ptr.
+    #include <assert.h>
 #endif
 
-// fast_vector is a substitute for std::vector which:
+
+// fast_vector is a dynamic array that can substitute for std::vector, where it:
 // (1) avoids heap allocations when the element count fits within the fixed-size capacity.
 // (2) avoids unnecessarily initializing elements if ShouldInitializeElements == false.
 //     This is useful for large buffers which will just be overwritten soon anyway.
 // (3) supports most vector methods except insert/erase/emplace.
-//
-// The caller can supply a given fixed-size buffer to use until exceeding capacity.
-// See fast_vector below for the common case which includes a fixed size array as
-// a template parameter like std::array.
 //
 // Template parameters:
 // - DefaultArraySize - passing 0 means it is solely heap allocated. Passing > 0
@@ -35,6 +39,7 @@ import Common.ArrayRef;
 // Examples:
 //  fast_vector<int, 20> axes        - up to 20 integers before heap allocation.
 //  fast_vector<int, 0, false> axes  - always heap allocated but never initialized.
+//  fast_vector<int> axes            - basically std vector.
 
 template<typename T, size_t DefaultArraySize = 0, bool ShouldInitializeElements = true>
 class fast_vector;
@@ -44,13 +49,12 @@ enum fast_vector_use_memory_buffer_enum
     fast_vector_use_memory_buffer
 };
 
+// The base class is separated out for the customization of passing specific
+// memory, and to avoid bloating additional template permutations solely due to
+// differing array sizes.
 template<typename T, bool ShouldInitializeElements>
 class fast_vector<T, 0, ShouldInitializeElements>
 {
-    // The base class is separated out for the customization of passing specific
-    // memory, and to avoid bloating additional template permutations solely due to
-    // differing array sizes.
-
     static_assert(ShouldInitializeElements || std::is_trivial<T>::value);
     using self = fast_vector<T, 0, ShouldInitializeElements>;
 
@@ -93,6 +97,9 @@ public:
     }
 
     // Construct using explicit fixed size memory buffer.
+    // - Used by the derived template specialization which includes a fixed size buffer.
+    // - May also be used by the caller to pass an explicit buffer such as a local array,
+    //   where the buffer is guaranteed to live for the lifetime of the fast_vector.
     constexpr fast_vector(fast_vector_use_memory_buffer_enum, array_ref<T> initialBackingArray)
     :   data_(initialBackingArray.data()),
         capacity_(initialBackingArray.size())
@@ -113,29 +120,22 @@ public:
         resize(initialSize);
     }
  
-    fast_vector& operator=(fast_vector&& otherVector) // Throws std::bad_alloc if low on memory.
-    {
-        transfer_from(otherVector);
-        return *this;
-    }
-
-    fast_vector& operator=(const fast_vector& otherVector)
-    {
-        assign(otherVector);
-        return *this;
-    }
-
     ~fast_vector() noexcept(std::is_nothrow_destructible<T>::value)
     {
-        // Free any elements, whether they are in the fixed size array or heap array.
-        if (ShouldInitializeElements)
-        {
-            std::destroy(data_, data_ + size_);
-        }
+        free();
+    }
+
+    // Clear the vector and free all memory. Calling clear() then shrink_to_fit()
+    // a less efficient way to accomplish it too.
+    void free()
+    {
+        clear(); // Destruct objects and zero the size.
+        capacity_ = 0;
 
         if (dataIsAllocatedMemory_)
         {
-            free(data_);
+            std::free(data_);
+            data_ = nullptr;
         }
     }
 
@@ -184,10 +184,24 @@ public:
         return const_cast<self&>(*this).checked_read(i);
     }
 
+    fast_vector& operator=(const fast_vector& otherVector)
+    {
+        assign(otherVector);
+        return *this;
+    }
+
+    fast_vector& operator=(fast_vector&& otherVector) // Throws std::bad_alloc if low on memory.
+    {
+        transfer_from(otherVector);
+        return *this;
+    }
+
     // Clear any existing elements and copy the new elements from span.
     void assign(array_ref<const T> span)
     {
+        #ifndef USE_GSL_SPAN_INSTEAD_OF_ARRAY_REF
         assert(!span.intersects(data_span())); // No self intersection.
+        #endif
 
         clear();
 
@@ -202,7 +216,9 @@ public:
     // if type T throws in the middle of a copy.
     void transfer_from(array_ref<const T> span)
     {
+        #ifndef USE_GSL_SPAN_INSTEAD_OF_ARRAY_REF
         assert(!span.intersects(data_span())); // No self intersection.
+        #endif
 
         clear();
 
@@ -367,6 +383,7 @@ public:
     // via detach_memory.
     // - If ShouldInitializeElements == true, then the memory is presumed to contain
     //   valid objects, which will be destructed when the fast_vector dies.
+    // - Because the memory is raw, it's possible to reuse a different data type.
     //
     void attach_memory(array_ref<uint8_t> data) noexcept(std::is_nothrow_destructible<T>::value)
     {
@@ -384,9 +401,7 @@ public:
 protected:
     void ReallocateMemory(size_t newByteSize) // Throws std::bad_alloc if low on memory, or if T's move constructor fails.
     {
-        assert(newByteSize >= size_ * sizeof(T)); // Shouldn't have been called unless
-
-        newByteSize = std::max(newByteSize, size_t(1)); // Ensure at least one byte is allocated to avoid nullptr.
+        assert(newByteSize >= size_ * sizeof(T)); // Shouldn't have been called otherwise, because it's wrong for size_ to be less than actual memory.
 
         if (dataIsAllocatedMemory_ && std::is_trivially_move_constructible<T>::value)
         {
@@ -394,7 +409,7 @@ protected:
             // This is for plain old data types and simple classes.
 
             T* newData = static_cast<T*>(realloc(data_, newByteSize));
-            if (newData == nullptr)
+            if (newData == nullptr && newByteSize > 0)
             {
                 throw std::bad_alloc();
             }
@@ -416,10 +431,12 @@ protected:
             // Release the existing block, and assign the new one.
             if (dataIsAllocatedMemory_)
             {
-                free(data_);
+                std::free(data_);
             }
             data_ = newDataHolder.release();
             dataIsAllocatedMemory_ = true;
+
+            // Caller updates capacity_ and size_. This simple reallocates the memory block.
         }
     }
 
@@ -431,11 +448,7 @@ protected:
 };
 
 
-// A lightweight dynamic array that mostly follows the interface of std vector, except that it
-// (1) avoids heap allocation so long as the number of elements fits within the minimum stack size.
-// (2) does not initialize memory for simple types, if ShouldInitializeElements == false.
-// This avoids unnecessarily touching memory which will just be overwritten again later anyway.
-//
+// Derived specialization which includes a fixed size buffer.
 template <typename T, size_t DefaultArraySize, bool ShouldInitializeElements>
 class fast_vector : public fast_vector<T, 0, ShouldInitializeElements>
 {
@@ -515,3 +528,7 @@ private:
     // up front, only initializing the fields which actually exist when resized later.
     uint8_t fixedSizedArrayData_[DefaultArraySize][sizeof(T)];
 };
+
+#ifdef USE_GSL_SPAN_INSTEAD_OF_ARRAY_REF
+#undef array_ref
+#endif

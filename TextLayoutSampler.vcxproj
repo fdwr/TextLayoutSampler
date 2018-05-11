@@ -80,6 +80,7 @@
       </UndefinePreprocessorDefinitions>
       <MultiProcessorCompilation>false</MultiProcessorCompilation>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <PreprocessToFile>false</PreprocessToFile>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
@@ -132,9 +133,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Common.FastVector.cpp" />
-    <ClCompile Include="MainWindow.ixx" />
-    <ClCompile Include="Application.ixx" />
+    <ClCompile Include="MainWindow.ixx">
+      <PreprocessToFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</PreprocessToFile>
+    </ClCompile>
+    <ClCompile Include="Application.ixx">
+      <PreprocessToFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</PreprocessToFile>
+    </ClCompile>
     <ClCompile Include="MessageBoxShaded.ixx" />
     <ClCompile Include="WindowUtility.ixx" />
     <ClCompile Include="DrawingCanvasControl.ixx" />
@@ -154,6 +158,7 @@
     <ClCompile Include="Common.ArrayRef.ixx" />
     <ClCompile Include="precomp.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
+      <PreprocessToFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</PreprocessToFile>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -192,7 +197,13 @@
     <Image Include="MainWindow.ico" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Common.FastVector.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
     <None Include="LICENSE" />
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="Common.FastVector.natvis" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

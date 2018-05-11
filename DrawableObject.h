@@ -19,6 +19,7 @@ import DWritEx;
 #include "Common.String.h"
 #include "Common.AutoResource.h"
 #include "Common.AutoResource.Windows.h"
+#include "Common.FastVector.h"
 #include "FileHelpers.h"
 #include "Attributes.h"
 #include "DrawingCanvas.h"

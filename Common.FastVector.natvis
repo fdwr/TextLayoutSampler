@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+  <Type Name="fast_vector&lt;*,*,*&gt;">
+      <DisplayString>{{ Count={size_} }}</DisplayString>
+      <Expand>
+          <Item Name="[Count]" ExcludeView="simple">size_</Item>
+          <Item Name="[Capacity]" ExcludeView="simple">capacity_</Item>
+          <ArrayItems>
+              <Size>size_</Size>
+              <ValuePointer>data_</ValuePointer>
+          </ArrayItems>
+      </Expand>
+  </Type>
+</AutoVisualizer>

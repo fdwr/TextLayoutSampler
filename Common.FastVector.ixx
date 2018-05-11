@@ -5,6 +5,7 @@
 
 #if USE_MODULES
 import Common.ArrayRef;
+import Common.FastVector;
 #else
 #include "Common.ArrayRef.h"
 #include "Common.FastVector.h"
@@ -22,17 +23,18 @@ void fast_vector_test_as_parameter(fast_vector<int>& ints)
     ints.resize(20);
 }
 
-class SimpleStruct
+struct SimpleStruct
 {
     char c;
 };
-class ComplexStruct
+
+struct ComplexStruct
 {
-public:
     ComplexStruct()
     {
         s[0] += rand() % 26;
     }
+
     std::string s = "A";
 
     friend bool operator==(const ComplexStruct& lhs, const ComplexStruct& rhs);
@@ -166,9 +168,18 @@ void fast_vector_test()
     detachableMemory[19] = 42;
 
     // Reattach memory and reinterpret it as bytes.
+    // Then move it back and verify again.
     reattachedMemory.attach_memory(detachableMemory.detach_memory());
     assert(reattachedMemory[0 * 4] == 42);
     assert(reattachedMemory[19 * 4] == 42);
+    detachableMemory.attach_memory(reattachedMemory.detach_memory());
+    assert(detachableMemory[0] == 42);
+    assert(detachableMemory[19] == 42);
+
+    // Try the empty case.
+    detachableMemory.clear();
+    reattachedMemory.attach_memory(detachableMemory.detach_memory());
+    assert(reattachedMemory.size() == 0);
 
     // Verify that memory can be reassigned.
     uint32_t memoryBuffer[20] = {10, 11, 12};
@@ -178,7 +189,14 @@ void fast_vector_test()
     assert(memoryBuffer[0] == 0); // First entry should have been wiped.
     assert(memoryBuffer[2] == 12); // Third entry should be intact.
 
-    #ifdef INCLUDE_EXCEPTION_TESTS // Noisy.
+    // Verify vector can be transferred.
+    fast_vector<ComplexStruct> complexStruct2(20);
+    std::string originalValue = complexStruct2.front().s;
+    fast_vector<ComplexStruct> complexStruct3;
+    complexStruct3.transfer_from(complexStruct2);
+    assert(complexStruct3[0].s == originalValue);
+
+    #if INCLUDE_EXCEPTION_TESTS // Noisy.
     fast_vector<uint32_t> shouldThrow;
     bool didThrow = false;
     try

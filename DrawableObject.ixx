@@ -1846,9 +1846,6 @@ HRESULT CachedDWriteFontFace::Update(
         return S_OK;
     }
 
-    std::string sampleText;
-    std::vector<uint32_t> codePointArray;
-    std::copy(sampleText.begin(), sampleText.end(), codePointArray.begin());
     std::vector<DWRITE_FONT_AXIS_VALUE> fontAxisValues;
     GetFontAxisValues(attributeSource, OUT fontAxisValues);
 
@@ -1987,7 +1984,7 @@ HRESULT CachedDWriteGlyphRun::Update(
         array_ref<char16_t const> text = attributeSource.GetString(DrawableObjectAttributeText);
         if (!text.empty())
         {
-            std::vector<char32_t> utf32text;
+            fast_vector<char32_t, 120, false> utf32text;
             utf32text.resize(text.size());
 
             size_t convertedLength = static_cast<uint32_t>(ConvertTextUtf16ToUtf32NoReplacement(
@@ -2072,7 +2069,7 @@ HRESULT CachedDWriteGlyphRun::GetGlyphAdvancesIfNull()
     //    ));
     //glyphAdvances = glyphAdvancesBuffer.data();
 
-    std::vector<int32_t> glyphAdvances(glyphRun.glyphCount);
+    fast_vector<int32_t, 120, false> glyphAdvances(glyphRun.glyphCount);
     ComPtr<IDWriteFontFace1> fontFace1;
     if (SUCCEEDED(fontFace->QueryInterface(OUT &fontFace1)))
     {
@@ -2363,7 +2360,7 @@ HRESULT DrawableObjectDWriteGlyphRun::GetBounds(
     // Calculate content width.
     float width = 0;
     float const* glyphAdvances = cachedGlyphRun.glyphAdvances;
-    std::vector<float> glyphAdvancesBuffer(cachedGlyphRun.glyphCount);
+    fast_vector<float, 120, false> glyphAdvancesBuffer(cachedGlyphRun.glyphCount);
 
     // Get advance widths from font face if none were given.
     if (cachedGlyphRun.glyphAdvances == nullptr)
@@ -2498,7 +2495,7 @@ HRESULT DrawableObjectDirect2DDrawGlyphRun::Draw(
     // debugging hack to draw rects behind glyphs.
     #if 0
     DWRITE_FONT_METRICS fontMetrics;
-    std::vector<DWRITE_GLYPH_METRICS> glyphMetricsArray(cachedGlyphRun.glyphCount);
+    fast_vector<DWRITE_GLYPH_METRICS, 120, false> glyphMetricsArray(cachedGlyphRun.glyphCount);
     fontFace_.fontFace->GetMetrics(OUT &fontMetrics);
     fontFace_.fontFace->GetDesignGlyphMetrics(
         cachedGlyphRun.glyphIndices,

@@ -537,7 +537,7 @@ void MainWindow::FillAttributesListView()
     lw.DeleteAllItems();
     lw.mask |= LVIF_PARAM;
 
-    std::vector<uint32_t> listIndices(countof(DrawableObject::attributeList));
+    uint32_t listIndices[countof(DrawableObject::attributeList)];
     ListSubstringPrioritizer substringPrioritizer(attributeFilter_, static_cast<uint32_t>(countof(DrawableObject::attributeList)));
 
     // Get the filtered list.
@@ -716,7 +716,7 @@ void MainWindow::UpdateAttributeValuesListView()
     {
         Attribute const& attribute = DrawableObject::attributeList[selectedAttributeIndex_];
         uint32_t const predefinedValuesCount = static_cast<uint32_t>(attribute.predefinedValues.size());
-        std::vector<uint32_t> orderedIndices(predefinedValuesCount);
+        fast_vector<uint32_t, 20, false> orderedIndices(predefinedValuesCount);
 
         if (attribute.semantic == Attribute::SemanticLongText || !isTypingAttributeValueToFilter_)
         {
@@ -882,7 +882,7 @@ void MainWindow::UpdateTextEdit()
     if (!IsWindowVisible(editHwnd))
         return;
 
-    std::vector<uint32_t> drawableObjectIndices(drawableObjects_.size());
+    fast_vector<uint32_t, 30, false> drawableObjectIndices(drawableObjects_.size());
     std::iota(OUT drawableObjectIndices.begin(), OUT drawableObjectIndices.end(), 0);
 
     char16_t const* stringValue = DrawableObjectAndValues::GetStringValue(

@@ -366,7 +366,7 @@ std::u16string GetListViewText(
 
     const uint32_t columnCount = Header_GetItemCount(ListView_GetHeader(listViewHwnd));
     std::vector<int32_t> columnOrdering(columnCount);
-    ListView_GetColumnOrderArray(listViewHwnd, columnCount, OUT &columnOrdering.front());
+    ListView_GetColumnOrderArray(listViewHwnd, columnCount, OUT columnOrdering.data());
 
     // Find the first selected row. If nothing is selected, then we'll copy the entire text.
     LVITEMINDEX listViewIndex = {-1, -1};

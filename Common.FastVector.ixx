@@ -1,15 +1,16 @@
 //----------------------------------------------------------------------------
 //  History:    2018-04-30 Dwayne Robinson - Created
 //----------------------------------------------------------------------------
-#include "precomp.h"
 
-#if USE_MODULES
+#if USE_CPP_MODULES
 import Common.ArrayRef;
 import Common.FastVector;
 #else
+#define _SCL_SECURE_NO_WARNINGS // I hate doing this, but Visual Studio offers no substitute for std::uninitialized_copy.
 #include "Common.ArrayRef.h"
 #include "Common.FastVector.h"
-#include <assert.h>
+#include <algorithm>
+#include <assert>
 #endif
 
 ////////////////////////////////////////
@@ -56,10 +57,7 @@ void fast_vector_test()
     assert(ints2.size() == 0);
     assert(ints2.capacity() == 30);
 
-    ints2.resize(20);
-
-    // Explicitly verify that no data initialization happens,
-    // staying within the size limits of the 
+    // Explicitly verify that no data initialization happens when ShouldInitializeElements = false.
     int* originalDataPointer = ints.data();
     *originalDataPointer = 13;
     ints.resize(20);
@@ -68,10 +66,11 @@ void fast_vector_test()
     assert(ints.front() == 13);
     assert(ints.data() == originalDataPointer); // Should still point to internal array.
 
-    // The other array should be explicitly initialized though to zeroes.
+    // All elements should be initialized when ShouldInitializeElements = true.
+    ints2.resize(20);
     assert(std::all_of(ints2.begin(), ints2.end(), [](auto v) { return v == 0; }));
 
-    // Resize smaller. Capacity should remain large.
+    // Resize smaller. Capacity should remain the same.
     ints.resize(10);
     assert(ints.size() == 10);
     assert(ints.capacity() == 20);
@@ -82,7 +81,7 @@ void fast_vector_test()
     assert(ints.size() == 30);
     assert(ints.capacity() == 30);
     assert(secondDataPointer != originalDataPointer); // Allocation should have happened.
-    assert(ints.front() == 13); // Value should have been copied over to memory block.
+    assert(ints.front() == 13); // Previous value should have been preserved.
 
     // Resize smaller again, using memory block this time. Capacity should remain large.
     ints.resize(10);
@@ -93,8 +92,9 @@ void fast_vector_test()
     assert(ints.capacity() == 30);
 
     // Grow even larger, enough to reallocate the memory block.
+    // Exact capacity doesn't matter, as it is amortized growth.
     ints.reserve(40);
-    assert(ints.capacity() >= 40);
+    assert(ints.capacity() == 40);
     assert(ints.front() == 13); // Value should still exist, even after reallocations.
 
     // Shrink the memory block to actual size.
@@ -105,6 +105,15 @@ void fast_vector_test()
     assert(ints.size() == 30);
     assert(ints.front() == 13); // Value should still exist, even after reallocations.
 
+    // Verify incremental allocation upon resize.
+    size_t originalCapacity = ints.capacity();
+    ints.resize(31);
+    size_t newCapacity = ints.capacity();
+    assert(newCapacity > originalCapacity);
+    ints.resize(32);
+    assert(ints.capacity() == newCapacity); // Should not have reallocated again.
+
+    // Clear it completely to verify capacity is reduced.
     ints.clear();
     ints.shrink_to_fit();
     assert(ints.capacity() == 0);
@@ -190,11 +199,20 @@ void fast_vector_test()
     assert(memoryBuffer[2] == 12); // Third entry should be intact.
 
     // Verify vector can be transferred.
-    fast_vector<ComplexStruct> complexStruct2(20);
+    fast_vector<ComplexStruct, 4> complexStruct2(20);
     std::string originalValue = complexStruct2.front().s;
-    fast_vector<ComplexStruct> complexStruct3;
+    fast_vector<ComplexStruct, 4> complexStruct3;
     complexStruct3.transfer_from(complexStruct2);
     assert(complexStruct3[0].s == originalValue);
+    complexStruct2 = std::move(complexStruct3); // Now move back
+    assert(complexStruct2[0].s == originalValue);
+    fast_vector<ComplexStruct> complexStruct4(std::move(complexStruct2));
+    assert(complexStruct4.size() == 20);
+    assert(complexStruct2.size() == 0);
+    fast_vector<ComplexStruct, 30> complexStruct5(std::move(complexStruct4));
+    assert(complexStruct5.size() == 20);
+    assert(complexStruct4.size() == 0);
+    assert(complexStruct5[0].s == originalValue);
 
     #if INCLUDE_EXCEPTION_TESTS // Noisy.
     fast_vector<uint32_t> shouldThrow;

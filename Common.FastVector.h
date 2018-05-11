@@ -4,11 +4,13 @@
 #pragma once
 
 
-#if USE_MODULES
+#if USE_CPP_MODULES
+import std.core;
 import Common.ArrayRef;
 #else
-#include "Common.ArrayRef.h" // gsl::span may be mostly substituted instead of array_ref.
+#include "Common.ArrayRef.h" // gsl::span may be mostly substituted instead of array_ref, just missing intersects().
 #include <memory> // For uninitialized_move/copy and std::unique_ptr.
+#include <assert.h>
 #endif
 
 // fast_vector is a substitute for std::vector which:
@@ -66,7 +68,7 @@ public:
     using difference_type = ptrdiff_t;
 
 public:
-    constexpr fast_vector()
+    constexpr fast_vector() noexcept
     {
     }
 
@@ -83,6 +85,11 @@ public:
     fast_vector(const fast_vector& otherVector)
     {
         assign(otherVector);
+    }
+
+    fast_vector(fast_vector&& otherVector) // Throws std::bad_alloc if low on memory.
+    {
+        transfer_from(otherVector);
     }
 
     // Construct using explicit fixed size memory buffer.
@@ -105,15 +112,12 @@ public:
     {
         resize(initialSize);
     }
-
-    // Disable move assignment and move constructor, since we cannot safely move values from one
-    // to another without potentially throwing std::bad_alloc in low memory conditions, as the
-    // target vector may have a smaller fixed size and incur a memory allocation which cannot be
-    // satisfied. You can however call transfer_from to move the vector, which should always
-    // succeed without exception unless out of memory (std::bad_alloc).
-    fast_vector(fast_vector&& otherVector) = delete;
-
-    fast_vector& operator=(fast_vector&& otherVector) = delete;
+ 
+    fast_vector& operator=(fast_vector&& otherVector) // Throws std::bad_alloc if low on memory.
+    {
+        transfer_from(otherVector);
+        return *this;
+    }
 
     fast_vector& operator=(const fast_vector& otherVector)
     {
@@ -121,7 +125,7 @@ public:
         return *this;
     }
 
-    ~fast_vector()
+    ~fast_vector() noexcept(std::is_nothrow_destructible<T>::value)
     {
         // Free any elements, whether they are in the fixed size array or heap array.
         if (ShouldInitializeElements)
@@ -193,7 +197,7 @@ public:
         size_ = newSize;
     }
 
-    // Clear any existing elements and move the new elements from span.
+    // Tranfer all elements from the other vector to this one.
     // This only offers the weak exception guarantee, that no leaks will happen
     // if type T throws in the middle of a copy.
     void transfer_from(array_ref<const T> span)
@@ -208,7 +212,40 @@ public:
         size_ = newSize;
     }
 
-    void clear()
+    // Tranfer all elements from the other vector to this one.
+    // This only offers the weak exception guarantee, that no leaks will happen
+    // if type T throws in the middle of a copy.
+    void transfer_from(fast_vector<T, 0, ShouldInitializeElements>& other)
+    {
+        if (&other == this)
+        {
+            return; // Nop for self assignment.
+        }
+
+        if (other.dataIsAllocatedMemory_)
+        {
+            clear(); // Destroy any existing elements.
+
+            // Take ownership of new data directly.
+            data_ = other.data_;
+            other.data_ = nullptr;
+            size_ = other.size_;
+            other.size_ = 0;
+            capacity_ = other.capacity_;
+            other.capacity_ = 0;
+            dataIsAllocatedMemory_ = other.dataIsAllocatedMemory_;
+            other.dataIsAllocatedMemory_ = false;
+        }
+        else
+        {
+            // Copying from a fixed size buffer; so it's unsafe to simply
+            // steal the pointers as that may leave a dangling pointer
+            // when the other fast vector disappears.
+            transfer_from(other);
+        }
+    }
+
+    void clear() noexcept(std::is_nothrow_destructible<T>::value)
     {
         std::destroy(data_, data_ + size_);
         size_ = 0;
@@ -310,7 +347,7 @@ public:
     // otherVector.attach_memory(memory);
     // p.release(); // unique_ptr does not own it anymore.
     //
-    array_ref<uint8_t> detach_memory()
+    array_ref<uint8_t> detach_memory() noexcept
     {
         array_ref<uint8_t> data;
 
@@ -331,7 +368,7 @@ public:
     // - If ShouldInitializeElements == true, then the memory is presumed to contain
     //   valid objects, which will be destructed when the fast_vector dies.
     //
-    void attach_memory(array_ref<uint8_t> data)
+    void attach_memory(array_ref<uint8_t> data) noexcept(std::is_nothrow_destructible<T>::value)
     {
         assert(reinterpret_cast<T*>(data.data()) != data_);
 
@@ -344,38 +381,8 @@ public:
         dataIsAllocatedMemory_ = true;
     }
 
-    void transfer_from(fast_vector<T, 0, ShouldInitializeElements>& other)
-    {
-        if (&other == this)
-        {
-            return; // Nop for self assignment.
-        }
-
-        if (other.dataIsAllocatedMemory_)
-        {
-            clear(); // Destroy any existing elements.
-
-            // Take ownership of new data.
-            data_ = other.data_;
-            other.data_ = nullptr;
-            size_ = other.size_;
-            other.size_ = 0;
-            capacity_ = other.capacity_;
-            other.capacity_ = 0;
-            dataIsAllocatedMemory_ = other.dataIsAllocatedMemory_;
-            other.dataIsAllocatedMemory_ = false;
-        }
-        else
-        {
-            // Copying from a fixed size buffer; so it's unsafe to simply
-            // steal the pointers as that may leave a dangling pointer
-            // when the other fast vector disappears.
-            transfer_from(other);
-        }
-    }
-
 protected:
-    void ReallocateMemory(size_t newByteSize)
+    void ReallocateMemory(size_t newByteSize) // Throws std::bad_alloc if low on memory, or if T's move constructor fails.
     {
         assert(newByteSize >= size_ * sizeof(T)); // Shouldn't have been called unless
 
@@ -435,7 +442,7 @@ class fast_vector : public fast_vector<T, 0, ShouldInitializeElements>
 public:
     using BaseClass = fast_vector<T, 0, ShouldInitializeElements>;
 
-    constexpr fast_vector()
+    constexpr fast_vector() noexcept
     :   BaseClass(fast_vector_use_memory_buffer, GetFixedSizeArrayData())
     {
     }
@@ -455,13 +462,34 @@ public:
     {
     }
 
-    // Disable move assignment and move constructor, since we cannot safely move values from one
-    // to another without potentially throwing std::bad_alloc in low memory conditions, as the
-    // target vector may have a smaller fixed size and incur a memory allocation which cannot be
-    // satisfied. You can however call transfer_from to move the vector, which should always
-    // succeed without exception unless out of memory (std::bad_alloc).
-    fast_vector(fast_vector&& otherVector) = delete;
-    fast_vector& operator=(fast_vector&& otherVector) = delete;
+    // Move constructor. Will not throw unless type T throws, since the
+    // target is guaranteed to have enough space.
+    fast_vector(fast_vector&& otherVector) noexcept(std::is_nothrow_move_assignable<T>::value)
+    :   BaseClass(std::move(otherVector))
+    {
+    }
+
+    // Explicit overload for base class, to avoid the compiler from undesireably
+    // choosing the constructor overload which takes a span of initialValues or
+    // the copy constructor.
+    fast_vector(BaseClass&& otherVector) // Throws std::bad_alloc if low on memory.
+    :   BaseClass(std::move(otherVector))
+    {
+    }
+
+    // Move assignment. Will not throw unless type T throws, since the
+    // target vector is guaranteed to have a large enough fixed-size array.
+    fast_vector& operator=(fast_vector&& otherVector) noexcept(std::is_nothrow_move_assignable<T>::value && std::is_nothrow_destructible<T>::value)
+    {
+        transfer_from(otherVector);
+        return *this;
+    }
+
+    fast_vector& operator=(BaseClass&& otherVector) // Throws std::bad_alloc if low on memory.
+    {
+        transfer_from(otherVector);
+        return *this;
+    }
 
     fast_vector& operator=(const fast_vector& otherVector)
     {

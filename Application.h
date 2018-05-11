@@ -5,7 +5,7 @@
 #include <specstrings.h>
 #include "Application.macros.h"
 
-#if USE_MODULES
+#if USE_CPP_MODULES
 import Common.String;
 #else
 #include "Common.String.h"

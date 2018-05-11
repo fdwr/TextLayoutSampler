@@ -4,7 +4,7 @@
 #pragma once
 
 
-#if USE_MODULES
+#if USE_CPP_MODULES
 import Common.String;
 import Common.ArrayRef;
 import Common.AutoResource;

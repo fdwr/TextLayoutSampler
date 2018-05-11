@@ -5,7 +5,7 @@
 #pragma once
 
 
-#if USE_MODULES
+#if USE_CPP_MODULES
 import Common.ListSubstringPrioritizer;
 import Common.AutoResource;
 import Common.AutoResource.Windows;

@@ -3,16 +3,16 @@
 //----------------------------------------------------------------------------
 #pragma once
 
-#define USE_MODULES 0
+#define USE_CPP_MODULES 0
 
-#if USE_MODULES
+#if USE_CPP_MODULES
 #define MODULE(moduleName) export module moduleName;
 #else
 #define MODULE(moduleName)
 #endif
 
 
-#if USE_MODULES
+#if USE_CPP_MODULES
 #define EXPORT export
 #define EXPORT_BEGIN export {
 #define EXPORT_END }

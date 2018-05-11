@@ -7,7 +7,7 @@
 #pragma warning(disable:4201)   // Nameless unions should be fine.
 
 
-#if USE_MODULES
+#if USE_CPP_MODULES
 import Common.String;
 import Common.AutoResource;
 import Common.AutoResource.Windows;

@@ -1,7 +1,7 @@
 #pragma once
 
 
-#if USE_MODULES
+#if USE_CPP_MODULES
 import Common.AutoResource;
 #else
 #include "Common.AutoResource.h"

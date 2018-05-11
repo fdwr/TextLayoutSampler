@@ -5,7 +5,7 @@
 #pragma once
 
 
-#if USE_MODULES
+#if USE_CPP_MODULES
 import DrawingCanvas;
 #else
 #include "DrawingCanvas.h"

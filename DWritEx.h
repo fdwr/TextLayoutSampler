@@ -12,7 +12,7 @@ interface ID2D1Brush;
 #endif
 
 
-#if USE_MODULES
+#if USE_CPP_MODULES
 import Common.ArrayRef;
 import Common.String;
 import FileHelpers;

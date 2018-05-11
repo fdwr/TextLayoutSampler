@@ -4,6 +4,10 @@
 //----------------------------------------------------------------------------
 #pragma once
 
+// Set 0 if your defective std::string.data() lacks a mutable overload.
+#define STD_STRING_MUTABLE_DATA_IS_FIXED_CPP17 1
+
+#include <iterator>
 
 // View of contiguous memory, which may come from an std::vector,
 // std::wstring, std::initializer_list, std::array, plain C array,
@@ -47,6 +51,16 @@ public:
 
     using NonConstArrayRefType = array_ref<typename std::remove_const<T>::type>;
 
+#if STD_STRING_MUTABLE_DATA_IS_FIXED_CPP17
+
+    template<typename ContiguousContainer>
+    constexpr array_ref(ContiguousContainer& container)
+    :   begin_(std::data(container)),
+        end_(begin_ + std::size(container))
+    {
+    }
+
+#else
     // Generic constructor to accept any container which uses contiguous memory
     // and exposes a data() member.
     //
@@ -92,6 +106,7 @@ public:
         end_(other.end())
     {
     }
+#endif
 
     // Reset to a new range using a compatible data type, possibly differing in constness
     // but only from non-const to const.

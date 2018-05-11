@@ -6,7 +6,7 @@
 #include <stdint.h>
 #include "Common.h"
 
-#if USE_MODULES
+#if USE_CPP_MODULES
 import Common.String;
 #else
 #include "Common.String.h"

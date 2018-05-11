@@ -9,7 +9,7 @@
 //#include <string>
 //#include <Windows.h>
 
-#if USE_MODULES
+#if USE_CPP_MODULES
 import Common.ArrayRef;
 import Common.String;
 import WindowUtility;

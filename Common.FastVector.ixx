@@ -58,6 +58,9 @@ void fast_vector_test()
     assert(ints.capacity() == 20);
     assert(ints2.size() == 0);
     assert(ints2.capacity() == 30);
+    ints.resize(1);
+    ints.shrink_to_fit();
+    assert(ints.capacity() == 20); // Capacity of fixed size vector does not change.
 
     // Explicitly verify that no data initialization happens when ShouldInitializeElements = false.
     int* originalDataPointer = ints.data();

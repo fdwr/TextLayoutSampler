@@ -125,16 +125,16 @@ public:
     }
 
     // Clear the vector and free all memory. Calling clear() then shrink_to_fit()
-    // a less efficient way to accomplish it too.
+    // is a less efficient way to accomplish it too.
     void free()
     {
         clear(); // Destruct objects and zero the size.
-        capacity_ = 0;
 
         if (dataIsAllocatedMemory_)
         {
             std::free(data_);
             data_ = nullptr;
+            capacity_ = 0;
         }
     }
 
@@ -239,7 +239,7 @@ public:
 
         if (other.dataIsAllocatedMemory_)
         {
-            clear(); // Destroy any existing elements.
+            free();
 
             // Take ownership of new data directly.
             data_ = other.data_;
@@ -391,7 +391,7 @@ public:
     {
         assert(reinterpret_cast<T*>(data.data()) != data_);
 
-        clear(); // Destroy any existing elements.
+        free();
 
         // Take ownership of new data.
         data_ = reinterpret_cast<T*>(data.data());

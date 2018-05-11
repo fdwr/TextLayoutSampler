@@ -2,6 +2,7 @@
 //  History:    2018-04-30 Dwayne Robinson - Created
 //----------------------------------------------------------------------------
 
+
 #if USE_CPP_MODULES
 import Common.ArrayRef;
 import Common.FastVector;
@@ -12,6 +13,7 @@ import Common.FastVector;
 #include <algorithm>
 #include <assert.h>
 #endif
+
 
 ////////////////////////////////////////
 

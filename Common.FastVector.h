@@ -8,7 +8,6 @@
     import std.core;
     import Common.ArrayRef;
 #else
-
     #ifdef USE_GSL_SPAN_INSTEAD_OF_ARRAY_REF
         #include <gsl/span>
         #define array_ref gsl::span
@@ -39,14 +38,14 @@
 // Examples:
 //  fast_vector<int, 20> axes        - up to 20 integers before heap allocation.
 //  fast_vector<int, 0, false> axes  - always heap allocated but never initialized.
-//  fast_vector<int> axes            - basically std vector.
+//  fast_vector<int> axes            - basically std::vector.
 
 template<typename T, size_t DefaultArraySize = 0, bool ShouldInitializeElements = true>
 class fast_vector;
 
 enum fast_vector_use_memory_buffer_enum
 {
-    fast_vector_use_memory_buffer
+    fast_vector_use_memory_buffer // To avoid ambiguous constructor overload resolution.
 };
 
 // The base class is separated out for the customization of passing specific
@@ -263,7 +262,10 @@ public:
 
     void clear() noexcept(std::is_nothrow_destructible<T>::value)
     {
-        std::destroy(data_, data_ + size_);
+        if (ShouldInitializeElements)
+        {
+            std::destroy(data_, data_ + size_);
+        }
         size_ = 0;
         // But do not free heap memory.
     }

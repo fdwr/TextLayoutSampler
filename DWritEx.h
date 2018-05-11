@@ -5,13 +5,6 @@
 //----------------------------------------------------------------------------
 #pragma once
 
-#if 0 // Forward declarations in a module causes multiple definition build errors.
-interface IDWriteFactory;
-interface ID2D1RenderTarget;
-interface ID2D1Brush;
-#endif
-
-
 #if USE_CPP_MODULES
 import Common.ArrayRef;
 import Common.String;

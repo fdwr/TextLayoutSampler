@@ -14,6 +14,7 @@ EXPORT_END
 
 #pragma prefast(disable:__WARNING_HARD_CODED_STRING_TO_UI_FN, "It's an internal test program.")
 
+
 ////////////////////////////////////////
 
 HINSTANCE Application::g_hModule = nullptr;

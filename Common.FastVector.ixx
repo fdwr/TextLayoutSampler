@@ -48,6 +48,11 @@ bool operator==(const ComplexStruct& lhs, const ComplexStruct& rhs)
     return lhs.s == rhs.s;
 };
 
+struct SseSizedType
+{
+    alignas(16) uint8_t bytes[16];
+};
+
 
 void fast_vector_test()
 {
@@ -224,6 +229,11 @@ void fast_vector_test()
     assert(complexStruct5.size() == 20);
     assert(complexStruct4.size() == 0);
     assert(complexStruct5[0].s == originalValue);
+
+    // Try a type which has greater alignment needs than malloc provides.
+    fast_vector<SseSizedType, 4, false> sseSizeType(10);
+    assert(sseSizeType.size() == 10);
+    sseSizeType.resize(20);
 
     #if INCLUDE_EXCEPTION_TESTS // Noisy.
     fast_vector<uint32_t> shouldThrow;

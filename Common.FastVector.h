@@ -70,9 +70,9 @@ public:
     using size_type = size_t;
     using difference_type = ptrdiff_t;
 
-    // If true, the _aligned_malloc and _aligned_free functions are used instead.
-    // Only large types like SSE and AVX need this.
+    // If true, the data types needs additional alignment like SSE and AVX types.
     constexpr static bool NeedsTypeAlignmentBeyondMaxAlignT = alignof(T) > alignof(std::max_align_t);
+    constexpr static size_t MinimumMemoryBlockSize = NeedsTypeAlignmentBeyondMaxAlignT ? sizeof(void*) : 0;
 
 public:
     constexpr fast_vector() noexcept
@@ -280,9 +280,7 @@ public:
         {
             if (newSize > capacity_)
             {
-                // Grow with 1.5x factor to avoid frequent reallocations.
-                size_t newCapacity = std::max((size_ * 3 / 2), newSize);
-                reserve(newCapacity);
+                reserve_at_least(newSize);
             }
 
             // Grow data to the new size, calling the default constructor on each new item.
@@ -323,6 +321,13 @@ public:
         capacity_ = newCapacity;
     }
 
+    void reserve_at_least(size_t newCapacity)
+    {
+        // Grow with 1.5x factor to avoid frequent reallocations.
+        newCapacity = std::max((size_ * 3 / 2), newCapacity);
+        reserve(newCapacity);
+    }
+
     void shrink_to_fit()
     {
         if (!dataIsAllocatedMemory_ || capacity_ == size_)
@@ -350,9 +355,73 @@ public:
         ++size_;
     }
 
+    void append(array_ref<const T> span)
+    {
+        insert(size_, span);
+    }
+
+    void insert(size_t insertionOffset, array_ref<const T> span)
+    {
+        insert(insertionOffset, span.begin(), span.end());
+    }
+
+    void insert(size_t insertionOffset, const_iterator begin, const_iterator end)
+    {
+        assert(insertionOffset <= size_);
+
+        // Grow array size.
+        size_t newSize = std::distance(begin, end) + size_;
+        if (newSize < size_)
+        {
+            throw std::bad_alloc();
+        }
+        reserve_at_least(newSize);
+
+        // Add empty elements to the end.
+        size_t oldSize = size_;
+        if (ShouldInitializeElements)
+        {
+            std::uninitialized_value_construct<iterator>(data_ + size_, data_ + newSize);
+        }
+        size_ = newSize;
+
+        // Shift elements to the end to make more room.
+        std::move_backward(data_ + insertionOffset, data_ + oldSize, data_ + newSize);
+
+        std::copy(begin, end, /*out*/ data_ + insertionOffset);
+    }
+
+    void insert(const_iterator position, array_ref<const T> span)
+    {
+        insert(position - begin(), span.begin(), span.end());
+    }
+
+    void erase(const_iterator begin, const_iterator end)
+    {
+        assert(end >= begin);
+        assert(begin >= data_);
+        assert(end <= data_ + size_);
+
+        // Shift elements to front.
+        size_t oldSize = size_;
+        std::copy(iterator(end), data_ + size_, iterator(begin));
+        size_ -= std::distance(begin, end);
+
+        // Destroy elements at the end.
+        if (ShouldInitializeElements)
+        {
+            std::destroy(data_ + size_, data_ + oldSize);
+        }
+    }
+
+    void erase(const_iterator position)
+    {
+        erase(position, position + 1);
+    }
+
     // Returns underlying malloc()'d memory block.
     // - May be transferred to another fast_vector via attach_memory.
-    // - Caller must free the memory if not transferred.
+    // - Caller must free() the memory if not transferred.
     // - This is more safely used when T is a POD type, as the caller would also
     //   need to appropriately call any destructors if complex objects.
     // - If the vector is using fixed size memory (no allocations have happened),
@@ -360,9 +429,8 @@ public:
     // - If the vector is using allocated memory, the memory block will be not
     //   empty and non-null, and the vector is then empty.
     // - No object destructors are called.
-    // - If NeedsTypeAlignmentBeyondMaxAlignT is true, the memory must be freed
-    //   by _aligned_free instead (assuming ownership is not transferred).
-    //   Ordinary free() is not compatible.
+    // - If NeedsTypeAlignmentBeyondMaxAlignT is true, the data array might start
+    //   after the memory block for alignment.
     //
     // fast_vector<int> vector(20);
     // ...
@@ -376,10 +444,15 @@ public:
     {
         array_ref<uint8_t> data;
 
+        // Only heap allocated memory can be returned, not the fixed size buffer.
         if (dataIsAllocatedMemory_)
         {
-            // Only heap allocated memory can be returned, not the fixed size buffer.
-            data = {reinterpret_cast<uint8_t*>(data_), size_ * sizeof(T)};
+            // Return the raw memory block, from the actual beginning of memory to the true end.
+            // The data might start beyond the memory block for alignment purposes.
+            uint8_t* bytes = reinterpret_cast<uint8_t*>(data_);
+            size_t byteCount = size_ * sizeof(T);
+            data = {reinterpret_cast<uint8_t*>(GetMemoryBlock(data_)), bytes + byteCount};
+
             data_ = nullptr;
             size_ = 0;
             capacity_ = 0;
@@ -393,18 +466,27 @@ public:
     // - If ShouldInitializeElements == true, then the memory is presumed to contain
     //   valid objects, which will be destructed when the fast_vector dies.
     // - Because the memory is raw, it's possible to reuse a different data type.
-    // - If NeedsTypeAlignmentBeyondMaxAlignT is true, the memory must have come
-    //   from _aligned_malloc instead.
+    // - The memory must be aligned to alignof(std::max_align_t).
+    // - If NeedsTypeAlignmentBeyondMaxAlignT is true, the memory must be at least
+    //   sizeof(void*) bytes.
     //
-    void attach_memory(array_ref<uint8_t> data) noexcept(std::is_nothrow_destructible<T>::value)
+    void attach_memory(array_ref<uint8_t> memory) noexcept(std::is_nothrow_destructible<T>::value)
     {
-        assert(reinterpret_cast<T*>(data.data()) != data_);
+        #ifndef USE_GSL_SPAN_INSTEAD_OF_ARRAY_REF
+        assert(!memory.intersects(data_span())); // No self intersection.
+        #endif
+
+        assert((reinterpret_cast<size_t>(memory.data()) & (alignof(std::max_align_t) - 1)) == 0); // malloc/realloc should return aligned pointers up to max_align_t.
+        assert(memory.data() == nullptr || memory.size() >= MinimumMemoryBlockSize);
 
         free();
 
+        T* data = AlignMemoryBlock(memory.data());
+
         // Take ownership of new data.
-        data_ = reinterpret_cast<T*>(data.data());
-        size_ = data.size() / sizeof(T);
+        data_ = data;
+        uint8_t* dataEnd = memory.data() + memory.size();
+        size_ = (dataEnd - reinterpret_cast<uint8_t*>(data_)) / sizeof(T);
         capacity_ = size_;
         dataIsAllocatedMemory_ = true;
     }
@@ -412,14 +494,12 @@ public:
 protected:
     void ReallocateMemory(size_t newByteSize) // Throws std::bad_alloc if low on memory, or if T's move constructor fails.
     {
-        #ifndef _MSC_VER 
-        // For alignment on other compilers, need to find a substitute for _aligned_malloc.
-        // This needed for SSE and AVX types (which need 16 and 32 bytes). Any othen standard
-        // type should have sufficient alignment by default malloc and free.
-        static_assert(!NeedsTypeAlignmentBeyondMaxAlignT);
-        #endif
-
         assert(newByteSize >= size_ * sizeof(T)); // Shouldn't have been called otherwise, because it's wrong for size_ to be less than actual memory.
+
+        // Handle alignment needs when the type is beyond what malloc/realloc guarantee.
+        // This needed for SSE and AVX types (which need 16 and 32 bytes). Any other standard
+        // type should have sufficient alignment by default.
+        newByteSize = InflateMemorySizeForAlignment(newByteSize);
 
         // Try to reallocate the memory block directly rather allocate a new block and manually
         // copying. The memory manager can sometimes just extend the existing data block in-place
@@ -430,21 +510,12 @@ protected:
         {
             // Try to just reallocate the existing memory block.
             
-            T* newData;
-            if constexpr (NeedsTypeAlignmentBeyondMaxAlignT)
-            {
-                newData = static_cast<T*>(_aligned_realloc(data_, newByteSize, alignof(T)));
-            }
-            else
-            {
-                newData = static_cast<T*>(realloc(data_, newByteSize));
-            }
-
-            if (newData == nullptr && newByteSize > 0)
+            void* memory = realloc(GetMemoryBlock(data_), newByteSize);
+            if (memory == nullptr && newByteSize > 0)
             {
                 throw std::bad_alloc();
             }
-            data_ = newData;
+            data_ = AlignMemoryBlock(/*modified*/ memory);
         }
         else
         {
@@ -453,18 +524,11 @@ protected:
             // moveable (e.g. std::string, which contains pointers that point
             // into the class address itself for the small string optimization).
 
-            T* newData;
-            if constexpr (NeedsTypeAlignmentBeyondMaxAlignT)
-            {
-                newData = static_cast<T*>(_aligned_malloc(newByteSize, alignof(T)));
-            }
-            else
-            {
-                newData = static_cast<T*>(std::malloc(newByteSize));
-            }
-            std::unique_ptr<T, decltype(FreeMemoryBlock)*> newDataHolder(newData, &FreeMemoryBlock);
+            void* memory = std::malloc(newByteSize);
+            std::unique_ptr<void, decltype(std::free)*> newDataHolder(memory, &std::free);
 
             // Copy an any existing elements from the fixed size buffer.
+            T* newData = AlignMemoryBlock(memory);
             std::uninitialized_move(data_, data_ + size_, /*out*/newData);
 
             // Release the existing block, and assign the new one.
@@ -472,24 +536,86 @@ protected:
             {
                 FreeMemoryBlock(data_);
             }
-            data_ = newDataHolder.release();
+            newDataHolder.release();
+            data_ = newData;
             dataIsAllocatedMemory_ = true;
 
-            // Caller updates capacity_ and size_. This simple reallocates the memory block.
+            // Caller updates capacity_ and size_. This simply reallocates the memory block.
         }
     }
 
     // No object destruction, just a direct free.
-    static void FreeMemoryBlock(void* p)
+    static void FreeMemoryBlock(T* data)
     {
-        if constexpr (NeedsTypeAlignmentBeyondMaxAlignT)
+        std::free(GetMemoryBlock(data));
+    }
+
+    // Get the actual memory block associated with the data.
+    static void* GetMemoryBlock(T* data)
+    {
+        if (NeedsTypeAlignmentBeyondMaxAlignT && data != nullptr)
         {
-            _aligned_free(p);
+            // Read the pointer to the actual block which is set immediately before the data.
+            // [ptr to memory block][data ...]
+            return reinterpret_cast<void**>(data)[-1];
         }
         else
         {
-            std::free(p);
+            return data;
         }
+    }
+
+    // Return aligned data for the given type, storing the raw memory block from malloc.
+    // Write the memory block associated with the data, and return the data.
+    // The caller has already ensure enough space exists in the block for alignment.
+    static T* AlignMemoryBlock(void* memory)
+    {
+        if (NeedsTypeAlignmentBeyondMaxAlignT && memory != nullptr)
+        {
+            // Return a pointer to the aligned data, which starts after the pointer to the original
+            // memory.
+            //
+            // [ptr to memory block][data ...]
+
+            // Return  the pointer to the actual block which is set immediately before the data.
+            // [ptr to memory block][data ...]
+            constexpr size_t alignmentMask = alignof(T) - 1;
+            static_assert((alignof(T) & alignmentMask) == 0, "Alignment must be a power of 2.");
+            static_assert(NeedsTypeAlignmentBeyondMaxAlignT == false || alignof(T) >= alignof(void*), "Alignment must be at least the size of a pointer for NeedsTypeAlignmentBeyondMaxAlignT to be true.");
+
+            // Align memory. Note calling std::align is awkward given it expects sizes, which are
+            // already correct earlier and do not need to be passed to this function.
+            size_t memoryAddress = reinterpret_cast<size_t>(memory);
+            memoryAddress = (memoryAddress + sizeof(void*) + alignmentMask) & ~alignmentMask;
+            T* data = reinterpret_cast<T*>(memoryAddress);
+
+            // Store the pointer to the original memory block.
+            reinterpret_cast<void**>(data)[-1] = memory;
+            return data;
+        }
+        else
+        {
+            assert((reinterpret_cast<size_t>(memory) & (alignof(std::max_align_t) - 1)) == 0); // malloc/realloc should return aligned pointers up to max_align_t.
+            return reinterpret_cast<T*>(memory);
+        }
+    }
+
+    static size_t InflateMemorySizeForAlignment(size_t newByteSize)
+    {
+        if (NeedsTypeAlignmentBeyondMaxAlignT && newByteSize != 0)
+        {
+            // Need to increase the allocation size to include enough for full type alignment
+            // and the size of a single pointer preceding the data.
+            size_t alignedByteSize = newByteSize + alignof(T) - alignof(std::max_align_t) + MinimumMemoryBlockSize;
+            if (alignedByteSize < newByteSize)
+            {
+                throw std::bad_alloc(); // Too much memory requested and overflowed.
+            }
+            newByteSize = alignedByteSize;
+        }
+        // else malloc/realloc default alignment will suffice.
+
+        return newByteSize;
     }
 
 protected:

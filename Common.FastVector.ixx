@@ -232,8 +232,28 @@ void fast_vector_test()
 
     // Try a type which has greater alignment needs than malloc provides.
     fast_vector<SseSizedType, 4, false> sseSizeType(10);
+    fast_vector<SseSizedType, 4, false> sseSizeType2;
     assert(sseSizeType.size() == 10);
     sseSizeType.resize(20);
+    sseSizeType.clear();
+    sseSizeType.shrink_to_fit();
+    sseSizeType.free();
+    sseSizeType.shrink_to_fit();
+    sseSizeType.resize(20);
+    sseSizeType2.attach_memory(sseSizeType.detach_memory());
+
+    int values[] = {1,2,3,4,5};
+    int appendedValues[] = {42,43};
+    int prependedValues[] = {-2,-1};
+    int insertedValues[] = {13,14};
+    int expectedValues[] = {-2,-1,13,14,3,4,5,42,43};
+    ints.assign(values);
+    assert(ints.size() == 5);
+    ints.append(appendedValues);
+    ints.insert(2, insertedValues);
+    ints.insert(size_t(0), prependedValues);
+    ints.erase(ints.begin() + 2, ints.begin() + 4);
+    assert(make_array_ref(ints) == make_array_ref(expectedValues));
 
     #if INCLUDE_EXCEPTION_TESTS // Noisy.
     fast_vector<uint32_t> shouldThrow;

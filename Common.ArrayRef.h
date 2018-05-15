@@ -201,9 +201,11 @@ public:
         begin_ = std::min(begin_, end_);
     }
 
-    bool intersects(array_ref<T const> other) const noexcept
+    template <typename U>
+    bool intersects(array_ref<U> other) const noexcept
     {
-        return begin_ < other.end_ && end_ > other.begin_;
+        return reinterpret_cast<const void*>(begin_) < reinterpret_cast<const void*>(other.end_)
+            && reinterpret_cast<const void*>(end_)   > reinterpret_cast<const void*>(other.begin_);
     }
 
 protected:
@@ -238,7 +240,7 @@ protected:
 };
 
 template <typename T>
-bool operator==(array_ref<const T> lhs, array_ref<const T> rhs) noexcept(T() == T())
+bool operator==(array_ref<T> lhs, array_ref<T> rhs) noexcept(noexcept(T() == T()))
 {
     return lhs.size() == rhs.size() && std::equal(lhs.data(), lhs.data() + lhs.size(), rhs.data());
 }

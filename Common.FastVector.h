@@ -122,6 +122,21 @@ public:
     {
         resize(initialSize);
     }
+
+    fast_vector(fast_vector_use_memory_buffer_enum, array_ref<T> initialBackingArray, pointer p, size_t elementCount)
+    :   data_(initialBackingArray.data()),
+        capacity_(initialBackingArray.size())
+    {
+        assign({p, elementCount});
+    }
+
+    template <typename IteratorType>
+    fast_vector(fast_vector_use_memory_buffer_enum, array_ref<T> initialBackingArray, IteratorType begin, IteratorType end)
+    :   data_(initialBackingArray.data()),
+        capacity_(initialBackingArray.size())
+    {
+        assign(begin, end);
+    }
  
     ~fast_vector() noexcept(std::is_nothrow_destructible<T>::value)
     {
@@ -211,6 +226,18 @@ public:
         size_t newSize = span.size();
         reserve(newSize);
         std::uninitialized_copy(span.data(), span.data() + newSize, /*out*/ data_);
+        size_ = newSize;
+    }
+
+    // Clear any existing elements and copy the new elements from the iterable range.
+    template <typename IteratorType>
+    void assign(IteratorType begin, IteratorType end)
+    {
+        clear();
+
+        size_t newSize = std::distance(begin, end);
+        reserve(newSize);
+        std::uninitialized_copy(begin, end, /*out*/ data_);
         size_ = newSize;
     }
 
@@ -645,6 +672,17 @@ public:
 
     fast_vector(const fast_vector& otherVector)
     :   BaseClass(otherVector)
+    {
+    }
+
+    fast_vector(typename BaseClass::pointer p, size_t elementCount)
+    :   BaseClass(fast_vector_use_memory_buffer, GetFixedSizeArrayData(), p, elementCount)
+    {
+    }
+
+    template <typename IteratorType>
+    fast_vector(IteratorType begin, IteratorType end)
+    :   BaseClass(fast_vector_use_memory_buffer, GetFixedSizeArrayData(), begin, end)
     {
     }
 

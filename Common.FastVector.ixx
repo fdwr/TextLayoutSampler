@@ -242,6 +242,7 @@ void fast_vector_test()
     sseSizeType.resize(20);
     sseSizeType2.attach_memory(sseSizeType.detach_memory());
 
+    // Verify insertion and erasure works correctly.
     int values[] = {1,2,3,4,5};
     int appendedValues[] = {42,43};
     int prependedValues[] = {-2,-1};
@@ -254,6 +255,24 @@ void fast_vector_test()
     ints.insert(size_t(0), prependedValues);
     ints.erase(ints.begin() + 2, ints.begin() + 4);
     assert(make_array_ref(ints) == make_array_ref(expectedValues));
+
+    // Ensure construction from pointer+count and iterator pairs work.
+    fast_vector<int, 4> intsUsingPointerCount(values, std::size(values));
+    fast_vector<int, 4> intsUsingIterators(std::begin(values), std::end(values));
+    fast_vector<int64_t, 4> ints64UsingIterators(std::begin(values), std::end(values));
+    assert(intsUsingPointerCount[0] == 1);
+    assert(intsUsingPointerCount[4] == 5);
+    assert(intsUsingPointerCount.size() == 5);
+    assert(intsUsingIterators[0] == 1);
+    assert(intsUsingIterators[4] == 5);
+    assert(intsUsingIterators.size() == 5);
+    assert(ints64UsingIterators[0] == 1);
+    assert(ints64UsingIterators[4] == 5);
+    assert(ints64UsingIterators.size() == 5);
+    ints64UsingIterators.assign(std::begin(appendedValues), std::end(appendedValues));
+    assert(ints64UsingIterators[0] == 42);
+    assert(ints64UsingIterators[1] == 43);
+    assert(ints64UsingIterators.size() == 2);
 
     #if INCLUDE_EXCEPTION_TESTS // Noisy.
     fast_vector<uint32_t> shouldThrow;

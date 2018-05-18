@@ -69,6 +69,8 @@ public:
     using const_reverse_iterator = std::reverse_iterator<const_iterator>;
     using size_type = size_t;
     using difference_type = ptrdiff_t;
+    using mutable_value_type = typename std::remove_const<T>::type;
+    using mutable_iterator = mutable_value_type*;
 
     // If true, the data types needs additional alignment like SSE and AVX types.
     constexpr static bool NeedsTypeAlignmentBeyondMaxAlignT = alignof(T) > alignof(std::max_align_t);
@@ -580,15 +582,17 @@ protected:
     // Get the actual memory block associated with the data.
     static void* GetMemoryBlock(T* data)
     {
+        mutable_value_type* mutableData = const_cast<mutable_value_type*>(data);
+
         if (NeedsTypeAlignmentBeyondMaxAlignT && data != nullptr)
         {
             // Read the pointer to the actual block which is set immediately before the data.
             // [ptr to memory block][data ...]
-            return reinterpret_cast<void**>(data)[-1];
+            return reinterpret_cast<void**>(mutableData)[-1];
         }
         else
         {
-            return data;
+            return mutableData;
         }
     }
 
@@ -614,7 +618,7 @@ protected:
             // already correct earlier and do not need to be passed to this function.
             size_t memoryAddress = reinterpret_cast<size_t>(memory);
             memoryAddress = (memoryAddress + sizeof(void*) + alignmentMask) & ~alignmentMask;
-            T* data = reinterpret_cast<T*>(memoryAddress);
+            mutable_value_type* data = reinterpret_cast<mutable_value_type*>(memoryAddress);
 
             // Store the pointer to the original memory block.
             reinterpret_cast<void**>(data)[-1] = memory;

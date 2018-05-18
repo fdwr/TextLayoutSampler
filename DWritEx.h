@@ -1,5 +1,14 @@
 ﻿//+---------------------------------------------------------------------------
-//  DWrite helper functions for commonly needed tasks.
+//  DWrite helper functions for commonly needed tasks. These are mostly
+//  convenience functions that help interop with standard STL containers,
+//  but make some processes clearer (such as getting the path to a font file
+//  or retrieving the black box of a glyph run) which otherwise take multiple
+//  steps and are not obvious how to achieve.
+//
+//  The minimum OS is Windows 7, but some of these functions require later
+//  versions of Windows to work fully. The library tries to gracefully fall back
+//  to reasonable functionality where possible, such as DrawColorGlyphRun
+//  drawing at least monochrome if color is not supported.
 //
 //  History:    2009-09-09  Dwayne Robinson - Created
 //----------------------------------------------------------------------------
@@ -75,10 +84,13 @@ HRESULT RecreateFontFace(
     _COM_Outptr_ IDWriteFontFace** newFontFace
     );
 
+// Create a font collection using a list of files.
+// e.g. "arial.ttf\0tahoma.ttf\0segoeui.ttf\0d:/myfonts/test.ttf\0"
+//
 HRESULT CreateFontCollection(
     _In_ IDWriteFactory* factory,
     DWRITE_FONT_FAMILY_MODEL fontFamilyModel,
-    _In_bytecount_(fontFileNamesSize) const wchar_t* fontFileNames,
+    _In_bytecount_(fontFileNamesSize) const wchar_t* fontFileNames, // Each file name null terminated.
     _In_ uint32_t fontFileNamesSize, // Number of wchar_t's, not number file name count
     _COM_Outptr_ IDWriteFontCollection** fontCollection
     ) noexcept;

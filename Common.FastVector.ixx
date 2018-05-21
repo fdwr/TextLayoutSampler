@@ -274,9 +274,7 @@ void fast_vector_test()
     assert(ints64UsingIterators[1] == 43);
     assert(ints64UsingIterators.size() == 2);
 
-    //int x = constInts[1];
-    //constInts.resize(10);
-
+    fast_vector<int, 4> initializerListInts({1,3,4});
 
     #if INCLUDE_EXCEPTION_TESTS // Noisy.
     fast_vector<uint32_t> shouldThrow;

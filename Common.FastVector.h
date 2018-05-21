@@ -289,7 +289,7 @@ public:
             // Copying from a fixed size buffer; so it's unsafe to simply
             // steal the pointers as that may leave a dangling pointer
             // when the other fast vector disappears.
-            transfer_from(other);
+            transfer_from(make_array_ref(other));
         }
     }
 
@@ -669,8 +669,13 @@ public:
     {
     }
 
-    fast_vector(array_ref<T> initialValues)
+    fast_vector(array_ref<const T> initialValues)
     :   BaseClass(fast_vector_use_memory_buffer, GetFixedSizeArrayData(), initialValues)
+    {
+    }
+
+    fast_vector(std::initializer_list<const T> initialValues)
+    :   BaseClass(fast_vector_use_memory_buffer, GetFixedSizeArrayData(), make_array_ref(initialValues))
     {
     }
 

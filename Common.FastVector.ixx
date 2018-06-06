@@ -53,6 +53,16 @@ struct SseSizedType
     alignas(16) uint8_t bytes[16];
 };
 
+struct StructWithAddressOverload
+{
+    uint32_t i;
+
+    SimpleStruct** operator &() = delete;
+    //{
+    //    return &p;
+    //}
+};
+
 
 void fast_vector_test()
 {
@@ -273,6 +283,14 @@ void fast_vector_test()
     assert(ints64UsingIterators[0] == 42);
     assert(ints64UsingIterators[1] == 43);
     assert(ints64UsingIterators.size() == 2);
+
+    // Test compatibility with operator overload '&'.
+    StructWithAddressOverload structWithAddressOverload{13};
+    fast_vector<StructWithAddressOverload> operatorOverloadedVector;
+    operatorOverloadedVector.push_back(structWithAddressOverload);
+    operatorOverloadedVector.push_back(std::move(structWithAddressOverload));
+    assert(operatorOverloadedVector[0].i == 13);
+    assert(operatorOverloadedVector[1].i == 13);
 
     fast_vector<int, 4> initializerListInts({1,3,4});
 

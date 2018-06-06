@@ -370,17 +370,18 @@ public:
         capacity_ = size_;
     }
 
+
     void push_back(const T& newValue)
     {
-        reserve(size_ + 1);
-        new(&data_[size_]) T(newValue);
+        reserve(size_ + 1);// 
+        new(static_cast<void*>(data_ + size_)) T(newValue);
         ++size_;
     }
 
     void push_back(T&& newValue)
     {
         reserve(size_ + 1);
-        new(&data_[size_]) T(std::move(newValue));
+        new(static_cast<void*>(data_ + size_)) T(std::move(newValue));
         ++size_;
     }
 

@@ -720,25 +720,25 @@ public:
     // target vector is guaranteed to have a large enough fixed-size array.
     fast_vector& operator=(fast_vector&& otherVector) noexcept(std::is_nothrow_move_assignable<T>::value && std::is_nothrow_destructible<T>::value)
     {
-        transfer_from(otherVector);
+        BaseClass::transfer_from(otherVector);
         return *this;
     }
 
     fast_vector& operator=(BaseClass&& otherVector) // Throws std::bad_alloc if low on memory.
     {
-        transfer_from(otherVector);
+        BaseClass::transfer_from(otherVector);
         return *this;
     }
 
     fast_vector& operator=(const fast_vector& otherVector)
     {
-        assign(otherVector);
+        BaseClass::assign(otherVector);
         return *this;
     }
 
     fast_vector& operator=(const BaseClass& otherVector)
     {
-        assign(otherVector);
+        BaseClass::assign(otherVector);
         return *this;
     }
 

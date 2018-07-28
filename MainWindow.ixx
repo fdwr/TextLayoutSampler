@@ -3034,8 +3034,8 @@ void MainWindow::OnTextEscapeMode(HWND anchorControl)
 {
     TrackPopupMenu_Item constexpr static items[] = {
         { IdcTextEscapeModeNone, u"Raw text ('ģ')" },
-        { IdcTextEscapeModeCppUcn, u"Escaped C++ UCN hex (\u0123)" },
-        { IdcTextEscapeModeHtmlNcr, u"Escaped HTML NCR hex (&#x0123;)" },
+        { IdcTextEscapeModeCppUcn, u"Escaped C++ UCN hex (\\u0123)" },
+        { IdcTextEscapeModeHtmlNcr, u"Escaped HTML NCR hex (&&#x0123;)" },
     };
 
     int menuId = TrackPopupMenu(make_array_ref(items, countof(items)), anchorControl, hwnd_, textEscapeMode_ + IdcTextEscapeModeFirst);

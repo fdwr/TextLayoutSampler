@@ -19,6 +19,15 @@
     #include <assert.h>
 #endif
 
+#pragma warning(push)
+#pragma warning(disable:4127) // Conditional expression is constant. VS can't tell that certain compound conditionals of template parameters aren't always constant when the tempalate parameter is true.
+
+#if defined(_ITERATOR_DEBUG_LEVEL) && _ITERATOR_DEBUG_LEVEL > 0
+// For std::uninitialized_copy and std::uninitialized_move.
+#define FASTVECTOR_MAKE_UNCHECKED stdext::make_unchecked_array_iterator
+#else
+#define FASTVECTOR_MAKE_UNCHECKED
+#endif
 
 // fast_vector is a dynamic array that can substitute for std::vector, where it:
 // (1) avoids heap allocations when the element count fits within the fixed-size capacity.
@@ -227,7 +236,7 @@ public:
 
         size_t newSize = span.size();
         reserve(newSize);
-        std::uninitialized_copy(span.data(), span.data() + newSize, /*out*/ data_);
+        std::uninitialized_copy(FASTVECTOR_MAKE_UNCHECKED(span.data()), FASTVECTOR_MAKE_UNCHECKED(span.data()) + newSize, /*out*/ FASTVECTOR_MAKE_UNCHECKED(data_));
         size_ = newSize;
     }
 
@@ -239,7 +248,7 @@ public:
 
         size_t newSize = std::distance(begin, end);
         reserve(newSize);
-        std::uninitialized_copy(begin, end, /*out*/ data_);
+        std::uninitialized_copy(FASTVECTOR_MAKE_UNCHECKED(begin), FASTVECTOR_MAKE_UNCHECKED(end), /*out*/ FASTVECTOR_MAKE_UNCHECKED(data_));
         size_ = newSize;
     }
 
@@ -256,7 +265,7 @@ public:
 
         size_t newSize = span.size();
         reserve(newSize);
-        std::uninitialized_move(span.data(), span.data() + newSize, /*out*/data_);
+        std::uninitialized_move(FASTVECTOR_MAKE_UNCHECKED(span.data()), FASTVECTOR_MAKE_UNCHECKED(span.data()) + newSize, /*out*/ FASTVECTOR_MAKE_UNCHECKED(data_));
         size_ = newSize;
     }
 
@@ -559,7 +568,7 @@ protected:
 
             // Copy an any existing elements from the fixed size buffer.
             T* newData = AlignMemoryBlock(memory);
-            std::uninitialized_move(data_, data_ + size_, /*out*/newData);
+            std::uninitialized_move(FASTVECTOR_MAKE_UNCHECKED(data_), FASTVECTOR_MAKE_UNCHECKED(data_) + size_, /*out*/ FASTVECTOR_MAKE_UNCHECKED(newData));
 
             // Release the existing block, and assign the new one.
             if (dataIsAllocatedMemory_)
@@ -758,3 +767,7 @@ private:
 #ifdef USE_GSL_SPAN_INSTEAD_OF_ARRAY_REF
 #undef array_ref
 #endif
+
+#undef FASTVECTOR_MAKE_UNCHECKED
+
+#pragma warning(pop)

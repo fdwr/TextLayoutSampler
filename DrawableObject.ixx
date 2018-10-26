@@ -36,7 +36,7 @@ const Attribute DrawableObject::attributeList[DrawableObjectAttributeTotal] =
     {Attribute::TypeArrayUInteger16,Attribute::SemanticNone,         0            , DrawableObjectAttributeGlyphs, u"glyphs", u"Glyphs", u"0 1 2 3 4", glyphDefaults },
     {Attribute::TypeArrayFloat32,   Attribute::SemanticNone,         0            , DrawableObjectAttributeAdvances, u"advances", u"Advances", u"",{} },
     {Attribute::TypeArrayFloat32,   Attribute::SemanticDelta,        0            , DrawableObjectAttributeOffsets, u"offsets", u"Offsets", u"",{} },
-    {Attribute::TypeFloat32,        Attribute::SemanticNone,         CategoryLight, DrawableObjectAttributeFontSize, u"font_size", u"Font size (DIPs)", u"16", fontSizes },
+    {Attribute::TypeFloat32,        Attribute::SemanticNone,         CategoryLight, DrawableObjectAttributeFontSize, u"font_size", u"Font size (ppem)", u"16", fontSizes },
     {Attribute::TypeString16,       Attribute::SemanticNone,         CategoryLight, DrawableObjectAttributeFontFamily, u"font_family", u"Font family", u"Segoe UI",{} },
     {Attribute::TypeUInteger32,     Attribute::SemanticEnum,         CategoryLight, DrawableObjectAttributeWeight, u"weight", u"Weight", u"400", weights },
     {Attribute::TypeUInteger32,     Attribute::SemanticEnum,         CategoryLight, DrawableObjectAttributeStretch, u"stretch", u"Stretch", u"Normal", stretches },
@@ -121,7 +121,7 @@ const Attribute::PredefinedValue DrawableObject::enabledValues[] = {
 
 const Attribute::PredefinedValue DrawableObject::labelDefaults[] = {
     {0, u"", u"" },
-    {0, u"", u"Family = $(font_family), Font size = $(font_size)"},
+    {0, u"", u"Family = $(font_family), Font size = $(font_size) ppem"},
 };
 
 const Attribute::PredefinedValue DrawableObject::textDefaults[] = {

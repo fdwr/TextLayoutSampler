@@ -761,6 +761,10 @@ private:
     // Uninitialized data to be used by the base class.
     // It's declared as raw bytes rather than an std::array<T> to avoid any initialization cost
     // up front, only initializing the fields which actually exist when resized later.
+    //
+    // Note Visual Studio 2017 15.8 requires you to declare _ENABLE_EXTENDED_ALIGNED_STORAGE
+    // if your type T is > max_align_t.
+    //
     std::aligned_storage_t<sizeof(T), alignof(T)> fixedSizedArrayData_[DefaultArraySize];
 };
 

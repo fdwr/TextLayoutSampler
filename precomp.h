@@ -71,6 +71,7 @@
 #include <string>
 #include <functional>
 #include <map>
+#include <array>
 
 //////////////////////////////
 // Windows Header Files:

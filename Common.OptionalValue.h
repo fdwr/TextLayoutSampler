@@ -12,15 +12,9 @@ template <typename T>
 class optional_value
 {
 public:
-    T& value()
-    {
-        return *reinterpret_cast<T*>(t_);
-    }
-
-    T const& value() const
-    {
-        return *reinterpret_cast<T const*>(t_);
-    }
+    bool has_value() { return valueExists_; }
+    T& value() { return *reinterpret_cast<T*>(t_); }
+    T const& value() const { return *reinterpret_cast<T const*>(t_); }
 
     template <typename... Args>
     void emplace(Args&&... args)
@@ -30,7 +24,7 @@ public:
         valueExists_ = true;
     }
 
-    void clear()
+    void reset()
     {
         if (valueExists_)
         {
@@ -77,32 +71,19 @@ public:
         return *this;
     }
 
-    T* operator->()
-    {
-        return reinterpret_cast<T*>(t_);
-    }
+    T* operator->() { return reinterpret_cast<T*>(t_); }
+    T const* operator->() const { return reinterpret_cast<T const*>(t_); }
+    T& operator*() { return value(); }
+    T const& operator*() const { return value(); }
 
-    T const* operator->() const
-    {
-        return reinterpret_cast<T const*>(t_);
-    }
-
-    T& operator*()
-    {
-        return value();
-    }
-
-    T const& operator*() const
-    {
-        return value();
-    }
-
-    bool empty()
-    {
-        return !valueExists_;
-    }
+    // Container compatible helpers to accomodate generic template algorithms,
+    // treating std::optional like an std::vecto of size 0 or 1.
+    bool empty() { return !valueExists_; }
+    T* data() { return &value(); }
+    T const* data() const { return &value(); }
+    void clear() { reset(); }
 
 private:
-    char t_[sizeof(T)];
+    alignas(alignof(T)) uint8_t t_[sizeof(T)];
     bool valueExists_ = false;
 };

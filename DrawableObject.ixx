@@ -10,7 +10,7 @@
 
 MODULE(DrawableObject)
 EXPORT_BEGIN
-    #include "DrawableObject.h"
+#include "DrawableObject.h"
 EXPORT_END
 
 ////////////////////////////////////////

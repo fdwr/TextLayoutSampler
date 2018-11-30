@@ -164,6 +164,7 @@
     <ClCompile Include="Common.cpp" />
     <ClCompile Include="Common.String.ixx" />
     <ClCompile Include="Common.ArrayRef.ixx" />
+    <ClCompile Include="Common.Variant.ixx" />
     <ClCompile Include="precomp.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
       <PreprocessToFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</PreprocessToFile>
@@ -179,6 +180,7 @@
     <ClInclude Include="Common.FastVector.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="Common.ListSubstringPrioritizer.h" />
+    <ClInclude Include="Common.Variant.h" />
     <ClInclude Include="DrawableObject.h" />
     <ClInclude Include="DrawableObjectAndValues.h" />
     <ClInclude Include="DrawingCanvas.h" />

@@ -255,3 +255,22 @@ protected:
 
     ULONG refCount_ = 0;
 };
+
+// Place these around usage if Visual Studio unnecessarily complains:
+// #pragma warning(push)
+// #pragma warning(disable:4307) // "The overflow is deliberate - warning C4307: '*': integral constant overflow"
+// #pragma warning(pop)
+constexpr size_t constexpr_hash(_In_z_ const char* input)
+{
+    size_t hash = sizeof(size_t) == 8 ? 0XCBF29CE484222325 : 0X811C9DC5;
+    const size_t prime = sizeof(size_t) == 8 ? 0X00000100000001B3 : 0X01000193;
+
+    while (*input)
+    {
+        hash ^= static_cast<size_t>(*input);
+        hash *= prime;
+        ++input;
+    }
+
+    return hash;
+}

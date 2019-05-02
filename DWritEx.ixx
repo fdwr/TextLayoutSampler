@@ -15,8 +15,8 @@
 
 #include "precomp.h"
 
-#include <windows.h>
-#include <Dwrite_3.h>
+#include <Windows.h>
+#include <DWrite_3.h>
 
 #pragma comment(lib, "DWrite.lib")
 

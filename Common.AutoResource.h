@@ -7,26 +7,6 @@
 #pragma once
 
 
-// This class mostly obviates the following custom classes
-// (which are mostly just variants of various smart resource holders):
-//
-//      Common/SmartPtr.h : ScopedPtr
-//      Platform/AccessToken.h : AccessToken
-//      Platform/Win32/Win32Handle.h : Win32Handle
-//      Platform/Win32/SecurityHelpers.h : AutoLocalFree
-//      Platform/Win32/GdiHelpers.h : GdiHandle
-//
-// It partially obviates these, satisfying the destructors
-// and getters, but the classes have more complex constructors,
-// meaning they would require inheritance.
-//
-//      Platform/MemorySection.h : MemoryView, MemorySection
-//
-// With a free function (given a resource releaser that requires multiple
-// parameters), it satisfies these too.
-//
-//      Platform/Win32/WaitHandle.h
-//
 // Example usage:
 //
 //  GdiPenHandle gdiPenHandle;

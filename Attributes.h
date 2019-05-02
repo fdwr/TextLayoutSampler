@@ -22,6 +22,7 @@ import Common.ListSubstringPrioritizer;
 struct Attribute
 {
     // Basic data types (no complex classes with state cleanup).
+    // Any of these types can also be an array.
     enum Type : uint8_t
     {
         TypeNone,

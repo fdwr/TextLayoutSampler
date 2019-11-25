@@ -5,12 +5,16 @@
 #include <specstrings.h>
 #include "Application.macros.h"
 
-MODULE(Application)
-MODULE(DWritEx)
-EXPORT_BEGIN
-#include "Application.h"
-EXPORT_END
+#if USE_CPP_MODULES
+import Common.String;
+#else
+#include "Common.String.h"
+#endif
 
+MODULE(Application)
+EXPORT_BEGIN
+    #include "Application.h"
+EXPORT_END
 
 #pragma prefast(disable:__WARNING_HARD_CODED_STRING_TO_UI_FN, "It's an internal test program.")
 

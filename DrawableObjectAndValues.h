@@ -28,6 +28,9 @@ import TextTreeParser;
 #endif
 
 
+MODULE(DrawableObjectAndValues)
+EXPORT_BEGIN
+
 //interface AttributeSource;
 //class DrawableObject; // causes - fatal error C1001: An internal error has occurred in the compiler.
 
@@ -136,3 +139,5 @@ public:
         TextTree::NodePointer objectsNode
         );
 };
+
+EXPORT_END

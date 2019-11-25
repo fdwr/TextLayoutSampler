@@ -6,10 +6,7 @@
 #include <string>
 
 
-MODULE(Common.ListSubstringPrioritizer)
-EXPORT_BEGIN
-    #include "Common.ListSubstringPrioritizer.h"
-EXPORT_END
+#include "Common.ListSubstringPrioritizer.h"
 
 ////////////////////////////////////////
 

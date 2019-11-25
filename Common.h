@@ -3,16 +3,20 @@
 //----------------------------------------------------------------------------
 #pragma once
 
-// #define __cpp_modules 0
+#ifdef __cpp_modules
+#define USE_CPP_MODULES 1
+#endif
 
-#if __cpp_modules // Is there no __cpp_modules feature test macro?
+#define USE_CPP_MODULES 0
+
+#if USE_CPP_MODULES // Is there no __cpp_modules feature test macro?
 #define MODULE(moduleName) export module moduleName;
 #else
 #define MODULE(moduleName)
 #endif
 
 
-#if __cpp_modules
+#if USE_CPP_MODULES
 #define EXPORT export
 #define EXPORT_BEGIN export {
 #define EXPORT_END }

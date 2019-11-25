@@ -36,14 +36,45 @@ todo:::
 #include "resource.h"
 #include "Application.macros.h"
 #include "WindowUtility.macros.h"
+
+
+#if USE_CPP_MODULES
+import Common.ArrayRef;
+import Common.String;
+import Common.AutoResource;
+import Common.AutoResource.Windows;
+import Common.ListSubstringPrioritizer;
+import Common.FastVector;
+import MessageBoxShaded;
+import FileHelpers;
+import DrawingCanvasControl;
+import DrawableObject;
+import Application;
+import DrawableObjectAndValues;
+import TextTreeParser; // for DrawableObjectAndValues
+#else
+#include "Common.ArrayRef.h"
+#include "Common.String.h"
+#include "Common.AutoResource.h"
+#include "Common.AutoResource.Windows.h"
 #include "Common.FastVector.h"
+#include "Common.ListSubstringPrioritizer.h"
+#include "MessageBoxShaded.h"
+#include "FileHelpers.h"
+#include "DrawingCanvasControl.h"
+#include "DrawableObject.h"
+#include "Application.h"
+#include "DrawableObjectAndValues.h"
+#include "TextTreeParser.h"
+#endif
 
 
 #pragma comment(lib, "ComCtl32.lib")
 
 MODULE(MainWindow)
-
-#include "MainWindow.h"
+EXPORT_BEGIN
+    #include "MainWindow.h"
+EXPORT_END
 
 ////////////////////////////////////////
 
@@ -778,7 +809,7 @@ void MainWindow::UpdateAttributeValuesListView()
     }
 
     lw.EnableDrawing();
-    InvalidateRect(lw.hwnd, nullptr, false);
+    ::InvalidateRect(lw.hwnd, nullptr, false);
 }
 
 

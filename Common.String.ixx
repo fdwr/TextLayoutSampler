@@ -5,10 +5,7 @@
 //----------------------------------------------------------------------------
 #include "precomp.h"
 
-MODULE(Common.String)
-EXPORT_BEGIN
-    #include "Common.String.h"
-EXPORT_END
+#include "Common.String.h"
 
 ////////////////////////////////////////
 

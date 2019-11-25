@@ -3,7 +3,6 @@
 //----------------------------------------------------------------------------
 #pragma once
 
-
 #if USE_CPP_MODULES
 import Common.String;
 import Common.ArrayRef;
@@ -16,6 +15,8 @@ import Common.ListSubstringPrioritizer;
 #include "Common.ListSubstringPrioritizer.h"
 #endif
 
+MODULE(Attributes)
+EXPORT_BEGIN
 
 // Definition of attribute, including the type, name, and default values.
 // The current value is stored separately.
@@ -105,7 +106,10 @@ struct Attribute
             );
     };
 
+
+    #if !defined(__cpp_char8_t) && !defined(__cpp_lib_char8_t)
     using char8_t = unsigned char; // Code points should never be signed.
+    #endif
 
     // A live value for an attribute.
     union Variant
@@ -378,3 +382,5 @@ public:
     // simple enough).
     virtual HRESULT GetCookie(uint32_t id, _Out_ uint32_t& cookieValue) = 0;
 };
+
+EXPORT_END

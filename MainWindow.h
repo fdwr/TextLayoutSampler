@@ -4,35 +4,6 @@
 #pragma once
 
 
-#if USE_CPP_MODULES
-import Common.ArrayRef;
-import Common.String;
-import Common.AutoResource;
-import Common.AutoResource.Windows;
-import Common.ListSubstringPrioritizer;
-import MessageBoxShaded;
-import FileHelpers;
-import DrawingCanvasControl;
-import DrawableObject;
-import Application;
-import DrawableObjectAndValues;
-import TextTreeParser; // for DrawableObjectAndValues
-#else
-#include "Common.ArrayRef.h"
-#include "Common.String.h"
-#include "Common.AutoResource.h"
-#include "Common.AutoResource.Windows.h"
-#include "Common.ListSubstringPrioritizer.h"
-#include "MessageBoxShaded.h"
-#include "FileHelpers.h"
-#include "DrawingCanvasControl.h"
-#include "DrawableObject.h"
-#include "Application.h"
-#include "DrawableObjectAndValues.h"
-#include "TextTreeParser.h"
-#endif
-
-
 class MainWindow
 {
 public:

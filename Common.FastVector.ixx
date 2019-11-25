@@ -1,20 +1,12 @@
 //----------------------------------------------------------------------------
 //  History:    2018-04-30 Dwayne Robinson - Created
 //----------------------------------------------------------------------------
-
-
-#if USE_CPP_MODULES
-import Common.ArrayRef;
-import Common.FastVector;
-#else
 #define _ENABLE_EXTENDED_ALIGNED_STORAGE // For the SseSizedType case, which is > max_align_t.
 #define _SCL_SECURE_NO_WARNINGS // I hate doing this, but Visual Studio offers no substitute for std::uninitialized_copy.
-#include "Common.ArrayRef.h"
-#include "Common.FastVector.h"
-#include <algorithm>
-#include <assert.h>
-#endif
 
+#include "precomp.h"
+
+#include "Common.FastVector.h"
 
 ////////////////////////////////////////
 

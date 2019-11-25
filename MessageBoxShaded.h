@@ -4,10 +4,7 @@
 //  History:    2008-02-11   Dwayne Robinson - Created
 //----------------------------------------------------------------------------
 
-//#include "precomp.h"
-//#include "resource.h"
-//#include <string>
-//#include <Windows.h>
+////////////////////////////////////////
 
 #if USE_CPP_MODULES
 import Common.ArrayRef;
@@ -19,8 +16,7 @@ import WindowUtility;
 #include "WindowUtility.h"
 #endif
 
-
-////////////////////////////////////////
+EXPORT_BEGIN
 
 class MessageBoxShaded
 {
@@ -46,3 +42,5 @@ public:
     DialogProcResult CALLBACK ProcessNotification(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
     void Resize();
 };
+
+EXPORT_END

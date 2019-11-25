@@ -10,9 +10,7 @@
 #include <Windows.h>
 
 MODULE(MessageBoxShaded)
-EXPORT_BEGIN
-    #include "MessageBoxShaded.h"
-EXPORT_END
+#include "MessageBoxShaded.h"
 
 ////////////////////////////////////////
 

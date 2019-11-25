@@ -7,6 +7,9 @@
 #pragma once
 
 
+MODULE(Common.AutoResource)
+EXPORT_BEGIN
+
 // Example usage:
 //
 //  GdiPenHandle gdiPenHandle;
@@ -371,3 +374,5 @@ struct OwnedMemoryPointerPolicy : public DefaultResourceTypePolicy<ResourceType>
 
 template<typename ResourceType>
 using OwnedMemoryPointer = AutoResource<ResourceType*, OwnedMemoryPointerPolicy<ResourceType*>, ResourceType*>;
+
+EXPORT_END

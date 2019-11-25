@@ -12,6 +12,19 @@
 
 #pragma comment(lib, "Shlwapi.lib")
 
+#if USE_CPP_MODULES
+import Common.String;
+import Common.ArrayRef;
+import Common.AutoResource;
+import Common.AutoResource.Windows;
+#else
+#include "Common.String.h"
+#include "Common.ArrayRef.h"
+#include "Common.AutoResource.h"
+#include "Common.AutoResource.Windows.h"
+#endif
+
+
 MODULE(FileHelpers)
 EXPORT_BEGIN
     #include "FileHelpers.h"

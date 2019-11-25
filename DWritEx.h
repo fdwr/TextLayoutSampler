@@ -14,19 +14,6 @@
 //----------------------------------------------------------------------------
 #pragma once
 
-#if USE_CPP_MODULES
-import Common.ArrayRef;
-import Common.String;
-import FileHelpers;
-import Common.AutoResource.Windows;
-#else
-#include "Common.ArrayRef.h"
-#include "Common.String.h"
-#include "FileHelpers.h"
-#include "Common.AutoResource.Windows.h"
-#endif
-
-
 // A much more useful metrics structure for display.
 // Side-bearings are awfully confusing with unclear positive/negative sign depending on whether inside or outside the
 // bounding box, plus an inverted 2D coordinate system compared to the rest of DirectWrite and Direct2D. So this

@@ -13,6 +13,9 @@ import Common.String;
 #endif
 
 
+MODULE(Common.ListSubstringPrioritizer)
+EXPORT_BEGIN
+
 class ListSubstringPrioritizer
 {
     struct IndexAndWeight
@@ -51,3 +54,5 @@ private:
     std::u16string filterString_;
     std::u16string majusculeName_;
 };
+
+EXPORT_END

@@ -3,11 +3,7 @@
 //----------------------------------------------------------------------------
 #include "precomp.h"
 
-
-MODULE(Attributes)
-EXPORT_BEGIN
-    #include "Attributes.h"
-EXPORT_END
+#include "Attributes.h"
 
 ////////////////////////////////////////
 

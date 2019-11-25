@@ -14,10 +14,7 @@
 #pragma comment(lib, "GdiPlus.lib")
 #pragma comment(lib, "WindowsCodecs.lib")
 
-MODULE(DrawingCanvas)
-EXPORT_BEGIN
-    #include "DrawingCanvas.h"
-EXPORT_END
+#include "DrawingCanvas.h"
 
 ////////////////////////////////////////
 

@@ -20,6 +20,19 @@
 
 #pragma comment(lib, "DWrite.lib")
 
+#if USE_CPP_MODULES
+import Common.ArrayRef;
+import Common.String;
+import FileHelpers;
+import Common.AutoResource.Windows;
+#else
+#include "Common.ArrayRef.h"
+#include "Common.String.h"
+#include "FileHelpers.h"
+#include "Common.AutoResource.Windows.h"
+#endif
+
+
 MODULE(DWritEx)
 EXPORT_BEGIN
     #include "DWritEx.h"

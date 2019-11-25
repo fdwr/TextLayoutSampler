@@ -4,7 +4,6 @@
 //----------------------------------------------------------------------------
 #pragma once
 
-
 #if USE_CPP_MODULES
 import Common.ArrayRef;
 import Common.String;
@@ -26,6 +25,9 @@ import DWritEx;
 #include "DWritEx.h"
 #endif
 
+
+MODULE(DrawableObject)
+EXPORT_BEGIN
 
 ////////////////////////////////////////////////////////////////////////////////
 // Generic attributes and interfaces.
@@ -599,3 +601,5 @@ public:
     CachedGdiPlusStartup cachedStartup_;
     CachedGdiPlusFont cachedFont_;
 };
+
+EXPORT_END

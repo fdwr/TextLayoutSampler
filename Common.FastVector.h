@@ -4,20 +4,26 @@
 #pragma once
 
 
-#if USE_CPP_MODULES
-    import std.core;
-    import Common.ArrayRef;
-#else
-    #ifdef USE_GSL_SPAN_INSTEAD_OF_ARRAY_REF
-        #include <gsl/span>
-        #define array_ref gsl::span
-    #else
-        #include "Common.ArrayRef.h" // gsl::span may be mostly substituted instead of array_ref, just missing intersects().
-    #endif
+#include <iterator>
+#include <memory> // For uninitialized_move/copy and std::unique_ptr.
+#include <assert.h>
+#include <algorithm>
 
-    #include <memory> // For uninitialized_move/copy and std::unique_ptr.
-    #include <assert.h>
+#if USE_CPP_MODULES
+//import std.core;
+import Common.ArrayRef;
+#else
+#ifdef USE_GSL_SPAN_INSTEAD_OF_ARRAY_REF
+#include <gsl/span>
+#define array_ref gsl::span
+#else
+#include "Common.ArrayRef.h" // gsl::span may be mostly substituted instead of array_ref, just missing intersects().
 #endif
+#endif
+
+MODULE(Common.FastVector);
+EXPORT_BEGIN
+
 
 #pragma warning(push)
 #pragma warning(disable:4127) // Conditional expression is constant. VS can't tell that certain compound conditionals of template parameters aren't always constant when the tempalate parameter is true.
@@ -775,3 +781,5 @@ private:
 #undef FASTVECTOR_MAKE_UNCHECKED
 
 #pragma warning(pop)
+
+EXPORT_END

@@ -7,11 +7,7 @@
 //----------------------------------------------------------------------------
 #include "precomp.h"
 
-
-MODULE(DrawableObject)
-EXPORT_BEGIN
 #include "DrawableObject.h"
-EXPORT_END
 
 ////////////////////////////////////////
 

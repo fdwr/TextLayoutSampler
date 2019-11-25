@@ -3,17 +3,8 @@
 //              2015-10-20 Forked
 //----------------------------------------------------------------------------
 #include "precomp.h"
-#include <array>
-#include <stdint.h>
-#include <initializer_list>
-#include <vector>
-#include <string>
-#include <cassert>
 
-MODULE(Common.ArrayRef)
-EXPORT_BEGIN
-    #include "Common.ArrayRef.h"
-EXPORT_END
+#include "Common.ArrayRef.h"
 
 ////////////////////////////////////////
 

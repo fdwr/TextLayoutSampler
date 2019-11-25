@@ -4,10 +4,20 @@
 //----------------------------------------------------------------------------
 #pragma once
 
+#include <array>
+#include <stdint.h>
+#include <initializer_list>
+#include <vector>
+#include <string>
+#include <cassert>
+
 // Set 0 if your defective std::string.data() lacks a mutable overload.
 // #define STD_STRING_MUTABLE_DATA_IS_FIXED_CPP17 1
 
 #include <iterator>
+
+MODULE(Common.ArrayRef)
+EXPORT_BEGIN
 
 // View of contiguous memory, which may come from an std::vector,
 // std::wstring, std::initializer_list, std::array, plain C array,
@@ -291,3 +301,5 @@ static array_ref<T> wrap_single_array_ref(T& t)
 
 using byte_array_ref = array_ref<uint8_t>;
 using const_byte_array_ref = array_ref<uint8_t const>;
+
+EXPORT_END

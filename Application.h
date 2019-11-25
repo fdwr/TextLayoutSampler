@@ -1,22 +1,10 @@
 ﻿//----------------------------------------------------------------------------
 //  History:    2015-06-19 Dwayne Robinson - Created
 //----------------------------------------------------------------------------
-#include "precomp.h"
-#include <specstrings.h>
-#include "Application.macros.h"
-
-#if USE_CPP_MODULES
-import Common.String;
-#else
-#include "Common.String.h"
-#endif
-
-MODULE(Application)
-
 
 ////////////////////////////////////////
 
-EXPORT class Application
+class Application
 {
 public:
     static HINSTANCE g_hModule;

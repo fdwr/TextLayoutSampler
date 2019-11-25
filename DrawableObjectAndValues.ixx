@@ -5,10 +5,7 @@
 #include "precomp.h"
 
 
-MODULE(DrawableObjectAndValues)
-EXPORT_BEGIN
-    #include "DrawableObjectAndValues.h"
-EXPORT_END
+#include "DrawableObjectAndValues.h"
 
 ////////////////////////////////////////
 

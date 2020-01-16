@@ -1008,7 +1008,7 @@ namespace
     void InitializeDefaultDrawableObjectAndValues(DrawableObjectAndValues& drawableObjectAndValues)
     {
         drawableObjectAndValues.Set(DrawableObjectAttributeFunction, u"IDWriteBitmapRenderTarget IDWriteTextLayout");
-        drawableObjectAndValues.Set(DrawableObjectAttributeText, u"This is a test.");
+        drawableObjectAndValues.Set(DrawableObjectAttributeText, u"This is a test 😎👧🏼👧🏾.");
         drawableObjectAndValues.Set(DrawableObjectAttributeFontFamily, u"Segoe UI");
         drawableObjectAndValues.Set(DrawableObjectAttributeFontSize, u"18");
     }

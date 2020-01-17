@@ -38,6 +38,14 @@ EXPORT_BEGIN
 struct DrawableObjectAndValues : public IAttributeSource
 {
 public:
+    enum Flags : uint32_t
+    {
+        FlagsNone     = 0x00000000,
+        FlagsSelected = 0x00000001,
+        FlagsInitialDefaults = FlagsSelected,
+    };
+
+public:
     ComPtr<DrawableObject> drawableObject_;
     AttributeValue values_[DrawableObjectAttributeTotal];
     std::u16string label_;
@@ -45,10 +53,14 @@ public:
     D2D_RECT_F objectRect_;     // Object rectangle in post-transform canvas coordinates. Best rounded to whole pixel.
     D2D_RECT_F layoutBounds_;   // Extents of layout boundary, in pre-transform world coordinates.
     D2D_RECT_F contentBounds_;  // Actual content boundary, in pre-transform world coordinates.
-    CachedTransform transform_; // Transform from world coordinates to 
+    CachedTransform transform_; // Transform from world coordinates to screen.
     D2D_POINT_2F origin_;       // Offset from <0,0>. May be non-zero if rotation exists or content is larger than layout.
+    Flags flags_;
 
 public:
+    DrawableObjectAndValues();
+    DrawableObjectAndValues(DrawableObjectAndValues const&) = default;
+
     // IAttributeSource implementation.
     virtual HRESULT GetString(uint32_t id, _Out_ array_ref<char16_t>& value) override;
     using IAttributeSource::GetString;
@@ -139,5 +151,7 @@ public:
         TextTree::NodePointer objectsNode
         );
 };
+
+DEFINE_ENUM_FLAG_OPERATORS(DrawableObjectAndValues::Flags);
 
 EXPORT_END

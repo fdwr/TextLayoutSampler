@@ -112,8 +112,6 @@ LRESULT CALLBACK DrawingCanvasControl::WindowProc(HWND hwnd, UINT message, WPARA
             GetCursorPos(&cursorPoint);
             TrackPopupMenu(menu, TPM_LEFTALIGN|TPM_NOANIMATION|TPM_RIGHTBUTTON, cursorPoint.x, cursorPoint.y, 0, hwnd, 0);
             DestroyMenu(menu);
-
-            SendMouseNotification();
         }
         break;
 
@@ -137,7 +135,6 @@ LRESULT CALLBACK DrawingCanvasControl::WindowProc(HWND hwnd, UINT message, WPARA
     case WM_LBUTTONUP:
     case WM_MBUTTONUP:
         ReleaseCapture();
-        SendMouseNotification();
         break;
 
     case WM_CAPTURECHANGED:
@@ -209,8 +206,6 @@ LRESULT CALLBACK DrawingCanvasControl::WindowProc(HWND hwnd, UINT message, WPARA
             {
                 Pan(xDif, yDif);
             }
-
-            SendMouseNotification();
         }
         break;
 

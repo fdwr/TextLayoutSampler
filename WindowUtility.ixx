@@ -246,6 +246,15 @@ HRESULT CopyImageToClipboard(
 }
 
 
+void ListView_ToggleSelectSingleItem(HWND hwnd, int i)
+{
+    // Toggle selection of single item.
+    uint32_t state = ListView_GetItemState(hwnd, i, LVIS_SELECTED);
+    ListView_SetItemState(hwnd, i, state ^ LVIS_SELECTED, LVIS_SELECTED);
+    ListView_EnsureVisible(hwnd, i, false); // scroll down if needed
+}
+
+
 void ListView_SelectSingleVisibleItem(HWND hwnd, int i)
 {
     // Deselect all items. Then select the single item.

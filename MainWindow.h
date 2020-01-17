@@ -96,7 +96,7 @@ protected:
     void FillAttributesListView();
     void InitializeAttributeValuesListView();
     void UpdateUi();
-    void DeferUpdateUi(NeededUiUpdate neededUiUpdate = NeededUiUpdateNone);
+    void DeferUpdateUi(NeededUiUpdate neededUiUpdate = NeededUiUpdateNone, uint32_t timeOut = 50);
     void UpdateDrawableObjectsListView();
     void DeleteDrawableObjectsListViewSelected();
     void CreateDrawableObjectsListViewSelected();
@@ -117,7 +117,7 @@ protected:
     void Resize(int id);
     HRESULT SelectFontFile();
     HRESULT SelectFontFamily();
-    std::vector<uint32_t> GetSelectedDrawableObjectIndices();
+    std::vector<uint32_t> GetSelectedDrawableObjectIndices(bool returnAllIfEmpty = true);
     std::vector<uint32_t> GetSelectedAttributeIndices();
     HRESULT GetFileOrFamilyName(uint32_t selectedDrawableObjectIndex, _Out_ std::u16string& fileOrFamilyName);
 

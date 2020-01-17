@@ -30,6 +30,18 @@ namespace
 
     static const COLORREF s_defaultLabelTextColor = 0x00FFFFFF;
     static const COLORREF s_defaultErrorTextColor = 0x004040FF;
+    static const COLORREF s_defaultLabelBackColor = 0x00805050;
+}
+
+
+DrawableObjectAndValues::DrawableObjectAndValues()
+:   labelRect_{},
+    objectRect_{},    // Object rectangle in post-transform canvas coordinates. Best rounded to whole pixel.
+    layoutBounds_{},
+    contentBounds_{},
+    origin_{},
+    flags_{FlagsSelected}
+{
 }
 
 
@@ -158,7 +170,8 @@ void DrawableObjectAndValues::Draw(
             SetWorldTransform(currentHdc, &finalTransform.gdi);
             HFONT previousFont = SelectFont(currentHdc, labelFont);
             SetTextColor(currentHdc, s_defaultErrorTextColor);
-            SetBkMode(currentHdc, TRANSPARENT);
+            SetBkMode(currentHdc, OPAQUE);
+            SetBkColor(currentHdc, s_defaultLabelBackColor);
             DrawText(currentHdc, ToWChar(errorString.c_str()), int(errorString.size()), &errorRect, DT_NOCLIP | DT_NOPREFIX);
             SelectFont(currentHdc, previousFont);
             SetWorldTransform(currentHdc, &DrawableObject::identityTransform.gdi);
@@ -204,29 +217,21 @@ void DrawableObjectAndValues::Draw(
         {
             HFONT previousFont = SelectFont(hdc, labelFont);
             SetTextColor(hdc, s_defaultLabelTextColor);
-            SetBkMode(hdc, TRANSPARENT);
+            if (objectAndValues.flags_ & DrawableObjectAndValues::FlagsSelected)
+            {
+                SetBkMode(hdc, OPAQUE);
+                SetBkColor(hdc, s_defaultLabelBackColor);
+            }
+            else
+            {
+                SetBkMode(hdc, TRANSPARENT);
+            }
             DrawText(hdc, ToWChar(objectAndValues.label_.data()), int(objectAndValues.label_.size()), &objectAndValues.labelRect_, DT_NOCLIP | DT_NOPREFIX);
             SelectFont(hdc, previousFont);
         }
     }
     SetWorldTransform(hdc, &DrawableObject::identityTransform.gdi);
     drawingCanvas.SwitchRenderingAPI(DrawingCanvas::CurrentRenderingApiAny);
-
-    #if 0 // todo::: delete hack
-    DrawingCanvas::RawPixels rawPixels = drawingCanvas.GetRawPixels();
-    std::vector<Edge> edges = {{0,1},{1,2},{2,3},{3,4},{4,5},{5,6},{6,7},{7,0},  {8,9},{9,10},{10,11},{11,8},  {12,13},{13,14},{14,15},{15,12}};
-    std::vector<PointI> points = {{100,100},{150,0},{250,150},{250,0},{300,100},{250,200},{150,50},{150,200},  {400,150},{600,200},{350,350},{300,250},  {400,200},{450,250},{400,275},{350,250}};
-    FillPolyline(rawPixels, canvasTransform, points, IN OUT edges, 0xFFE080C0);
-    //DrawLineTransformed(
-    //    rawPixels,
-    //    canvasTransform,
-    //    100,
-    //    100,
-    //    100,
-    //    200,
-    //    0xFFE080C0
-    //    );
-    #endif
 }
 
 

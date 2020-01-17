@@ -446,11 +446,12 @@ INT_PTR MainWindow::InitializeMainDialog()
 
     Resize(IddMainWindow);
 
-    UpdateDrawableObjectsListView();
-    UpdateAttributesListView();
-    UpdateAttributeValuesListView();
+    // Indirectly called already by ChangeSettingsVisibility:
+    // UpdateDrawableObjectsListView();
+    // UpdateAttributesListView();
+    // UpdateAttributeValuesListView();
 
-    AppendLog(u"Mouse wheel scrolls, middle button drag pans, right click opens menu, left click selects object. "
+    AppendLog(u"Mouse wheel scrolls, middle button drag pans, right click opens menu, left click selects object (ctrl to toggle). "
               u"You can select multiple objects in the list to change an attribute across all.\r\n"
               u"Double click cell to edit. Press delete key to delete selected object. Press delete in attribute list to clear value.\r\n"
               );
@@ -543,6 +544,62 @@ void MainWindow::InitializeDrawableObjectsListView()
 }
 
 
+void MainWindow::UpdateDrawableObjectsListView()
+{
+    HWND drawableObjectsListHwnd = GetWindowFromId(hwnd_, IdcDrawableObjectsList);
+    if (!IsWindowVisible(drawableObjectsListHwnd))
+    {
+        return; // Shortcut, since control not displayed anyway.
+    }
+
+    std::u16string truncatedString;
+    ListViewWriter lw(drawableObjectsListHwnd);
+    lw.DisableDrawing();
+
+    isRecursing_ = true;
+    size_t itemCount = lw.GetItemCount();
+    size_t const totalDrawableObjects = drawableObjects_.size();
+    if (itemCount > totalDrawableObjects)
+    {
+        lw.DeleteAllItems();
+        itemCount = 0;
+    }
+    lw.ReserveItemCount(int(totalDrawableObjects));
+    isRecursing_ = false;
+
+    for (auto const& drawableObject : drawableObjects_)
+    {
+        if (lw.iItem >= int(itemCount))
+        {
+            isRecursing_ = true; // Stop pointless LVN_ITEMCHANGED messages.
+            lw.InsertItem(u"");
+            isRecursing_ = false;
+            ++itemCount;
+        }
+
+        isRecursing_ = true; // Stop pointless LVN_ITEMCHANGED messages.
+        ListView_SetItemState(lw.hwnd, lw.iItem, drawableObject.flags_ & drawableObject.FlagsSelected ? LVIS_SELECTED : 0, LVIS_SELECTED);
+        isRecursing_ = false;
+
+        for (uint32_t i = 0; i < DrawableObjectAttributeTotal; ++i)
+        {
+            auto* text = &drawableObject.values_[i].stringValue;
+            if (text->size() > 256)
+            {
+                truncatedString.assign(text->c_str(), 256);
+                text = &truncatedString;
+            }
+            isRecursing_ = true; // Stop pointless LVN_ITEMCHANGED messages.
+            lw.SetItemText(i, text->c_str());
+            isRecursing_ = false;
+        }
+        lw.AdvanceItem();
+    }
+    lw.EnableDrawing();
+    InvalidateRect(lw.hwnd, nullptr, false);
+}
+
+
 void MainWindow::InitializeAttributesListView()
 {
     const static ListViewColumnInfo columnInfo[] = {
@@ -560,7 +617,13 @@ void MainWindow::FillAttributesListView()
 {
     // Add items to the list, respecting any filters.
 
-    ListViewWriter lw(GetWindowFromId(hwnd_, IdcAttributesList));
+    HWND attributesListHwnd = GetWindowFromId(hwnd_, IdcAttributesList);
+    if (!IsWindowVisible(attributesListHwnd))
+    {
+        return; // Shortcut, since control not displayed anyway.
+    }
+
+    ListViewWriter lw(attributesListHwnd);
 
     isRecursing_ = true;
     lw.DisableDrawing();
@@ -606,102 +669,17 @@ void MainWindow::InitializeAttributeValuesListView()
 }
 
 
-void MainWindow::UpdateDrawableObjectsListView()
-{
-    std::u16string truncatedString;
-    ListViewWriter lw(GetWindowFromId(hwnd_, IdcDrawableObjectsList));
-    lw.DisableDrawing();
-
-    size_t itemCount = lw.GetItemCount();
-    size_t const totalDrawableObjects = drawableObjects_.size();
-    if (itemCount > totalDrawableObjects)
-    {
-        lw.DeleteAllItems();
-        itemCount = 0;
-    }
-    lw.ReserveItemCount(int(totalDrawableObjects));
-
-    for (auto const& drawableObject : drawableObjects_)
-    {
-        if (lw.iItem >= int(itemCount))
-        {
-            isRecursing_ = true; // Stop pointless LVN_ITEMCHANGED messages.
-            lw.InsertItem(u"");
-            isRecursing_ = false;
-            ++itemCount;
-        }
-    
-        for (uint32_t i = 0; i < DrawableObjectAttributeTotal; ++i)
-        {
-            auto* text = &drawableObject.values_[i].stringValue;
-            if (text->size() > 256)
-            {
-                truncatedString.assign(text->c_str(), 256);
-                text = &truncatedString;
-            }
-            isRecursing_ = true; // Stop pointless LVN_ITEMCHANGED messages.
-            lw.SetItemText(i, text->c_str());
-            isRecursing_ = false;
-        }
-        lw.AdvanceItem();
-    }
-    lw.EnableDrawing();
-    InvalidateRect(lw.hwnd, nullptr, false);
-}
-
-
-void MainWindow::DeferUpdateUi(NeededUiUpdate neededUiUpdate)
-{
-    neededUiUpdate_ |= neededUiUpdate;
-    SetTimer(hwnd_, IdcUpdateUi, 50, nullptr);
-}
-
-
-void MainWindow::UpdateUi()
-{
-    auto neededUiUpdate = neededUiUpdate_;
-    neededUiUpdate_ = NeededUiUpdateNone;
-
-    if (neededUiUpdate & NeededUiUpdateDrawableObjectsListView)
-    {
-        UpdateDrawableObjectsListView();
-    }
-    if (neededUiUpdate & NeededUiFillAttributesListView)
-    {
-        FillAttributesListView();
-    }
-    if (neededUiUpdate & NeededUiUpdateAttributesListView)
-    {
-        UpdateAttributesListView();
-    }
-    if (neededUiUpdate & NeededUiUpdateAttributeValuesEdit)
-    {
-        UpdateAttributeValuesEdit();
-    }
-    if (neededUiUpdate & NeededUiUpdateAttributeValuesSlider)
-    {
-        UpdateAttributeValuesSlider();
-    }
-    if (neededUiUpdate & NeededUiUpdateAttributeValuesListView)
-    {
-        UpdateAttributeValuesListView();
-    }
-    if (neededUiUpdate & NeededUiUpdateDrawableObjectsCanvas)
-    {
-        RepaintDrawableObjects();
-    }
-    if (neededUiUpdate & NeededUiUpdateTextEdit)
-    {
-        UpdateTextEdit();
-    }
-}
-
-
 void MainWindow::UpdateAttributesListView()
 {
+    HWND attributesListHwnd = GetWindowFromId(hwnd_, IdcAttributesList);
+    if (!IsWindowVisible(attributesListHwnd))
+    {
+        return; // Shortcut, since control not displayed anyway.
+    }
+
     // Update the text in the value column. This expects the items and attribute labels are already filled.
 
-    ListViewWriter lw(GetWindowFromId(hwnd_, IdcAttributesList));
+    ListViewWriter lw(attributesListHwnd);
 
     std::vector<uint32_t> selectedDrawableObjectIndices = GetSelectedDrawableObjectIndices();
 
@@ -717,11 +695,11 @@ void MainWindow::UpdateAttributesListView()
     for (auto attributeIndex : attributeIndices)
     {
         char16_t const* stringValue = DrawableObjectAndValues::GetStringValue(
-                                        drawableObjects_,
-                                        selectedDrawableObjectIndices,
-                                        attributeIndex,
-                                        u"<mixed values>"
-                                        );
+            drawableObjects_,
+            selectedDrawableObjectIndices,
+            attributeIndex,
+            u"<mixed values>"
+        );
 
         isRecursing_ = true; // Stop pointless LVN_ITEMCHANGED messages.
         lw.SetItemText(/*column*/1, stringValue);
@@ -736,9 +714,17 @@ void MainWindow::UpdateAttributesListView()
 
 void MainWindow::UpdateAttributeValuesListView()
 {
-    ListViewWriter lw(GetWindowFromId(hwnd_, IdcAttributeValuesList));
+    HWND attributesValuesListHwnd = GetWindowFromId(hwnd_, IdcAttributeValuesList);
+    if (!IsWindowVisible(attributesValuesListHwnd))
+    {
+        return; // Shortcut, since control not displayed anyway.
+    }
+
+    ListViewWriter lw(attributesValuesListHwnd);
     lw.DisableDrawing();
+    isRecursing_ = true;
     lw.DeleteAllItems();
+    isRecursing_ = false;
 
     std::u16string stringValueBuffer;
 
@@ -913,14 +899,13 @@ void MainWindow::UpdateTextEdit()
     if (!IsWindowVisible(editHwnd))
         return;
 
-    fast_vector<uint32_t, 30, false> drawableObjectIndices(drawableObjects_.size());
-    std::iota(OUT drawableObjectIndices.begin(), OUT drawableObjectIndices.end(), 0);
+    std::vector<uint32_t> drawableObjectIndices = GetSelectedDrawableObjectIndices();
 
     char16_t const* stringValue = DrawableObjectAndValues::GetStringValue(
                                         drawableObjects_,
                                         drawableObjectIndices,
                                         DrawableObjectAttributeText,
-                                        u""
+                                        u"<mixed values>"
                                         );
 
     std::u16string text;
@@ -958,6 +943,56 @@ void MainWindow::UpdateAttributeValuesSlider()
 }
 
 
+void MainWindow::DeferUpdateUi(NeededUiUpdate neededUiUpdate, uint32_t timeOut)
+{
+    neededUiUpdate_ |= neededUiUpdate;
+    if (neededUiUpdate_)
+    {
+        SetTimer(hwnd_, IdcUpdateUi, timeOut, nullptr);
+    }
+}
+
+
+void MainWindow::UpdateUi()
+{
+    auto neededUiUpdate = neededUiUpdate_;
+    neededUiUpdate_ = NeededUiUpdateNone;
+
+    if (neededUiUpdate & NeededUiUpdateDrawableObjectsCanvas)
+    {
+        RepaintDrawableObjects();
+    }
+    if (neededUiUpdate & NeededUiUpdateDrawableObjectsListView)
+    {
+        UpdateDrawableObjectsListView();
+    }
+    if (neededUiUpdate & NeededUiFillAttributesListView)
+    {
+        FillAttributesListView();
+    }
+    if (neededUiUpdate & NeededUiUpdateAttributesListView)
+    {
+        UpdateAttributesListView();
+    }
+    if (neededUiUpdate & NeededUiUpdateAttributeValuesEdit)
+    {
+        UpdateAttributeValuesEdit();
+    }
+    if (neededUiUpdate & NeededUiUpdateAttributeValuesSlider)
+    {
+        UpdateAttributeValuesSlider();
+    }
+    if (neededUiUpdate & NeededUiUpdateAttributeValuesListView)
+    {
+        UpdateAttributeValuesListView();
+    }
+    if (neededUiUpdate & NeededUiUpdateTextEdit)
+    {
+        UpdateTextEdit();
+    }
+}
+
+
 void MainWindow::RepaintDrawableObjects()
 {
     InvalidateRect(GetWindowFromId(hwnd_, IdcDrawingCanvas), nullptr, false);
@@ -966,11 +1001,7 @@ void MainWindow::RepaintDrawableObjects()
 
 void MainWindow::DeleteDrawableObjectsListViewSelected()
 {
-    std::vector<uint32_t> drawableObjectIndices = GetListViewMatchingIndices(
-        GetWindowFromId(hwnd_, IdcDrawableObjectsList),
-        LVNI_SELECTED,
-        /*returnAllIfNoMatch*/false
-        );
+    std::vector<uint32_t> drawableObjectIndices = GetSelectedDrawableObjectIndices(/*returnAllIfNoMatch*/false);
 
     if (drawableObjectIndices.empty())
     {
@@ -1055,9 +1086,8 @@ void MainWindow::EnsureAtLeastOneDrawableObject()
 
 void MainWindow::CreateDrawableObjectsListViewSelected()
 {
-    auto drawableObjectsListView = GetWindowFromId(hwnd_, IdcDrawableObjectsList);
     auto attributeValuesListView = GetWindowFromId(hwnd_, IdcAttributeValuesList);
-    std::vector<uint32_t> drawableObjectIndices = GetListViewMatchingIndices(drawableObjectsListView, LVNI_SELECTED, /*returnAllIfNoMatch*/false);
+    std::vector<uint32_t> drawableObjectIndices = GetSelectedDrawableObjectIndices(/*returnAllIfNoMatch*/true);
     std::vector<uint32_t> attributeValueIndices = GetListViewMatchingIndices(attributeValuesListView, LVNI_SELECTED, /*returnAllIfNoMatch*/false);
 
     // Create a default object or duplicate a selected one.
@@ -1129,6 +1159,12 @@ void MainWindow::CreateDrawableObjectsListViewSelected()
         drawableObject.Update();
     }
 
+    // Deselect any previous selected objects.
+    for (auto& drawableObject : make_iterator_range(drawableObjects_.data(), 0, originalDrawableObjectsCount))
+    {
+        drawableObject.flags_ &= ~drawableObject.FlagsSelected;
+    }
+
     DeferUpdateUi(
         NeededUiUpdateDrawableObjectsListView |
         NeededUiUpdateAttributesListView |
@@ -1140,34 +1176,39 @@ void MainWindow::CreateDrawableObjectsListViewSelected()
 }
 
 
-void MainWindow::ShiftSelectedDrawableObjects(int32_t shiftDirection /* down = positive, up = negative */)
+void MainWindow::ShiftSelectedDrawableObjects(int32_t shiftDirection /* move lines visually down = positive, up = negative */)
 {
     if (shiftDirection == 0)
         return; // Nop
 
-    auto drawableObjectsListView = GetWindowFromId(hwnd_, IdcDrawableObjectsList);
     size_t const drawableObjectsCount = drawableObjects_.size();
-    std::vector<uint32_t> drawableObjectIndices = GetListViewMatchingIndices(drawableObjectsListView, LVNI_SELECTED, /*returnAllIfNoMatch*/false);
+    std::vector<uint32_t> drawableObjectIndices = GetSelectedDrawableObjectIndices(/*returnAllIfEmpty*/false);
     if (drawableObjectIndices.empty())
         return; // Nop
 
     int32_t iDelta = (/*if shifting up*/ shiftDirection < 0) ? /*swap down*/1 : /*swap up*/ -1;
-    uint32_t begin = 0, end = uint32_t(drawableObjectIndices.size()); // if shifting up
+    uint32_t begin = 0;
+    uint32_t end = uint32_t(drawableObjectIndices.size());
 
     // Check for selected lines already being at either end, thus unabled to shift further.
-    if (shiftDirection > 0)
+    if (shiftDirection > 0) // Shift down visually.
     {
+        if (drawableObjectIndices.back() == drawableObjectsCount - 1)
+            return;
+
         // Shifting selected lines down, progressing up.
         begin = end - 1;
         end = 0xFFFFFFFF;
-        if (drawableObjectIndices.back() == drawableObjectsCount - 1)
-            return;
     }
-    else // shiftDirection < 0
+    else // shiftDirection < 0, shift up visually.
     {
         // Shifting selected lines up, progressing down.
         if (drawableObjectIndices.front() == 0)
             return;
+
+        // Already set as default values above.
+        // begin = 0;
+        // end = uint32_t(drawableObjectIndices.size());
     }
 
     for (uint32_t i = begin; i != end; i += iDelta)
@@ -1175,18 +1216,9 @@ void MainWindow::ShiftSelectedDrawableObjects(int32_t shiftDirection /* down = p
         auto drawableObjectIndex = drawableObjectIndices[i];
         if (drawableObjectIndex >= drawableObjectsCount)
             continue;
+
         std::swap(drawableObjects_[drawableObjectIndex], drawableObjects_[drawableObjectIndex - iDelta]);
-        //drawableObject.Invalidate();
-        //drawableObject.Update();
     }
-
-
-    // Update all the copied objects, since attributes have been changed.
-    // todo:delete
-    //for (auto& drawableObject : make_iterator_range(drawableObjects_.data(), originalDrawableObjectsCount, newDrawableObjectsCount))
-    //{
-    //
-    //}
 
     DeferUpdateUi(
         NeededUiUpdateDrawableObjectsListView |
@@ -1260,22 +1292,24 @@ MainWindow::DialogProcResult CALLBACK MainWindow::OnDragAndDrop(HWND hwnd, UINT 
 }
 
 
-std::vector<uint32_t> MainWindow::GetSelectedDrawableObjectIndices()
+std::vector<uint32_t> MainWindow::GetSelectedDrawableObjectIndices(bool returnAllIfEmpty)
 {
-    auto selectedIndices = GetListViewMatchingIndices(GetWindowFromId(hwnd_, IdcDrawableObjectsList), LVNI_SELECTED,  /*returnAllIfNoMatch*/true);
+    std::vector<uint32_t> selectedIndices;
+    selectedIndices.reserve(drawableObjects_.size());
 
-    // Return all the indices if none are selected, or if none exist in the list control
-    // due to the drawableObjects_ array being sized before the IdcDrawableObjectsList control
-    // was updated.
-    if (selectedIndices.empty())
+    for (uint32_t index = 0, count = uint32_t(drawableObjects_.size()); index < count; ++index)
     {
-        selectedIndices.resize(drawableObjects_.size());
-        std::iota(selectedIndices.begin(), selectedIndices.end(), 0);
+        if (drawableObjects_[index].flags_ & DrawableObjectAndValues::FlagsSelected)
+        {
+            selectedIndices.push_back(index);
+        }
     }
-    else // Validate the indices, just in case the UI somehow became out of sync.
+
+    // If none were selected, treat it as if all were selected.
+    if (selectedIndices.empty() && returnAllIfEmpty)
     {
-        auto const drawableObjectsTotal = drawableObjects_.size();
-        selectedIndices.erase(std::remove_if(selectedIndices.begin(), selectedIndices.end(), [=](auto i) {return i >= drawableObjectsTotal; }), selectedIndices.end());
+        selectedIndices.resize(selectedIndices.capacity());
+        std::iota(OUT selectedIndices.begin(), OUT selectedIndices.end(), 0);
     }
 
     return selectedIndices;
@@ -1290,7 +1324,6 @@ std::vector<uint32_t> MainWindow::GetSelectedAttributeIndices()
     auto attributeList = GetWindowFromId(hwnd_, IdcAttributesList);
 
     std::vector<uint32_t> attributeIndices = GetListViewMatchingIndices(attributeList, LVNI_SELECTED, /*returnAllIfNoMatch*/false);
-    std::vector<uint32_t> drawableObjectIndices = GetSelectedDrawableObjectIndices();
     ListViewRemapIndicesToLparam(attributeList, IN OUT attributeIndices);
 
     if (attributeIndices.empty() && selectedAttributeIndex_ < DrawableObjectAttributeTotal)
@@ -1504,7 +1537,9 @@ HRESULT MainWindow::UpdateDrawableObjectsFromFontFamilyNameProperties(FontFamily
         drawableObject.Set(DrawableObjectAttributeFontFilePath, fontFamilyNameProperties.filePath.c_str());
 
         if (fontFamilyNameProperties.fontSize > 0)
+        {
             drawableObject.Set(DrawableObjectAttributeFontSize, ToChar16(fontSizeString.data()));
+        }
     }
 
     DrawableObjectAndValues::Update(drawableObjects_, selectedDrawableObjectIndices);
@@ -2334,10 +2369,6 @@ void MainWindow::ChangeSettingsVisibility(SettingsVisibility settingsVisibility)
     ShowWindow(GetWindowFromId(hwnd_, IdcAttributeValuesEdit), fullShowMode);
     ShowWindow(GetWindowFromId(hwnd_, IdcAttributeValuesList), fullShowMode);
     ShowWindow(GetWindowFromId(hwnd_, IdcAttributeValuesList), fullShowMode);
-    EnableWindow(GetWindowFromId(hwnd_, IdcDrawableObjectCreate), isFullyVisible);
-    EnableWindow(GetWindowFromId(hwnd_, IdcDrawableObjectDelete), isFullyVisible);
-    EnableWindow(GetWindowFromId(hwnd_, IdcDrawableObjectMoveUp), isFullyVisible);
-    EnableWindow(GetWindowFromId(hwnd_, IdcDrawableObjectMoveDown), isFullyVisible);
 
     DeferUpdateUi(
         NeededUiFillAttributesListView |
@@ -2438,7 +2469,9 @@ MainWindow::DialogProcResult CALLBACK MainWindow::OnCommand(HWND hwnd, int id, H
                 // match choices in the list anyway usually.
                 bool isMultiline = !!(GetWindowStyle(hwndControl) & ES_MULTILINE);
                 if (!isMultiline)
+                {
                     isTypingAttributeValueToFilter_ = true;
+                }
 
                 DeferUpdateUi(
                     NeededUiUpdateDrawableObjectsListView |
@@ -2592,7 +2625,19 @@ MainWindow::DialogProcResult CALLBACK MainWindow::OnNotification(HWND hwnd, int 
                 int selectionFlag = (nm.uNewState ^ nm.uOldState) & LVIS_SELECTED;
                 if (selectionFlag)
                 {
-                    DeferUpdateUi(NeededUiUpdateAttributesListView | NeededUiUpdateAttributeValuesListView | NeededUiUpdateAttributeValuesSlider | NeededUiUpdateAttributeValuesEdit);
+                    if (uint32_t(nm.iItem) < drawableObjects_.size())
+                    {
+                        UpdateFlags(drawableObjects_[nm.iItem].flags_, nm.uNewState & LVIS_SELECTED, DrawableObjectAndValues::FlagsSelected);
+                    }
+
+                    DeferUpdateUi(
+                        NeededUiUpdateAttributesListView |
+                        NeededUiUpdateAttributeValuesListView |
+                        NeededUiUpdateAttributeValuesSlider | 
+                        NeededUiUpdateAttributeValuesEdit |
+                        NeededUiUpdateDrawableObjectsCanvas |
+                        NeededUiUpdateTextEdit
+                    );
                 }
             }
             break;
@@ -2803,20 +2848,59 @@ MainWindow::DialogProcResult CALLBACK MainWindow::OnNotification(HWND hwnd, int 
         switch (nmh.code)
         {
         case NM_CLICK:
-            if (settingsVisibility_ == SettingsVisibilityFull)
             {
+                // Select the drawable object under the mouse (or toggle if Control key held).
+                const bool shouldToggleItem = GetKeyState(VK_CONTROL) & 0x80;
+
                 NMCLICK const& click = reinterpret_cast<NMCLICK&>(nmh);
                 DrawingCanvasControl& drawingCanvas = *DrawingCanvasControl::GetClass(GetWindowFromId(hwnd_, IdcDrawingCanvas));
                 D2D_POINT_2F point = drawingCanvas.RemapPoint({float(click.pt.x), float(click.pt.y)}, /*fromCanvasToWorld*/true);
-                for (size_t drawableObjectIndex = 0; drawableObjectIndex < drawableObjects_.size(); ++drawableObjectIndex)
+
+                bool atLeastOneHit = false;
+                uint32_t clickedIndex = ~0u;
+
+                // Find which drawable object the mouse was over (if any).
+                for (size_t index = 0, count = drawableObjects_.size(); index < count; ++index)
                 {
-                    auto const& drawableObject = drawableObjects_[drawableObjectIndex];
+                    auto const& drawableObject = drawableObjects_[index];
                     if (drawableObject.IsPointInside(point.x, point.y))
                     {
-                        ListView_SelectSingleVisibleItem(GetWindowFromId(hwnd_, IdcDrawableObjectsList), int(drawableObjectIndex));
+                        clickedIndex = index;
                         break;
                     }
                 }
+
+                // Update object selections.
+                // If left click without Control key, select only object (deselecting any others).
+                // If left click with Control key, toggle clicked object.
+                // If outside all objects (and no control key), select all objects.
+                for (size_t index = 0, count = drawableObjects_.size(); index < count; ++index)
+                {
+                    auto& drawableObject = drawableObjects_[index];
+                    bool isClickedIndex = (index == clickedIndex);
+                    bool shouldChangeValue = isClickedIndex || clickedIndex == ~0u;
+                    if (shouldToggleItem)
+                    {
+                        if (shouldChangeValue)
+                        {
+                            drawableObject.flags_ = drawableObject.flags_ ^ drawableObject.FlagsSelected;
+                        }
+                    }
+                    else
+                    {
+                        UpdateFlags(drawableObject.flags_, shouldChangeValue, DrawableObjectAndValues::FlagsSelected);
+                    }
+                }
+
+                DeferUpdateUi(
+                    NeededUiUpdateDrawableObjectsListView |
+                    NeededUiUpdateAttributesListView |
+                    NeededUiUpdateAttributeValuesListView |
+                    NeededUiUpdateAttributeValuesEdit |
+                    NeededUiUpdateDrawableObjectsCanvas |
+                    NeededUiUpdateTextEdit,
+                    0
+                );
             }
             break;
         case NM_CUSTOMDRAW:

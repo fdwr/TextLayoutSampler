@@ -90,6 +90,12 @@ public:
         ResourceTypePolicy::Acquire(resource_);
     }
 
+    AutoResource(Self&& other)
+    {
+        resource_ = other.resource_;
+        ResourceTypePolicy::InitializeEmpty(Cast(&other.resource_));
+    }
+
     inline AutoResource()
     {
         ResourceTypePolicy::InitializeEmpty(Cast(&resource_));
@@ -186,7 +192,7 @@ public:
         return Set(other.resource_);
     }
 
-    inline ResourceType Set(Self&& other)
+    ResourceType Set(Self&& other)
     {
         if (other.resource_ != resource_)
         {
@@ -208,6 +214,12 @@ public:
     {
         static_assert(ResourceTypePolicy::AllowsMultipleReferences, "This function is only useable on resource types that allow multiple strong references.");
         Set(other.resource_);
+        return *this;
+    }
+
+    inline Self& operator=(Self&& resource)
+    {
+        Set(std::move(resource));
         return *this;
     }
 

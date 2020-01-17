@@ -62,6 +62,15 @@ bool TestBit(void const* memoryBase, uint32_t bitIndex) noexcept;
 bool ClearBit(void* memoryBase, uint32_t bitIndex) noexcept;
 bool SetBit(void* memoryBase, uint32_t bitIndex) noexcept;
 
+// Returns true if current flags were updated (false if unchanged).
+template<typename EnumType>
+bool UpdateFlags(IN OUT EnumType& currentFlags, bool condition, EnumType flagsWhenTrue)
+{
+    EnumType previousFlags = currentFlags;
+    currentFlags = (previousFlags & ~flagsWhenTrue) | (condition ? flagsWhenTrue : EnumType(0));
+    return previousFlags != currentFlags;
+}
+
 template<typename T>
 T* PtrAddByteOffset(T* p, size_t offset)
 {

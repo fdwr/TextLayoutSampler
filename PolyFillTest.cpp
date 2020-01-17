@@ -1,4 +1,26 @@
 #if 0
+
+// Call from DrawableObjectAndValues::Draw()
+
+DrawableObjectAndValues::Draw()
+{
+    ...
+    DrawingCanvas::RawPixels rawPixels = drawingCanvas.GetRawPixels();
+    std::vector<Edge> edges = { {0,1},{1,2},{2,3},{3,4},{4,5},{5,6},{6,7},{7,0},  {8,9},{9,10},{10,11},{11,8},  {12,13},{13,14},{14,15},{15,12} };
+    std::vector<PointI> points = { {100,100},{150,0},{250,150},{250,0},{300,100},{250,200},{150,50},{150,200},  {400,150},{600,200},{350,350},{300,250},  {400,200},{450,250},{400,275},{350,250} };
+    FillPolyline(rawPixels, canvasTransform, points, IN OUT edges, 0xFFE080C0);
+    DrawLineTransformed(
+        rawPixels,
+        canvasTransform,
+        100,
+        100,
+        100,
+        200,
+        0xFFE080C0
+    );
+}
+
+
 namespace
 {
     struct PointI // There is no D2D_POINT_2I, just D2D_POINT_2F, D2D_POINT_2F, D2D_POINT_2L.

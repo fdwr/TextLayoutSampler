@@ -221,6 +221,7 @@
     <None Include="LICENSE" />
   </ItemGroup>
   <ItemGroup>
+    <Natvis Include="Common.ArrayRef.natvis" />
     <Natvis Include="Common.FastVector.natvis" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

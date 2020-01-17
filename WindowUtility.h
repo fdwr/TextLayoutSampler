@@ -218,6 +218,8 @@ struct DialogProcResult
 };
 
 
+void ListView_ToggleSelectSingleItem(HWND hwnd, int i);
+
 // Why doesn't CommCtrl.h have a helper function like this?
 void ListView_SelectSingleVisibleItem(HWND hwnd, int i);
 

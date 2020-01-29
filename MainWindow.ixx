@@ -1087,7 +1087,7 @@ void MainWindow::EnsureAtLeastOneDrawableObject()
 void MainWindow::CreateDrawableObjectsListViewSelected()
 {
     auto attributeValuesListView = GetWindowFromId(hwnd_, IdcAttributeValuesList);
-    std::vector<uint32_t> drawableObjectIndices = GetSelectedDrawableObjectIndices(/*returnAllIfNoMatch*/true);
+    std::vector<uint32_t> drawableObjectIndices = GetSelectedDrawableObjectIndices(/*returnAllIfNoMatch*/false);
     std::vector<uint32_t> attributeValueIndices = GetListViewMatchingIndices(attributeValuesListView, LVNI_SELECTED, /*returnAllIfNoMatch*/false);
 
     // Create a default object or duplicate a selected one.

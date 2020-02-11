@@ -357,6 +357,7 @@ LRESULT CALLBACK AttributeValueEditProcedure(
     case WM_PRINTCLIENT:
     case WM_PAINT:
         {
+            // Draw the cue banner text if no text is typed.
             auto textLength = GetWindowTextLength(hwnd);
             if (textLength == 0)// && GetFocus() != hwnd)
             {
@@ -402,6 +403,44 @@ LRESULT CALLBACK AttributeValueEditProcedure(
 }
 
 
+LRESULT CALLBACK AttributesEditProcedure(
+    HWND hwnd,
+    UINT message,
+    WPARAM wParam,
+    LPARAM lParam,
+    UINT_PTR subclassId,
+    DWORD_PTR data
+    )
+{
+    // Subclass procedure for the attribute value edit, so that the edit
+    // behaves like a combo box.
+
+    MainWindow* window = reinterpret_cast<MainWindow*>(data);
+
+    switch (message)
+    {
+    case WM_KEYDOWN:
+        {
+            switch (wParam)
+            {
+            case VK_PRIOR:
+            case VK_NEXT:
+            case VK_UP:
+            case VK_DOWN:
+                return SendMessage(GetWindowFromId(window->GetHwnd(), IdcAttributesList), message, wParam, lParam);
+            }
+        }
+        break;
+
+    case WM_NCDESTROY:
+        RemoveWindowSubclass(hwnd, &AttributesEditProcedure, 0);
+        break;
+    }
+
+    return DefSubclassProc(hwnd, message, wParam, lParam);
+}
+
+
 INT_PTR MainWindow::InitializeMainDialog()
 {
     ////////////////////
@@ -437,6 +476,7 @@ INT_PTR MainWindow::InitializeMainDialog()
 
     auto attributesEdit = GetWindowFromId(hwnd_, IdcAttributesFilterEdit);
     Edit_SetCueBannerText(attributesEdit, L"<type attribute filter here>");
+    SetWindowSubclass(attributesEdit, &AttributesEditProcedure, 0, reinterpret_cast<DWORD_PTR>(this));
 
     ChangeSettingsVisibility(settingsVisibility_);
     InitializeDrawableObjectsListView();

@@ -209,7 +209,7 @@ public:
     static const Attribute::PredefinedValue visibilities[2];
     static const Attribute::PredefinedValue enabledValues[2];
     static const Attribute::PredefinedValue labelDefaults[2];
-    static const Attribute::PredefinedValue textDefaults[68];
+    static const Attribute::PredefinedValue textDefaults[75];
     static const Attribute::PredefinedValue readingDirections[8];
     static const Attribute::PredefinedValue glyphDefaults[3];
     static const Attribute::PredefinedValue fontSizes[47];

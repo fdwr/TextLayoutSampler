@@ -37,7 +37,6 @@ todo:::
 #include "Application.macros.h"
 #include "WindowUtility.macros.h"
 
-
 #if USE_CPP_MODULES
 import Common.ArrayRef;
 import Common.String;
@@ -93,7 +92,6 @@ char16_t const* g_openSaveFiltersList = u"All supported text layout sampler file
                                         u"Layout Sampler Settings (*.TextLayoutSamplerSettings)\0" u"*.TextLayoutSamplerSettings\0"
                                         u"Text files (*.txt)\0" u"*.txt\0"
                                         u"All files (*)\0" u"*\0";
-
 
 ////////////////////////////////////////
 

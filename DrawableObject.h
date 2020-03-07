@@ -67,6 +67,7 @@ enum DrawableObjectAttribute : uint32_t
     DrawableObjectAttributeGdiRenderingMode,
     DrawableObjectAttributeGdiPlusRenderingMode,
     DrawableObjectAttributeDWriteMeasuringMode,
+    DrawableObjectAttributeDWriteGridFitMode,
     DrawableObjectAttributeDWriteVerticalGlyphOrientation,
     DrawableObjectAttributeLanguageList,
     DrawableObjectAttributeTextColor,
@@ -226,6 +227,7 @@ public:
     static const Attribute::PredefinedValue justifications[2];
     static const Attribute::PredefinedValue wrappingModes[4];
     static const Attribute::PredefinedValue dwriteMeasuringModes[3];
+    static const Attribute::PredefinedValue dwriteGridFitModes[3];
     static const Attribute::PredefinedValue dwriteRenderingModes[7];
     static const Attribute::PredefinedValue dwriteVerticalGlyphOrientation[2];
     static const Attribute::PredefinedValue gdiRenderingModes[7];
@@ -292,6 +294,7 @@ struct CachedDWriteRenderingParams
 {
     ComPtr<IDWriteRenderingParams> renderingParams;
     uint32_t cookieRenderingMode = ~0;
+    uint32_t cookieGridFitMode = ~0;
 
     HRESULT Update(IAttributeSource& attributeSource, DrawingCanvas& drawingCanvas);
     void Invalidate() { renderingParams.clear(); }

@@ -57,6 +57,7 @@ const Attribute DrawableObject::attributeList[DrawableObjectAttributeTotal] =
     {Attribute::TypeUInteger32,     Attribute::SemanticEnumExclusive,0,             DrawableObjectAttributeGdiRenderingMode, u"gdi_rendering_mode", u"GDI rendering mode", u"", gdiRenderingModes },
     {Attribute::TypeUInteger32,     Attribute::SemanticEnumExclusive,0,             DrawableObjectAttributeGdiPlusRenderingMode, u"gdiplus_rendering_mode", u"GDI+ rendering mode", u"", gdiPlusRenderingModes },
     {Attribute::TypeUInteger32,     Attribute::SemanticEnumExclusive,0            , DrawableObjectAttributeDWriteMeasuringMode, u"dwrite_measuring_mode", u"DWrite measuring mode", u"", dwriteMeasuringModes },
+    {Attribute::TypeUInteger32,     Attribute::SemanticEnumExclusive,0            , DrawableObjectAttributeDWriteGridFitMode, u"dwrite_grid_fit_mode", u"DWrite grid fit mode", u"", dwriteGridFitModes },
     {Attribute::TypeUInteger32,     Attribute::SemanticEnumExclusive,0            , DrawableObjectAttributeDWriteVerticalGlyphOrientation, u"dwrite_vertical_glyph_orientation", u"DWrite vertical glyph orientation", u"", dwriteVerticalGlyphOrientation },
     {Attribute::TypeString16,       Attribute::SemanticNone,         CategoryLight, DrawableObjectAttributeLanguageList, u"language_list", u"Language list", u"", languages },
     {Attribute::TypeUInteger32,     Attribute::SemanticColor,        0            , DrawableObjectAttributeTextColor, u"text_color", u"Text color", u"000000", textColors, u"Color as #FFFFFFFF, 255 128 0, or name" },
@@ -79,7 +80,7 @@ const Attribute DrawableObject::attributeList[DrawableObjectAttributeTotal] =
     {Attribute::TypeArrayFloat32,   Attribute::SemanticNone,         0            , DrawableObjectAttributeAxisValues, u"axis_values", u"Axis values", u"", {} },
     {Attribute::TypeUInteger32,     Attribute::SemanticEnumExclusive,0            , DrawableObjectAttributeDWriteFontFamilyModel, u"dwrite_font_family_model", u"DWrite font family model", u"Weight Style Stretch", dwriteFontFamilyModels },
 };
-static_assert(DrawableObjectAttributeTotal == 53, "A new attribute enum has been added. Update this table.");
+static_assert(DrawableObjectAttributeTotal == 54, "A new attribute enum has been added. Update this table.");
 
 
 const Attribute::PredefinedValue DrawableObject::functions[] = {
@@ -810,6 +811,12 @@ const Attribute::PredefinedValue DrawableObject::dwriteMeasuringModes[] = {
     {uint32_t(DWRITE_MEASURING_MODE_NATURAL), u"Natural" },
     {uint32_t(DWRITE_MEASURING_MODE_GDI_CLASSIC), u"GDI compatible" },
     {uint32_t(DWRITE_MEASURING_MODE_GDI_NATURAL), u"GDI compatible natural" },
+};
+
+const Attribute::PredefinedValue DrawableObject::dwriteGridFitModes[] = {
+    {uint32_t(DWRITE_GRID_FIT_MODE_DEFAULT), u"Default" },
+    {uint32_t(DWRITE_GRID_FIT_MODE_DISABLED), u"Disabled" },
+    {uint32_t(DWRITE_GRID_FIT_MODE_ENABLED), u"Enabled" },
 };
 
 const Attribute::PredefinedValue DrawableObject::dwriteRenderingModes[] = {
@@ -1920,6 +1927,7 @@ HRESULT CachedDWriteRenderingParams::Update(IAttributeSource& attributeSource, D
 {
     // Invalidate the cached rendering params.
     if (attributeSource.IsCookieSame(DrawableObjectAttributeDWriteRenderingMode, IN OUT cookieRenderingMode)
+    &   attributeSource.IsCookieSame(DrawableObjectAttributeDWriteGridFitMode, IN OUT cookieGridFitMode)
     &   (renderingParams != nullptr))
     {
         return S_OK;
@@ -1927,11 +1935,19 @@ HRESULT CachedDWriteRenderingParams::Update(IAttributeSource& attributeSource, D
 
     renderingParams.clear();
 
-    // Get the rendering mode and check with the one the canvas is already using.
-    // If compatible, just use it directly.
     auto dwriteRenderingMode = attributeSource.GetValue(DrawableObjectAttributeDWriteRenderingMode, DWRITE_RENDERING_MODE_DEFAULT);
+    auto dwriteGridFitMode = attributeSource.GetValue(DrawableObjectAttributeDWriteGridFitMode, DWRITE_GRID_FIT_MODE_DEFAULT);
+
+    // Get the rendering mode and check with the one the canvas is already using.
+    // If all settings are compatible, just use it directly.
+    // Otherwise create a new one.
     auto* canvasRenderingParams = drawingCanvas.GetDirectWriteRenderingParamsWeakRef();
-    if (canvasRenderingParams != nullptr && canvasRenderingParams->GetRenderingMode() == dwriteRenderingMode)
+    ComPtr<IDWriteRenderingParams2> renderingParams2;
+    canvasRenderingParams->QueryInterface(&renderingParams2);
+
+    if (canvasRenderingParams != nullptr
+    &&  canvasRenderingParams->GetRenderingMode() == dwriteRenderingMode
+    &&  (renderingParams2 == nullptr || renderingParams2->GetGridFitMode() == dwriteGridFitMode))
     {
         renderingParams = canvasRenderingParams;
         return S_OK;
@@ -1939,16 +1955,45 @@ HRESULT CachedDWriteRenderingParams::Update(IAttributeSource& attributeSource, D
 
     // Otherwise create custom one, using the default one as a template for any unspecified parameters.
     auto* dwriteFactory = drawingCanvas.GetDWriteFactoryWeakRef();
+    ComPtr<IDWriteFactory2> dwriteFactory2;
+    IFR(drawingCanvas.GetDWriteFactoryWeakRef()->QueryInterface(OUT &dwriteFactory2));
+
+    // Get defaults for gamma, contrast, CT level, pixel geometry...
     ComPtr<IDWriteRenderingParams> defaultRenderingParams;
+    ComPtr<IDWriteRenderingParams1> defaultRenderingParams1;
     IFR(dwriteFactory->CreateRenderingParams(OUT &defaultRenderingParams));
-    return dwriteFactory->CreateCustomRenderingParams(
-        defaultRenderingParams->GetGamma(), // default=1.8f
-        defaultRenderingParams->GetEnhancedContrast(), // default=0.5f
-        defaultRenderingParams->GetClearTypeLevel(), // default=0.5f
-        defaultRenderingParams->GetPixelGeometry(), // default=RGB for most monitors
-        dwriteRenderingMode,
-        OUT &renderingParams
+    defaultRenderingParams->QueryInterface(&defaultRenderingParams1);
+
+    auto gamma = defaultRenderingParams->GetGamma(); // default=1.8f
+    auto contrast = defaultRenderingParams->GetEnhancedContrast(); // default=0.5f
+    auto clearTypeLevel = defaultRenderingParams->GetClearTypeLevel(); // default=0.5f
+    auto pixelGeometry = defaultRenderingParams->GetPixelGeometry(); // default=RGB for most monitors
+    auto grayscaleContrast = defaultRenderingParams1 ? defaultRenderingParams1->GetGrayscaleEnhancedContrast() : 0.5f; // default=0.5f
+
+    if (dwriteFactory2)
+    {
+        return dwriteFactory2->CreateCustomRenderingParams(
+            gamma,
+            contrast,
+            grayscaleContrast,
+            clearTypeLevel,
+            pixelGeometry,
+            dwriteRenderingMode,
+            dwriteGridFitMode,
+            OUT reinterpret_cast<IDWriteRenderingParams2**>(&renderingParams)
         );
+    }
+    else
+    {
+        return dwriteFactory->CreateCustomRenderingParams(
+            gamma,
+            contrast,
+            clearTypeLevel,
+            pixelGeometry,
+            dwriteRenderingMode,
+            OUT &renderingParams
+        );
+    }
 }
 
 

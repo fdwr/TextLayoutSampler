@@ -1,12 +1,40 @@
 //----------------------------------------------------------------------------
 //  History:    2018-04-30 Dwayne Robinson - Created
 //----------------------------------------------------------------------------
-#define _ENABLE_EXTENDED_ALIGNED_STORAGE // For the SseSizedType case, which is > max_align_t.
-#define _SCL_SECURE_NO_WARNINGS // I hate doing this, but Visual Studio offers no substitute for std::uninitialized_copy.
+
+// For whatever inane reason, VS complains here but not in other files.
+// error C7577: a global module fragment can only appear at the start of a translation unit
+// #if USE_CPP_MODULES
+    module;
+// #endif
 
 #include "precomp.h"
 
-#include "Common.FastVector.h"
+#define _ENABLE_EXTENDED_ALIGNED_STORAGE // For the SseSizedType case, which is > max_align_t.
+#define _SCL_SECURE_NO_WARNINGS // I hate doing this, but Visual Studio offers no substitute for std::uninitialized_copy.
+
+#include <iterator>
+#include <memory> // For uninitialized_move/copy and std::unique_ptr.
+#include <assert.h>
+#include <algorithm>
+
+#if USE_CPP_MODULES
+    //import std.core;
+    import Common.ArrayRef;
+    export module Common.FastVector;
+    export
+    {
+        #include "Common.FastVector.h"
+    }
+#else
+    #ifdef USE_GSL_SPAN_INSTEAD_OF_ARRAY_REF
+        #include <gsl/span>
+        #define array_ref gsl::span
+    #else
+        #include "Common.ArrayRef.h" // gsl::span may be mostly substituted instead of array_ref, just missing intersects().
+    #endif
+    #include "Common.FastVector.h"
+#endif
 
 ////////////////////////////////////////
 

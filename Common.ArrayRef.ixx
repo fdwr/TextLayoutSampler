@@ -2,11 +2,34 @@
 //  History:    2015-06-19 Dwayne Robinson - Created
 //              2015-10-20 Forked
 //----------------------------------------------------------------------------
+
+#if USE_CPP_MODULES
+    module;
+#endif
+
 #include "precomp.h"
 
-#include "Common.ArrayRef.h"
+#include <array>
+#include <stdint.h>
+#include <initializer_list>
+#include <vector>
+#include <string>
+#include <cassert>
+// Set 0 if your defective std::string.data() lacks a mutable overload.
+// #define STD_STRING_MUTABLE_DATA_IS_FIXED_CPP17 1
+#include <iterator>
 
 ////////////////////////////////////////
+
+#if USE_CPP_MODULES
+    export module Common.ArrayRef;
+    export
+    {
+        #include "Common.ArrayRef.h"
+    }
+#else
+    #include "Common.ArrayRef.h"
+#endif
 
 #ifdef _DEBUG
 

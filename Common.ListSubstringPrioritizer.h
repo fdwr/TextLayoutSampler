@@ -3,19 +3,6 @@
 //----------------------------------------------------------------------------
 #pragma once
 
-
-#if USE_CPP_MODULES
-import Common.ArrayRef;
-import Common.String;
-#else
-#include "Common.ArrayRef.h"
-#include "Common.String.h"
-#endif
-
-
-MODULE(Common.ListSubstringPrioritizer)
-EXPORT_BEGIN
-
 class ListSubstringPrioritizer
 {
     struct IndexAndWeight
@@ -54,5 +41,3 @@ private:
     std::u16string filterString_;
     std::u16string majusculeName_;
 };
-
-EXPORT_END

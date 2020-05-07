@@ -5,7 +5,6 @@
 //----------------------------------------------------------------------------
 #pragma once
 
-
 HRESULT ReadTextFile(const char16_t* filename, OUT std::u16string& text) noexcept; // Read UTF-8 or ASCII
 HRESULT WriteTextFile(const char16_t* filename, array_ref<char16_t const> text) noexcept;
 HRESULT WriteTextFile(const char16_t* filename, __in_ecount(textLength) const char16_t* text, uint32_t textLength) noexcept; // Write as UTF-8

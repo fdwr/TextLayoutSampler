@@ -5,9 +5,6 @@
 //----------------------------------------------------------------------------
 #pragma once
 
-#include <variant>
-
-
 template<typename VariantType, typename T, std::size_t index = 0>
 constexpr std::size_t variant_index()
 {

@@ -5,9 +5,42 @@
 //                  for performance), getting attributes from their
 //                  AttributeSource as needed.
 //----------------------------------------------------------------------------
+
+#if USE_CPP_MODULES
+    module;
+#endif
+
 #include "precomp.h"
 
-#include "DrawableObject.h"
+#if USE_CPP_MODULES
+    import Common.ArrayRef;
+    import Common.String;
+    import Common.AutoResource;
+    import Common.AutoResource.Windows;
+    import Common.FastVector;
+    import FileHelpers;
+    import Attributes;
+    import DrawingCanvas;
+    import DWritEx;
+    export module DrawableObject;
+    export
+    {
+        #include "DrawableObject.h"
+    }
+#else
+    #include "Common.ArrayRef.h"
+    #include "Common.String.h"
+    #include "Common.AutoResource.h"
+    #include "Common.AutoResource.Windows.h"
+    #include "Common.FastVector.h"
+    #include "FileHelpers.h"
+    #include "Common.OptionalValue.h"
+    #include "Attributes.h"
+    #include "DWritEx.h"
+    #include "DrawingCanvas.h"
+    #include "DrawableObject.h"
+#endif
+
 
 ////////////////////////////////////////
 

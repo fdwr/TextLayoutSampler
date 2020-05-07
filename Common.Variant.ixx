@@ -1,9 +1,24 @@
 //----------------------------------------------------------------------------
 //  History:    2018-11-29 Dwayne Robinson - Created
 //----------------------------------------------------------------------------
+
+#if USE_CPP_MODULES
+    module;
+#endif
+
 #include "precomp.h"
 #include <assert.h>
-#include "Common.Variant.h"
+#include <variant>
+
+#if USE_CPP_MODULES
+    export module Common.Variant;
+    export
+    {
+        #include "Common.Variant.h"
+    }
+#else
+    #include "Common.Variant.h"
+#endif
 
 #ifdef _DEBUG
 

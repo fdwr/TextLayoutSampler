@@ -3,20 +3,27 @@
 //
 //  History:    2013-08-29   Dwayne Robinson - Created
 //----------------------------------------------------------------------------
+
+#if USE_CPP_MODULES
+    module;
+#endif
+
 #include "precomp.h"
 
 #if USE_CPP_MODULES
-import Common.String;
-import Common.ArrayRef;
+    import Common.String;
+    import Common.ArrayRef;
+    export module TextTreeParser;
+    export
+    {
+        #include "TextTreeParser.h"
+    }
 #else
-#include "Common.String.h"
-#include "Common.ArrayRef.h"
+    #include "Common.ArrayRef.h"
+    #include "Common.String.h"
+    #include "TextTreeParser.h"
 #endif
 
-MODULE(TextTreeParser)
-EXPORT_BEGIN
-    #include "TextTreeParser.h"
-EXPORT_END
 
 ////////////////////////////////////////
 

@@ -1,17 +1,5 @@
 #pragma once
 
-
-#if USE_CPP_MODULES
-import Common.AutoResource;
-#else
-#include "Common.AutoResource.h"
-#endif
-
-
-MODULE(Common.AutoResource.Windows)
-EXPORT_BEGIN
-
-
 template <
     typename ResourceType,                      // underlying type of the resource held onto (e.g. HGDIOBJ instead of HFONT)
     typename ResourceReleaserSignature,         // function prototype of the releasing function
@@ -85,5 +73,3 @@ struct ComResourceTypePolicy : public DefaultResourceTypePolicy<IUnknown*>
 
 template<typename ResourceType>
 using ComPtr = AutoResource<ResourceType*, ComResourceTypePolicy, IUnknown*>;
-
-EXPORT_END

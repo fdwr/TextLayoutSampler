@@ -1,12 +1,28 @@
 //----------------------------------------------------------------------------
 //  History:    2015-06-19 Dwayne Robinson - Created
 //----------------------------------------------------------------------------
+
+#if USE_CPP_MODULES
+    module;
+#endif
+
 #include "precomp.h"
 #include <vector>
 #include <string>
 
-
-#include "Common.ListSubstringPrioritizer.h"
+#if USE_CPP_MODULES
+    import Common.ArrayRef;
+    import Common.String;
+    export module Common.ListSubstringPrioritizer;
+    export
+    {
+        #include "Common.ListSubstringPrioritizer.h"
+    }
+#else
+    #include "Common.ArrayRef.h"
+    #include "Common.String.h"
+    #include "Common.ListSubstringPrioritizer.h"
+#endif
 
 ////////////////////////////////////////
 

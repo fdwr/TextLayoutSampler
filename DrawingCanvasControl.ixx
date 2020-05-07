@@ -2,13 +2,29 @@
 //  History:    2008-02-11 Dwayne Robinson - Created
 //              2015-06-24 Split into base class and Windows control.
 //----------------------------------------------------------------------------
+
+#if USE_CPP_MODULES
+    module;
+#endif
+
 #include "precomp.h"
 
-MODULE(DrawingCanvasControl)
-
-EXPORT_BEGIN
+#if USE_CPP_MODULES
+    import DrawingCanvas;
+    export module DrawingCanvasControl;
+    export
+    {
+        #include "DrawingCanvasControl.h"
+    }
+#else
+    #include "Common.ArrayRef.h"
+    #include "Common.AutoResource.h"
+    #include "Common.AutoResource.Windows.h"
+    #include "DWritEx.h"
+    #include "DrawingCanvas.h"
     #include "DrawingCanvasControl.h"
-EXPORT_END
+#endif
+
 
 ////////////////////////////////////////
 

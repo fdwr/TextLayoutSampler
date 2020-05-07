@@ -3,9 +3,24 @@
 //
 //  History:    2008-02-11   Dwayne Robinson - Created
 //----------------------------------------------------------------------------
+
+#if USE_CPP_MODULES
+    module;
+#endif
+
 #include "precomp.h"
 
-#include "Common.String.h"
+#if USE_CPP_MODULES
+    import Common.ArrayRef;
+    export module Common.String;
+    export
+    {
+        #include "Common.String.h"
+    }
+#else
+    #include "Common.ArrayRef.h"
+    #include "Common.String.h"
+#endif
 
 ////////////////////////////////////////
 

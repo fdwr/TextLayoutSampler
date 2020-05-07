@@ -1,12 +1,31 @@
 ﻿//----------------------------------------------------------------------------
 //  History:    2012-12-14 Dwayne Robinson - Created
 //----------------------------------------------------------------------------
+
+#if USE_CPP_MODULES
+    module;
+#endif
+
 #include "precomp.h"
 
-MODULE(WindowUtility)
-EXPORT_BEGIN
+#if USE_CPP_MODULES
+    import Common.String;
+    import Common.ArrayRef;
+    import Common.AutoResource;
+    import Common.AutoResource.Windows;
+    export module WindowUtility;
+    export
+    {
+        #include "WindowUtility.h"
+    }
+#else
+    #include "Common.ArrayRef.h"
+    #include "Common.String.h"
+    #include "Common.AutoResource.h"
+    #include "Common.AutoResource.Windows.h"
     #include "WindowUtility.h"
-EXPORT_END
+#endif
+
 
 ////////////////////////////////////////
 

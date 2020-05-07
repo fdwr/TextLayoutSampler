@@ -1,3 +1,15 @@
+#if USE_CPP_MODULES
+    module;
+#endif
+
 #include "precomp.h"
 
-#include "Common.AutoResource.h"
+#if USE_CPP_MODULES
+    export module Common.AutoResource;
+    export
+    {
+        #include "Common.AutoResource.h"
+    }
+#else
+    #include "Common.AutoResource.h"
+#endif

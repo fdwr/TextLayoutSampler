@@ -1,23 +1,29 @@
 ﻿//----------------------------------------------------------------------------
 //  History:    2015-06-19 Dwayne Robinson - Created
 //----------------------------------------------------------------------------
+
+#if USE_CPP_MODULES
+    module;
+#endif
+
 #include "precomp.h"
 #include <specstrings.h>
 #include "Application.macros.h"
 
 #if USE_CPP_MODULES
-import Common.String;
+    import Common.String;
+    export module Application;
+    export
+    {
+        #include "Application.h"
+    }
 #else
-#include "Common.String.h"
+    #include "Common.ArrayRef.h"
+    #include "Common.String.h"
+    #include "Application.h"
 #endif
 
-MODULE(Application)
-EXPORT_BEGIN
-    #include "Application.h"
-EXPORT_END
-
 #pragma prefast(disable:__WARNING_HARD_CODED_STRING_TO_UI_FN, "It's an internal test program.")
-
 
 ////////////////////////////////////////
 

@@ -13,6 +13,10 @@
 //  History:    2009-09-09  Dwayne Robinson - Created
 //----------------------------------------------------------------------------
 
+#if USE_CPP_MODULES
+    module;
+#endif
+
 #include "precomp.h"
 
 #include <Windows.h>
@@ -21,22 +25,24 @@
 #pragma comment(lib, "DWrite.lib")
 
 #if USE_CPP_MODULES
-import Common.ArrayRef;
-import Common.String;
-import FileHelpers;
-import Common.AutoResource.Windows;
+    import Common.ArrayRef;
+    import Common.String;
+    import FileHelpers;
+    import Common.AutoResource.Windows;
+    export module DWritEx;
+    export
+    {
+        #include "DWritEx.h"
+    }
 #else
-#include "Common.ArrayRef.h"
-#include "Common.String.h"
-#include "FileHelpers.h"
-#include "Common.AutoResource.Windows.h"
+    #include "Common.ArrayRef.h"
+    #include "Common.String.h"
+    #include "FileHelpers.h"
+    #include "Common.AutoResource.h"
+    #include "Common.AutoResource.Windows.h"
+    #include "DWritEx.h"
 #endif
 
-
-MODULE(DWritEx)
-EXPORT_BEGIN
-    #include "DWritEx.h"
-EXPORT_END
 
 ////////////////////////////////////////
 

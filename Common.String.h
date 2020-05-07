@@ -3,15 +3,6 @@
 //----------------------------------------------------------------------------
 #pragma once
 
-#if USE_CPP_MODULES
-import Common.ArrayRef;
-#else
-#include "Common.ArrayRef.h"
-#endif
-
-MODULE(Common.String)
-EXPORT_BEGIN
-
 inline bool IsSurrogate(char32_t ch) noexcept
 {
     // 0xD800 <= ch <= 0xDFFF
@@ -178,5 +169,3 @@ struct UnicodeCharacterReader : public array_ref<char16_t const>
         return ch;
     }
 };
-
-EXPORT_END

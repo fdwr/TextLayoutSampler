@@ -21,7 +21,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{E0964FE3-5D6D-48CB-AC4D-1A6FF19A911C}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Label="Configuration">
@@ -63,7 +63,7 @@
       </UndefinePreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>precomp.h</PrecompiledHeaderFile>
-      <AdditionalOptions>/experimental:module</AdditionalOptions>
+      <AdditionalOptions>/module:search $(IntDir)</AdditionalOptions>
       <AdditionalIncludeDirectories>
       </AdditionalIncludeDirectories>
       <DisableSpecificWarnings>
@@ -73,7 +73,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;USE_CPP_MODULES=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
       <UndefinePreprocessorDefinitions>
@@ -89,7 +89,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;USE_CPP_MODULES=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
       <UndefinePreprocessorDefinitions>
@@ -103,7 +103,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;USE_CPP_MODULES=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <UndefinePreprocessorDefinitions>
       </UndefinePreprocessorDefinitions>
@@ -125,7 +125,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;USE_CPP_MODULES=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <UndefinePreprocessorDefinitions>
       </UndefinePreprocessorDefinitions>
@@ -145,34 +145,31 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="MainWindow.ixx">
-      <PreprocessToFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</PreprocessToFile>
-    </ClCompile>
-    <ClCompile Include="Application.ixx">
-      <PreprocessToFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</PreprocessToFile>
-    </ClCompile>
-    <ClCompile Include="MessageBoxShaded.ixx" />
-    <ClCompile Include="WindowUtility.ixx" />
-    <ClCompile Include="DrawingCanvasControl.ixx" />
-    <ClCompile Include="DrawableObjectAndValues.ixx" />
-    <ClCompile Include="TextTreeParser.ixx" />
-    <ClCompile Include="DrawableObject.ixx" />
-    <ClCompile Include="DrawingCanvas.ixx" />
-    <ClCompile Include="Attributes.ixx" />
-    <ClCompile Include="DWritEx.ixx" />
-    <ClCompile Include="FileHelpers.ixx" />
-    <ClCompile Include="Common.ListSubstringPrioritizer.ixx" />
-    <ClCompile Include="Common.OptionalValue.ixx" />
-    <ClCompile Include="Common.AutoResource.Windows.ixx" />
-    <ClCompile Include="Common.AutoResource.ixx" />
-    <ClCompile Include="Common.cpp" />
-    <ClCompile Include="Common.String.ixx" />
-    <ClCompile Include="Common.ArrayRef.ixx" />
-    <ClCompile Include="Common.Variant.ixx" />
     <ClCompile Include="precomp.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
       <PreprocessToFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</PreprocessToFile>
     </ClCompile>
+    <ClCompile Include="Common.ArrayRef.ixx" />
+    <ClCompile Include="Common.String.ixx" />
+    <ClCompile Include="Common.Variant.ixx" />
+    <ClCompile Include="Common.AutoResource.ixx" />
+    <ClCompile Include="Common.AutoResource.Windows.ixx" />
+    <ClCompile Include="Common.FastVector.ixx" />
+    <ClCompile Include="Common.OptionalValue.ixx" />
+    <ClCompile Include="Common.ListSubstringPrioritizer.ixx" />
+    <ClCompile Include="Common.cpp" />
+    <ClCompile Include="WindowUtility.ixx" />
+    <ClCompile Include="MessageBoxShaded.ixx" />
+    <ClCompile Include="TextTreeParser.ixx" />
+    <ClCompile Include="FileHelpers.ixx" />
+    <ClCompile Include="DWritEx.ixx" />
+    <ClCompile Include="Attributes.ixx" />
+    <ClCompile Include="DrawingCanvas.ixx" />
+    <ClCompile Include="DrawingCanvasControl.ixx" />
+    <ClCompile Include="DrawableObject.ixx" />
+    <ClCompile Include="DrawableObjectAndValues.ixx" />
+    <ClCompile Include="Application.ixx" />
+    <ClCompile Include="MainWindow.ixx" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application.h" />
@@ -211,13 +208,6 @@
     <Image Include="MainWindow.ico" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Common.FastVector.ixx">
-      <FileType>Document</FileType>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
-    </ClCompile>
     <None Include="LICENSE" />
   </ItemGroup>
   <ItemGroup>

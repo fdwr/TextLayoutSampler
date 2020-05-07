@@ -3,9 +3,6 @@
 //----------------------------------------------------------------------------
 #pragma once
 
-MODULE(Common.OptionalValue)
-EXPORT_BEGIN
-
 // Bare minimum partial substitute for C++11 std::optional.
 // This class also exists to work around some cases where default
 // constructors are not defined by a class or the assignment operator
@@ -89,5 +86,3 @@ private:
     alignas(alignof(T)) uint8_t t_[sizeof(T)];
     bool valueExists_ = false;
 };
-
-EXPORT_END

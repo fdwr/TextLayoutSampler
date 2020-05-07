@@ -5,9 +5,10 @@
 
 #ifdef __cpp_modules
 #define USE_CPP_MODULES 1
+#elif !defined(USE_CPP_MODULES)
+#define USE_CPP_MODULES 0
 #endif
 
-#define USE_CPP_MODULES 0
 
 #if USE_CPP_MODULES // Is there no __cpp_modules feature test macro?
 #define MODULE(moduleName) export module moduleName;

@@ -4,33 +4,6 @@
 //----------------------------------------------------------------------------
 #pragma once
 
-
-#if USE_CPP_MODULES
-import Common.ListSubstringPrioritizer;
-import Common.AutoResource;
-import Common.AutoResource.Windows;
-import Common.ArrayRef;
-import Common.String;
-import Attributes;
-import DrawingCanvas;
-import DrawableObject;
-import TextTreeParser;
-#else
-#include "Common.ListSubstringPrioritizer.h"
-#include "Common.AutoResource.h"
-#include "Common.AutoResource.Windows.h"
-#include "Common.ArrayRef.h"
-#include "Common.String.h"
-#include "Attributes.h"
-#include "DrawingCanvas.h"
-#include "DrawableObject.h"
-#include "TextTreeParser.h"
-#endif
-
-
-MODULE(DrawableObjectAndValues)
-EXPORT_BEGIN
-
 //interface AttributeSource;
 //class DrawableObject; // causes - fatal error C1001: An internal error has occurred in the compiler.
 
@@ -153,5 +126,3 @@ public:
 };
 
 DEFINE_ENUM_FLAG_OPERATORS(DrawableObjectAndValues::Flags);
-
-EXPORT_END

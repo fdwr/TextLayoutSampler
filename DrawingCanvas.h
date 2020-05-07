@@ -6,21 +6,6 @@
 
 #pragma warning(disable:4201)   // Nameless unions should be fine.
 
-#if USE_CPP_MODULES
-import Common.String;
-import Common.AutoResource;
-import Common.AutoResource.Windows;
-import DWritEx;
-#else
-#include "Common.String.h"
-#include "Common.AutoResource.h"
-#include "Common.AutoResource.Windows.h"
-#include "DWritEx.h"
-#endif
-
-MODULE(DrawingCanvas)
-EXPORT_BEGIN
-
 ////////////////////
 // Matrix helpers
 
@@ -312,5 +297,3 @@ public:
     HRESULT InitializeRendering();
     void SwitchRenderingAPI(CurrentRenderingApi currentRenderingApi);
 };
-
-EXPORT_END

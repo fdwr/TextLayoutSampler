@@ -2,6 +2,11 @@
 //  History:    2008-02-11 Dwayne Robinson - Created
 //              2015-06-24 Split into base class and Windows control.
 //----------------------------------------------------------------------------
+
+#if USE_CPP_MODULES
+    module;
+#endif
+
 #include "precomp.h"
 
 #pragma prefast(disable:__WARNING_ACCESSIBILITY_COLORAPI, "Shush. It's a test program.")
@@ -14,7 +19,25 @@
 #pragma comment(lib, "GdiPlus.lib")
 #pragma comment(lib, "WindowsCodecs.lib")
 
-#include "DrawingCanvas.h"
+#if USE_CPP_MODULES
+    import Common.String;
+    import Common.AutoResource;
+    import Common.AutoResource.Windows;
+    import DWritEx;
+    export module DrawingCanvas;
+    export
+    {
+        #include "DrawingCanvas.h"
+    }
+#else
+    #include "Common.ArrayRef.h"
+    #include "Common.String.h"
+    #include "Common.AutoResource.h"
+    #include "Common.AutoResource.Windows.h"
+    #include "DWritEx.h"
+    #include "DrawingCanvas.h"
+#endif
+
 
 ////////////////////////////////////////
 

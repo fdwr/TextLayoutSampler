@@ -32,48 +32,60 @@ todo:::
 //  History:    2015-06-19 Dwayne Robinson - Created
 //----------------------------------------------------------------------------
 
+#if USE_CPP_MODULES
+    module;
+#endif
+
 #include "precomp.h"
 #include "resource.h"
 #include "Application.macros.h"
 #include "WindowUtility.macros.h"
 
 #if USE_CPP_MODULES
-import Common.ArrayRef;
-import Common.String;
-import Common.AutoResource;
-import Common.AutoResource.Windows;
-import Common.ListSubstringPrioritizer;
-import Common.FastVector;
-import MessageBoxShaded;
-import FileHelpers;
-import DrawingCanvasControl;
-import DrawableObject;
-import Application;
-import DrawableObjectAndValues;
-import TextTreeParser; // for DrawableObjectAndValues
+    import Common.ArrayRef;
+    import Common.String;
+    import Common.AutoResource;
+    import Common.AutoResource.Windows;
+    import Common.ListSubstringPrioritizer;
+    import MessageBoxShaded;
+    import WindowUtility;
+    import Common.FastVector;
+    import FileHelpers;
+    import DrawingCanvasControl;
+    import DrawableObject;
+    import Application;
+    import DrawableObjectAndValues;
+    import TextTreeParser; // for DrawableObjectAndValues
+    export module MainWindow;
+    export
+    {
+        #include "MainWindow.h"
+    }
 #else
-#include "Common.ArrayRef.h"
-#include "Common.String.h"
-#include "Common.AutoResource.h"
-#include "Common.AutoResource.Windows.h"
-#include "Common.FastVector.h"
-#include "Common.ListSubstringPrioritizer.h"
-#include "MessageBoxShaded.h"
-#include "FileHelpers.h"
-#include "DrawingCanvasControl.h"
-#include "DrawableObject.h"
-#include "Application.h"
-#include "DrawableObjectAndValues.h"
-#include "TextTreeParser.h"
+    #include "Common.ArrayRef.h"
+    #include "Common.String.h"
+    #include "Common.AutoResource.h"
+    #include "Common.AutoResource.Windows.h"
+    #include "Common.FastVector.h"
+    #include "Common.ListSubstringPrioritizer.h"
+    #include "WindowUtility.h"
+    #include "MessageBoxShaded.h"
+    #include "FileHelpers.h"
+    #include "DWritEx.h"
+    #include "DrawingCanvas.h"
+    #include "DrawingCanvasControl.h"
+    #include "Common.OptionalValue.h"
+    #include "Attributes.h"
+    #include "DrawableObject.h"
+    #include "Application.h"
+    #include "TextTreeParser.h"
+    #include "DrawableObjectAndValues.h"
+    #include "TextTreeParser.h"
+    #include "MainWindow.h"
 #endif
-
 
 #pragma comment(lib, "ComCtl32.lib")
 
-MODULE(MainWindow)
-EXPORT_BEGIN
-    #include "MainWindow.h"
-EXPORT_END
 
 ////////////////////////////////////////
 

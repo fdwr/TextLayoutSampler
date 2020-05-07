@@ -5,9 +5,7 @@
 //----------------------------------------------------------------------------
 #pragma once
 
-
 class TextTreeParser;
-
 
 // Tree of text nodes, applicable most heirarchical text file formats
 // (such as JSON, XML, INI, BibTex, CSV, Boost PropertyTree INFO).

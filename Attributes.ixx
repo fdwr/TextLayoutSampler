@@ -1,9 +1,30 @@
 ﻿//----------------------------------------------------------------------------
 //  History:    2015-06-19 Dwayne Robinson - Created
 //----------------------------------------------------------------------------
+
+#if USE_CPP_MODULES
+    module;
+#endif
+
 #include "precomp.h"
 
-#include "Attributes.h"
+#if USE_CPP_MODULES
+    import Common.String;
+    import Common.ArrayRef;
+    import Common.OptionalValue;
+    import Common.ListSubstringPrioritizer;
+    export module Attributes;
+    export
+    {
+        #include "Attributes.h"
+    }
+#else
+    #include "Common.ArrayRef.h"
+    #include "Common.String.h"
+    #include "Common.OptionalValue.h"
+    #include "Common.ListSubstringPrioritizer.h"
+    #include "Attributes.h"
+#endif
 
 ////////////////////////////////////////
 

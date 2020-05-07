@@ -4,13 +4,31 @@
 //  History:    2008-02-11   Dwayne Robinson - Created
 //----------------------------------------------------------------------------
 
+#if USE_CPP_MODULES
+    module;
+#endif
+
 #include "precomp.h"
 #include "resource.h"
 #include <string>
 #include <Windows.h>
 
-MODULE(MessageBoxShaded)
-#include "MessageBoxShaded.h"
+#if USE_CPP_MODULES
+    import Common.ArrayRef;
+    import Common.String;
+    import WindowUtility;
+    export module MessageBoxShaded;
+    export
+    {
+        #include "MessageBoxShaded.h"
+    }
+#else
+    #include "Common.ArrayRef.h"
+    #include "Common.String.h"
+    #include "WindowUtility.h"
+    #include "MessageBoxShaded.h"
+#endif
+
 
 ////////////////////////////////////////
 

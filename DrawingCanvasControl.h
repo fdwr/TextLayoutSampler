@@ -4,14 +4,6 @@
 //----------------------------------------------------------------------------
 #pragma once
 
-
-#if USE_CPP_MODULES
-import DrawingCanvas;
-#else
-#include "DrawingCanvas.h"
-#endif
-
-
 class DrawingCanvasControl : public DrawingCanvas
 {
 ////////////////////////////////////////

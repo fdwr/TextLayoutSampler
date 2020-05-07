@@ -9,6 +9,7 @@
 #if USE_CPP_MODULES
 import Common.String;
 #else
+#include "Common.ArrayRef.h"
 #include "Common.String.h"
 #endif
 

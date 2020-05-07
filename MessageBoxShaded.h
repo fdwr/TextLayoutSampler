@@ -6,18 +6,6 @@
 
 ////////////////////////////////////////
 
-#if USE_CPP_MODULES
-import Common.ArrayRef;
-import Common.String;
-import WindowUtility;
-#else
-#include "Common.ArrayRef.h"
-#include "Common.String.h"
-#include "WindowUtility.h"
-#endif
-
-EXPORT_BEGIN
-
 class MessageBoxShaded
 {
     using Self = MessageBoxShaded;
@@ -42,5 +30,3 @@ public:
     DialogProcResult CALLBACK ProcessNotification(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
     void Resize();
 };
-
-EXPORT_END

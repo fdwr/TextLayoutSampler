@@ -2,10 +2,43 @@
 //  History:        2015-06-19 Dwayne Robinson - Created
 //  Description:    Generic drawable object instance with attribute values.
 //----------------------------------------------------------------------------
+
+#if USE_CPP_MODULES
+    module;
+#endif
+
 #include "precomp.h"
 
+#if USE_CPP_MODULES
+    import Common.ListSubstringPrioritizer;
+    import Common.AutoResource;
+    import Common.AutoResource.Windows;
+    import Common.ArrayRef;
+    import Common.String;
+    import Attributes;
+    import DrawingCanvas;
+    import DrawableObject;
+    import TextTreeParser;
+    export module DrawableObjectAndValues;
+    export
+    {
+        #include "DrawableObjectAndValues.h"
+    }
+#else
+    #include "Common.AutoResource.h"
+    #include "Common.AutoResource.Windows.h"
+    #include "Common.ArrayRef.h"
+    #include "Common.String.h"
+    #include "Common.ListSubstringPrioritizer.h"
+    #include "Common.OptionalValue.h"
+    #include "Attributes.h"
+    #include "DWritEx.h"
+    #include "DrawingCanvas.h"
+    #include "DrawableObject.h"
+    #include "TextTreeParser.h"
+    #include "DrawableObjectAndValues.h"
+#endif
 
-#include "DrawableObjectAndValues.h"
 
 ////////////////////////////////////////
 

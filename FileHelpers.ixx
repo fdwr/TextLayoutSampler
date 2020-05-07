@@ -3,6 +3,9 @@
 //
 //  History:    2013-10-04   Dwayne Robinson - Created
 //----------------------------------------------------------------------------
+
+module;
+
 #include "precomp.h"
 
 #include <windows.h>
@@ -13,22 +16,23 @@
 #pragma comment(lib, "Shlwapi.lib")
 
 #if USE_CPP_MODULES
-import Common.String;
-import Common.ArrayRef;
-import Common.AutoResource;
-import Common.AutoResource.Windows;
+    import Common.String;
+    import Common.ArrayRef;
+    import Common.AutoResource;
+    import Common.AutoResource.Windows;
+    export module FileHelpers;
+    export
+    {
+        #include "FileHelpers.h"
+    }
 #else
-#include "Common.String.h"
-#include "Common.ArrayRef.h"
-#include "Common.AutoResource.h"
-#include "Common.AutoResource.Windows.h"
+    #include "Common.ArrayRef.h"
+    #include "Common.String.h"
+    #include "Common.AutoResource.h"
+    #include "Common.AutoResource.Windows.h"
+    #include "FileHelpers.h"
 #endif
 
-
-MODULE(FileHelpers)
-EXPORT_BEGIN
-    #include "FileHelpers.h"
-EXPORT_END
 
 ////////////////////////////////////////
 

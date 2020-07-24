@@ -1,5 +1,4 @@
 ﻿/*
-todo:::
 -Custom font fallback
 -Custom font collection
 -EDIT/RichEdit

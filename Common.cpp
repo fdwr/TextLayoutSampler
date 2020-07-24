@@ -4,6 +4,7 @@
 #include "precomp.h"
 #include <string>
 #include <stdint.h>
+#include <stdexcept>
 #include "Common.h"
 
 #if USE_CPP_MODULES

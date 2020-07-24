@@ -75,6 +75,8 @@
 #include <functional>
 #include <map>
 #include <array>
+#include <clocale>
+#include <stdexcept>
 
 //////////////////////////////
 // Windows Header Files:

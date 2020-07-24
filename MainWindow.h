@@ -167,7 +167,6 @@ protected:
     TextEscapeMode textEscapeMode_ = TextEscapeModeNone;
 
     std::vector<DrawableObjectAndValues> drawableObjects_;
-
 };
 
 DEFINE_ENUM_FLAG_OPERATORS(MainWindow::NeededUiUpdate);

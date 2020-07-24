@@ -17,6 +17,7 @@
 #include <memory> // For uninitialized_move/copy and std::unique_ptr.
 #include <assert.h>
 #include <algorithm>
+#include <stdexcept>
 
 #if USE_CPP_MODULES
     //import std.core;

@@ -64,7 +64,7 @@ char16_t const* Attribute::GetPredefinedValue(uint32_t valueIndex, GetPredefined
         }
         else
         {
-            auto& newBuffer = std::to_wstring(predefinedValue.integerValue);
+            auto newBuffer = std::to_wstring(predefinedValue.integerValue);
             auto& recastBuffer = reinterpret_cast<std::u16string&>(newBuffer);
             buffer = recastBuffer;
         }
@@ -149,7 +149,7 @@ HRESULT Attribute::ParseString(
 {
     HRESULT hr = HRESULT_FROM_WIN32(ERROR_UNMAPPED_SUBSTITUTION_STRING);
 
-    if (stringValue == '\0')
+    if (stringValue == nullptr)
         return hr;
 
     static_assert(Attribute::TypeTotal == 13, "Update this switch statement.");
@@ -253,7 +253,7 @@ HRESULT Attribute::MapValueToName(_Out_ uint32_t enumValue, _Out_ std::u16string
 
     // Otherwise look for a numeric value, confirming that numeric value is
     // actually in the enumeration set.
-    auto& newString = std::to_wstring(enumValue);
+    auto newString = std::to_wstring(enumValue);
     auto& recastString = reinterpret_cast<std::u16string&>(newString);
     std::swap(stringValue, recastString);
 

@@ -312,7 +312,8 @@ public:
         //{
         //    return HRESULT_FROM_WIN32(ERROR_UNMAPPED_SUBSTITUTION_STRING);
         //}
-        values.reset(byteValues.reinterpret_as<T>());
+        auto a = byteValues.reinterpret_as<T>();
+        values.reset(a);
         return S_OK;
     }
 
@@ -329,7 +330,8 @@ public:
 
         if (SUCCEEDED(GetValueData(id, OUT actualType, OUT byteValues)))
         {
-            values.reset(byteValues.reinterpret_as<T>());
+            auto a = byteValues.reinterpret_as<T>();
+            values.reset(a);
         }
         // // todo::: restore once you figure out enums! || !Attribute::AreCompatibleTypes(desiredType, actualType))
         //if (!Attribute::AreCompatibleTypes(desiredType, actualType))

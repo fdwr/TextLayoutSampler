@@ -6,7 +6,8 @@
 #pragma warning(push)
 #pragma warning(disable:4127) // Conditional expression is constant. VS can't tell that certain compound conditionals of template parameters aren't always constant when the tempalate parameter is true.
 
-#if defined(_ITERATOR_DEBUG_LEVEL) && _ITERATOR_DEBUG_LEVEL > 0
+// Disable for Visual Studio 2019
+#if 0 // defined(_ITERATOR_DEBUG_LEVEL) && _ITERATOR_DEBUG_LEVEL > 0
 // For std::uninitialized_copy and std::uninitialized_move.
 #define FASTVECTOR_MAKE_UNCHECKED stdext::make_unchecked_array_iterator
 #else

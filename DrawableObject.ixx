@@ -1557,7 +1557,11 @@ HRESULT DrawableObjectGdiTextOut::Draw(
 
     if (!glyphs.empty() || !attributeSource.GetString(DrawableObjectAttributeGlyphs).empty())
     {
-        text.reset(glyphs.reinterpret_as<char16_t const>());
+        // Assign to a temporary to work around bogus error.
+        //      message : A non-const reference may only be bound to an lvalue
+        // There's utterly no reason why you shouldn't be able to pass a temporary as mutable in the language. -_-
+        auto a = glyphs.reinterpret_as<char16_t const>();
+        text.reset(a);
         textOutFlags |= ETO_GLYPH_INDEX;
         // todo::: Pass glyph advances if non-empty. ETO_PDY
     }
@@ -2089,7 +2093,8 @@ HRESULT CachedDWriteGlyphRun::Update(
     // leaving the others as zeroes.
     if (glyphOffsetFloats.size() >= glyphs.size() * 2U)
     {
-        glyphOffsets.reset(glyphOffsetFloats.reinterpret_as<DWRITE_GLYPH_OFFSET const>());
+        auto a = glyphOffsetFloats.reinterpret_as<DWRITE_GLYPH_OFFSET const>();
+        glyphOffsets.reset(a);
     }
     else
     {
@@ -3370,7 +3375,8 @@ HRESULT DrawableObjectGdiPlusDrawDriverString::Draw(
     if (glyphs.empty() && attributeSource.GetString(DrawableObjectAttributeGlyphs).empty())
     {
         drawDriverStringFlags |= Gdiplus::DriverStringOptionsCmapLookup;
-        glyphs.reset(text.reinterpret_as<uint16_t const>());
+        auto a = text.reinterpret_as<uint16_t const>();
+        glyphs.reset(a);
         // todo::: Convert and pass glyph advances if non-empty.
     }
 

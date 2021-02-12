@@ -481,7 +481,7 @@ INT_PTR MainWindow::InitializeMainDialog()
     // but they also ignore the Edit_SetCueBannerText call, meaning we can't
     // just call GetCueBannerText in the subclassed function. So store it as
     // a window property instead.
-    SetProp(attributeValuesEdit, L"CueBannerText", L"<no attributes selected>");
+    SetProp(attributeValuesEdit, L"CueBannerText", const_cast<wchar_t*>(L"<no attributes selected>"));
 
     auto attributesEdit = GetWindowFromId(hwnd_, IdcAttributesFilterEdit);
     Edit_SetCueBannerText(attributesEdit, L"<type attribute filter here>");
@@ -1100,7 +1100,7 @@ void MainWindow::InitializeDefaultDrawableObjects()
     ////////////////////
     // Initialize with typical APIs.
 
-    char16_t* const functionNames[] = {
+    char16_t const* const functionNames[] = {
         u"D2D DrawTextLayout",
         u"IDWriteBitmapRenderTarget IDWriteTextLayout",
         u"User32 DrawText",

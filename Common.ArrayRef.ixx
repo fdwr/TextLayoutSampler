@@ -15,8 +15,6 @@
 #include <vector>
 #include <string>
 #include <cassert>
-// Set 0 if your defective std::string.data() lacks a mutable overload.
-// #define STD_STRING_MUTABLE_DATA_IS_FIXED_CPP17 1
 #include <iterator>
 
 ////////////////////////////////////////

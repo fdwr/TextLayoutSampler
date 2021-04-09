@@ -4,6 +4,31 @@
 //----------------------------------------------------------------------------
 #pragma once
 
+// Class-specific constraint concepts.
+// (quite ridiculously, class-specific concepts cannot actually be declared
+// *inside* the pertinent class where you'd expect them)
+namespace array_ref_concepts
+{
+    // The array/initializer_list/other type is very basic and returns pointers
+    // directly rather than iterators. In that case, just use end() rather than
+    // use size(), which incurs an unnecessary division and multiplication each
+    // call.
+    template<typename T> concept IsContiguousMemoryTypeWithBeginEnd = requires(T&& c)
+    {
+        std::data(c);
+        std::begin(c);
+        std::end(c);
+        requires std::is_same_v<decltype(std::begin(c)), decltype(std::data(c))>;
+        requires std::is_same_v<decltype(std::end(c)), decltype(std::data(c))>;
+    };
+
+    template<typename T> concept IsContiguousMemoryTypeWithDataSize = requires(T&& c)
+    {
+        std::data(c);
+        std::size(c);
+    };
+}
+
 // View of contiguous memory, which may come from an std::vector,
 // std::wstring, std::initializer_list, std::array, plain C array,
 // or even raw memory.
@@ -37,27 +62,29 @@ public:
     using size_type = size_t;
     using difference_type = ptrdiff_t;
 
-    // construct/copy
     constexpr array_ref() = default;
-    constexpr array_ref(array_ref<typename T> const& other) = default;
-
     constexpr array_ref(pointer array, size_t elementCount) : begin_(array), end_(array + elementCount) {}
     constexpr array_ref(pointer begin, pointer end) : begin_(begin), end_(end) {}
 
+    using ConstArrayRefType = array_ref<const typename T>;
     using NonConstArrayRefType = array_ref<typename std::remove_const<T>::type>;
 
-#if STD_STRING_MUTABLE_DATA_IS_FIXED_CPP17
-
-    template<typename ContiguousContainer>
-    constexpr array_ref(ContiguousContainer& container)
-    :   begin_(std::data(container)),
-        end_(begin_ + std::size(container))
+    // Constructor for copying non-const array_ref's to const array_ref's.
+    // The default constructor handles const to const and non-const to non-const,
+    // but not non-const to const conversion. Implement it specially rather than
+    // using the generic constructor below to avoid pointless division and
+    // multiplication. The enable_if prevents the template from stealing all
+    // overload calls away from the default copy constructor.
+    template<typename ContiguousMemoryTypeWithBeginEnd>
+    requires(array_ref_concepts::IsContiguousMemoryTypeWithBeginEnd<ContiguousMemoryTypeWithBeginEnd>)
+    array_ref(ContiguousMemoryTypeWithBeginEnd&& other)
+    :   begin_(std::begin(other)),
+        end_(std::end(other))
     {
     }
 
-#else
     // Generic constructor to accept any container which uses contiguous memory
-    // and exposes a data() member.
+    // and exposes data() and size() members.
     //
     // Sadly some bugs/holes in the standard complicate genericity in getting
     // the data pointer, including std::initializer_list missing a data() member
@@ -68,40 +95,19 @@ public:
     // constructor when copying another array_ref of the same constness,
     // instead of always calling this templated copy constructor.
     //
-    template<
-        typename ContiguousContainer,
-        typename std::enable_if<
-            !std::is_same<ContiguousContainer, array_ref<T> >::value &&
-            !std::is_same<ContiguousContainer, NonConstArrayRefType>::value,
-            int
-        >::type = 0
-    >
-    constexpr array_ref(ContiguousContainer& container)
-    :   begin_(get_container_pointer(container)),
+    // Note older compilers may have an issue with std::string which lacked a proper
+    // mutable .data() method. http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-active.html#2391
+    //
+    template<typename ContiguousMemoryTypeWithDataSize>
+    requires(
+        array_ref_concepts::IsContiguousMemoryTypeWithDataSize<ContiguousMemoryTypeWithDataSize> &&
+        !array_ref_concepts::IsContiguousMemoryTypeWithBeginEnd<ContiguousMemoryTypeWithDataSize>
+    )
+    constexpr array_ref(ContiguousMemoryTypeWithDataSize&& container)
+    :   begin_(std::data(container)),
         end_(begin_ + std::size(container))
     {
     }
-
-    // Constructor for copying non-const array_ref's to const array_ref's.
-    // The default constructor handles const to const and non-const to non-const,
-    // but not non-const to const conversion. Implement it specially rather than
-    // using the generic constructor below to avoid pointless division and
-    // multiplication. The enable_if prevents the template from stealing all
-    // overload calls away from the default copy constructor.
-    template<
-        typename OtherArrayRef,
-        typename std::enable_if<
-            !std::is_same<OtherArrayRef, typename array_ref<T> >::value &&
-            std::is_same<OtherArrayRef, NonConstArrayRefType>::value,
-            int
-        >::type = 0
-    >
-    array_ref(OtherArrayRef const& other)
-    :   begin_(other.begin()),
-        end_(other.end())
-    {
-    }
-#endif
 
     // Reset to a new range using a compatible data type, possibly differing in constness
     // but only from non-const to const.
@@ -112,7 +118,7 @@ public:
     //
     template<typename ContiguousContainer> void reset(ContiguousContainer& container)
     {
-        begin_ = get_container_pointer(container);
+        begin_ = std::data(container);
         end_ = begin_ + std::size(container);
     }
 
@@ -207,27 +213,6 @@ protected:
     // Mini-helpers.
     static inline uint8_t const* to_byte_pointer(void const* p) { return reinterpret_cast<uint8_t const*>(p); }
     static inline uint8_t* to_byte_pointer(void* p) { return reinterpret_cast<uint8_t*>(p); }
-
-    // Unwraps the data pointer from the container passed.
-    template <typename ContiguousContainer>
-    inline static T* get_container_pointer(ContiguousContainer& container)
-    {
-        // This crazy function can be deleted once std::string is fixed.
-        // http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-active.html#2391
-        //
-        // std::data() and std::string::data() return a const pointer for a
-        // mutable string even when s[0] and begin() are mutable. So we have to
-        // cast away the constness while still staying const correct in the
-        // case of an actual const string. To get the true type, dereference an
-        // iterator (cannot use s[0] because std::initializer_list lacks that
-        // operator overload, despite basically being an array), then get the
-        // address of it (but not via operator '&' because some wrapping
-        // classes have an operator overload that returns their base type
-        // rather than the actual type), and then finally use the type of the
-        // address for the const_cast.
-
-        return const_cast<decltype(std::addressof(*std::begin(container)))>(std::data(container));
-    }
 
 protected:
     pointer begin_ = nullptr;

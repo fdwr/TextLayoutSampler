@@ -237,6 +237,17 @@ public:
         size_ = newSize;
     }
 
+    // Clear any existing elements and copy the new elements from the iterable range.
+    template <typename IteratorType>
+    void assign(size_t newSize, const T& value)
+    {
+        clear();
+
+        reserve(newSize);
+        std::uninitialized_fill(begin(), end(), /*out*/ data_);
+        size_ = newSize;
+    }
+
     // Tranfer all elements from the other vector to this one.
     // This only offers the weak exception guarantee, that no leaks will happen
     // if type T throws in the middle of a copy.
@@ -418,6 +429,11 @@ public:
     void insert(const_iterator position, array_ref<const T> span)
     {
         insert(position - begin(), span.begin(), span.end());
+    }
+
+    void insert(iterator position, const_iterator otherBegin, const_iterator otherEnd)
+    {
+        insert(position - begin(), otherBegin, otherEnd);
     }
 
     void erase(const_iterator begin, const_iterator end)

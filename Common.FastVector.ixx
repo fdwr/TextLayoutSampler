@@ -186,6 +186,12 @@ void fast_vector_test()
     assert(ints[0] == 1);
     assert(ints[2] == 3);
 
+    auto intAssignmentInitializerList = { 1,2,3 };
+    std::vector<int> intAssignmentVector({1,2,3});
+    ints.assign(intAssignmentInitializerList.begin(), intAssignmentInitializerList.end());
+    ints.assign(intAssignmentVector.begin(), intAssignmentVector.end());
+    ints.assign(3, 0);
+
     // Create another vector from the old one.
     ints2[0] = 1;
     ints2[2] = 3;

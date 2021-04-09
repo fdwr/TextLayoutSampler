@@ -227,6 +227,7 @@ public:
 
     // Clear any existing elements and copy the new elements from the iterable range.
     template <typename IteratorType>
+    requires(!std::is_convertible_v<IteratorType, size_t>)
     void assign(IteratorType begin, IteratorType end)
     {
         clear();
@@ -238,13 +239,12 @@ public:
     }
 
     // Clear any existing elements and copy the new elements from the iterable range.
-    template <typename IteratorType>
     void assign(size_t newSize, const T& value)
     {
         clear();
 
         reserve(newSize);
-        std::uninitialized_fill(begin(), end(), /*out*/ data_);
+        std::uninitialized_fill(begin(), end(), /*out*/ value);
         size_ = newSize;
     }
 

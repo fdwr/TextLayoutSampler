@@ -4,9 +4,9 @@
 
 // For whatever inane reason, VS complains here but not in other files.
 // error C7577: a global module fragment can only appear at the start of a translation unit
-// #if USE_CPP_MODULES
+#if USE_CPP_MODULES
     module;
-// #endif
+#endif
 
 #include "precomp.h"
 

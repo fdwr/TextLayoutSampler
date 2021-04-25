@@ -3,10 +3,12 @@
 //----------------------------------------------------------------------------
 #pragma once
 
+#ifndef USE_CPP_MODULES
 #ifdef __cpp_modules
 #define USE_CPP_MODULES 1
-#elif !defined(USE_CPP_MODULES)
+#else
 #define USE_CPP_MODULES 0
+#endif
 #endif
 
 

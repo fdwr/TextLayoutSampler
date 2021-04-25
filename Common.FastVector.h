@@ -550,7 +550,7 @@ protected:
         {
             // Try to just reallocate the existing memory block.
             
-            void* memory = realloc(GetMemoryBlock(data_), newByteSize);
+            void* memory = std::realloc(GetMemoryBlock(data_), newByteSize);
             if (memory == nullptr && newByteSize > 0)
             {
                 throw std::bad_alloc();

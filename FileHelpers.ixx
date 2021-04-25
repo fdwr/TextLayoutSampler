@@ -4,7 +4,9 @@
 //  History:    2013-10-04   Dwayne Robinson - Created
 //----------------------------------------------------------------------------
 
+#if USE_CPP_MODULES
 module;
+#endif
 
 #include "precomp.h"
 

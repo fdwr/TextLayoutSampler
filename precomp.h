@@ -36,6 +36,9 @@
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN // Exclude rarely-used stuff from Windows headers
 #define NOMINMAX
+#define NOSERVICE
+#define NOMCX
+#define NOIME
 #endif
 
 #define _ENABLE_EXTENDED_ALIGNED_STORAGE // For the SseSizedType case, which is > max_align_t.

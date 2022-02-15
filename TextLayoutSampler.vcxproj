@@ -21,7 +21,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{E0964FE3-5D6D-48CB-AC4D-1A6FF19A911C}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Label="Configuration">
@@ -39,8 +39,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <EmbedManifest>false</EmbedManifest>
-    <OutDir>$(SolutionDir)\.$(Configuration)_$(PlatformTarget)\</OutDir>
-    <IntDir>$(SolutionDir)\.$(Configuration)_$(PlatformTarget)\</IntDir>
+    <OutDir>$(SolutionDir)\build\$(PlatformTarget)_$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)\build\$(PlatformTarget)_$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
@@ -145,74 +145,74 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="precomp.cpp">
+    <ClCompile Include="source/precomp.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
       <PreprocessToFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</PreprocessToFile>
     </ClCompile>
-    <ClCompile Include="Common.ArrayRef.ixx" />
-    <ClCompile Include="Common.String.ixx" />
-    <ClCompile Include="Common.Variant.ixx" />
-    <ClCompile Include="Common.AutoResource.ixx" />
-    <ClCompile Include="Common.AutoResource.Windows.ixx" />
-    <ClCompile Include="Common.FastVector.ixx" />
-    <ClCompile Include="Common.OptionalValue.ixx" />
-    <ClCompile Include="Common.ListSubstringPrioritizer.ixx" />
-    <ClCompile Include="Common.cpp" />
-    <ClCompile Include="WindowUtility.ixx" />
-    <ClCompile Include="MessageBoxShaded.ixx" />
-    <ClCompile Include="TextTreeParser.ixx" />
-    <ClCompile Include="FileHelpers.ixx" />
-    <ClCompile Include="DWritEx.ixx" />
-    <ClCompile Include="Attributes.ixx" />
-    <ClCompile Include="DrawingCanvas.ixx" />
-    <ClCompile Include="DrawingCanvasControl.ixx" />
-    <ClCompile Include="DrawableObject.ixx" />
-    <ClCompile Include="DrawableObjectAndValues.ixx" />
-    <ClCompile Include="Application.ixx" />
-    <ClCompile Include="MainWindow.ixx" />
+    <ClCompile Include="source/Common.ArrayRef.ixx" />
+    <ClCompile Include="source/Common.String.ixx" />
+    <ClCompile Include="source/Common.Variant.ixx" />
+    <ClCompile Include="source/Common.AutoResource.ixx" />
+    <ClCompile Include="source/Common.AutoResource.Windows.ixx" />
+    <ClCompile Include="source/Common.FastVector.ixx" />
+    <ClCompile Include="source/Common.OptionalValue.ixx" />
+    <ClCompile Include="source/Common.ListSubstringPrioritizer.ixx" />
+    <ClCompile Include="source/Common.cpp" />
+    <ClCompile Include="source/WindowUtility.ixx" />
+    <ClCompile Include="source/MessageBoxShaded.ixx" />
+    <ClCompile Include="source/TextTreeParser.ixx" />
+    <ClCompile Include="source/FileHelpers.ixx" />
+    <ClCompile Include="source/DWritEx.ixx" />
+    <ClCompile Include="source/Attributes.ixx" />
+    <ClCompile Include="source/DrawingCanvas.ixx" />
+    <ClCompile Include="source/DrawingCanvasControl.ixx" />
+    <ClCompile Include="source/DrawableObject.ixx" />
+    <ClCompile Include="source/DrawableObjectAndValues.ixx" />
+    <ClCompile Include="source/Application.ixx" />
+    <ClCompile Include="source/MainWindow.ixx" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Application.h" />
-    <ClInclude Include="Application.macros.h" />
-    <ClInclude Include="Common.ArrayRef.h" />
-    <ClInclude Include="Attributes.h" />
-    <ClInclude Include="Common.AutoResource.h" />
-    <ClInclude Include="Common.AutoResource.Windows.h" />
-    <ClInclude Include="Common.FastVector.h" />
-    <ClInclude Include="Common.h" />
-    <ClInclude Include="Common.ListSubstringPrioritizer.h" />
-    <ClInclude Include="Common.Variant.h" />
-    <ClInclude Include="DrawableObject.h" />
-    <ClInclude Include="DrawableObjectAndValues.h" />
-    <ClInclude Include="DrawingCanvas.h" />
-    <ClInclude Include="DrawingCanvasControl.h" />
-    <ClInclude Include="DWritEx.h" />
-    <ClInclude Include="FileHelpers.h" />
-    <ClInclude Include="MainWindow.h" />
-    <ClInclude Include="Common.OptionalValue.h" />
-    <ClInclude Include="MessageBoxShaded.h" />
-    <ClInclude Include="precomp.h" />
-    <ClInclude Include="resource.h" />
-    <ClInclude Include="Common.String.h" />
-    <ClInclude Include="TextTreeParser.h" />
-    <ClInclude Include="WindowUtility.h" />
-    <ClInclude Include="WindowUtility.macros.h" />
+    <ClInclude Include="source/Application.h" />
+    <ClInclude Include="source/Application.macros.h" />
+    <ClInclude Include="source/Common.ArrayRef.h" />
+    <ClInclude Include="source/Attributes.h" />
+    <ClInclude Include="source/Common.AutoResource.h" />
+    <ClInclude Include="source/Common.AutoResource.Windows.h" />
+    <ClInclude Include="source/Common.FastVector.h" />
+    <ClInclude Include="source/Common.h" />
+    <ClInclude Include="source/Common.ListSubstringPrioritizer.h" />
+    <ClInclude Include="source/Common.Variant.h" />
+    <ClInclude Include="source/DrawableObject.h" />
+    <ClInclude Include="source/DrawableObjectAndValues.h" />
+    <ClInclude Include="source/DrawingCanvas.h" />
+    <ClInclude Include="source/DrawingCanvasControl.h" />
+    <ClInclude Include="source/DWritEx.h" />
+    <ClInclude Include="source/FileHelpers.h" />
+    <ClInclude Include="source/MainWindow.h" />
+    <ClInclude Include="source/Common.OptionalValue.h" />
+    <ClInclude Include="source/MessageBoxShaded.h" />
+    <ClInclude Include="source/precomp.h" />
+    <ClInclude Include="source/resource.h" />
+    <ClInclude Include="source/Common.String.h" />
+    <ClInclude Include="source/TextTreeParser.h" />
+    <ClInclude Include="source/WindowUtility.h" />
+    <ClInclude Include="source/WindowUtility.macros.h" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="MainWindow.rc" />
+    <ResourceCompile Include="resource/MainWindow.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Manifest Include="MainWindow.manifest" />
+    <Manifest Include="resource/MainWindow.manifest" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="MainWindow.ico" />
+    <Image Include="resource/MainWindow.ico" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="LICENSE" />
+    <None Include="LICENSE.txt" />
   </ItemGroup>
   <ItemGroup>
-    <Natvis Include="Common.ArrayRef.natvis" />
-    <Natvis Include="Common.FastVector.natvis" />
+    <Natvis Include="source/Common.ArrayRef.natvis" />
+    <Natvis Include="source/Common.FastVector.natvis" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

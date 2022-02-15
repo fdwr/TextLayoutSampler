@@ -1,5 +1,5 @@
 # TextLayoutSampler
-Utility to display text drawn via multiple Windows API's simultaneously, to compare differences in rendering, font selection, and glyph shaping.
+This utility displays text drawn via multiple Windows API's simultaneously, to compare differences in rendering, font selection, and glyph shaping.
 
 ## Supports:
 - DirectWrite, Direct2D, GDI, GDI+ API's

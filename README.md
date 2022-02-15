@@ -1,13 +1,14 @@
 # TextLayoutSampler
-Utility to display text via multiple Windows API's simultaneously to compare differences in rendering, font selection, and shaping.
+Utility to display text drawn via multiple Windows API's simultaneously, to compare differences in rendering, font selection, and glyph shaping.
 
 Supports:
-- Arbitrary number of text objects with different text, font, direction, language, and rendering settings.
-- DirectWrite, Direct2D, GDI, GDI+
-- Requires Windows 7+. Certain features like Direct2D SVG rendering requires Windows 10 RS4.
+- DirectWrite, Direct2D, GDI, GDI+ API's
+- Various attributes: weight, width, slope, family, direction, locale, font size, text color, back color, rotation, pixel zoom...
+- Arbitrary number of text objects with different attributes.
+- Requires Windows 7+. Certain features like Direct2D SVG rendering requires Windows 10 RS4+.
 
-C++, compiled with Visual Studio Professional 2019 16.9.3 (Community Edition should work too). VS 2017 is too old, as it lacks template constraints.
-Note the project now uses C++ modules.
-To use normal header files, USE_CPP_MODULES=0 in the project properties preprocessor definitions, because modules tend to crash the compiler.
+Building:
+- Open TextLayoutSampler.sln in Visual Studio Professional/Community 2019 16.9.3. VS 2017 is too old, as it lacks template constraints.
+- If C++ modules crash the compiler, use normal header files via USE_CPP_MODULES=0 in the project properties preprocessor definitions.
 
 ![Image of TextLayoutSampler](TextLayoutSampler.png)

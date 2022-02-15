@@ -208,6 +208,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="LICENSE.txt" />
+    <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="source/Common.ArrayRef.natvis" />

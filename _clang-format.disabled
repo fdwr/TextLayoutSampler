@@ -1,4 +1,6 @@
 {
+# Disable until clang format supports closing brace on new line.
+# https://reviews.llvm.org/D109557
 Language: Cpp,
 AlignAfterOpenBracket: AlwaysBreak,
 UseTab: Never,

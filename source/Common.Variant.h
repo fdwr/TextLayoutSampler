@@ -1,7 +1,15 @@
 //----------------------------------------------------------------------------
 //  History:    2018-11-29 Dwayne Robinson - Created
-//  Summary:    Extended variant which contains more intuitive methods rather
-//              inconvenient free functions.
+//  Summary:    Extended std::variant which contains more intuitive methods
+//              rather awkward and poorly named free functions.
+// 
+//              Extended methods:
+//
+//              v.get<T>()
+//              v.is_type<T>()
+//              v.index_of_type<T>()
+//              v.call<Callback>(Callback& callback)
+//
 //----------------------------------------------------------------------------
 #pragma once
 
@@ -22,13 +30,6 @@ constexpr std::size_t variant_index()
     }
 }
 
-// Extends std::variant with the following methods:
-//
-//      v.get<T>()
-//      v.is_type<T>()
-//      v.index_of_type<T>()
-//      v.call<Callback>(Callback& callback)
-//
 template <typename... Ts>
 class variantex : public std::variant<Ts...>
 {

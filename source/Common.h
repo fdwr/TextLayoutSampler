@@ -4,7 +4,7 @@
 #pragma once
 
 #ifndef USE_CPP_MODULES
-#ifdef __cpp_modules
+#ifdef __cpp_modules // Does this not work as a feature test macro in VS2019?
 #define USE_CPP_MODULES 1
 #else
 #define USE_CPP_MODULES 0

@@ -64,8 +64,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>precomp.h</PrecompiledHeaderFile>
       <AdditionalOptions>/ifcSearchDir $(IntDir)</AdditionalOptions>
-      <AdditionalIncludeDirectories>
-      </AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
       <TreatSpecificWarningsAsErrors>4456;4457;4459</TreatSpecificWarningsAsErrors>

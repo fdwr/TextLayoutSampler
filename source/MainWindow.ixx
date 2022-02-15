@@ -36,7 +36,7 @@
 #endif
 
 #include "precomp.h"
-#include "resource.h"
+#include "resource/resource.h"
 #include "Application.macros.h"
 #include "WindowUtility.macros.h"
 

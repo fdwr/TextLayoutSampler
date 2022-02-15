@@ -9,8 +9,17 @@
 #endif
 
 #include "precomp.h"
-#include "resource.h"
+#include "resource/resource.h"
 #include <string>
+
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN // Exclude rarely-used stuff from Windows headers
+#define NOMINMAX
+#define NOSERVICE
+#define NOMCX
+#define NOIME
+#endif
+
 #include <Windows.h>
 
 #if USE_CPP_MODULES

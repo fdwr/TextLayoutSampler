@@ -1,47 +1,73 @@
-{
-# Disable until clang format supports closing brace on new line.
-# https://reviews.llvm.org/D109557
-Language: Cpp,
-AlignAfterOpenBracket: AlwaysBreak,
-UseTab: Never,
-IndentWidth: 4,
-BreakBeforeBraces: Allman,
-AllowShortIfStatementsOnASingleLine: false,
-IndentCaseLabels: false,
-ColumnLimit: 120,
+# Run manually to reformat a file:
+#
+# LLVM14.0.0RC1\bin\clang-format.exe -i -style=file:clang-format.txt <file>
+#
+# To reformat all files using cmd.exe:
+# for /r %t in (*.cc *.h) do clang-format.exe -i -style=file "%t"
+#
 
-Language: JavaScript,
-AlignAfterOpenBracket: AlwaysBreak,
-UseTab: Never,
-IndentWidth: 4,
-BreakBeforeBraces: Allman,
-AllowShortIfStatementsOnASingleLine: false,
-IndentCaseLabels: false,
-ColumnLimit: 200,
+#DisableFormat: true
+---
+BasedOnStyle: Microsoft
+---
+Language: Cpp
+AlignAfterOpenBracket: BlockIndent
+UseTab: Never
+IndentWidth: 4
+ColumnLimit: 120
+DerivePointerAlignment: false
+PointerAlignment: Left
+AllowShortIfStatementsOnASingleLine: false
+IndentCaseLabels: false
+AlignAfterOpenBracket: BlockIndent #DontAlign AlwaysBreak
+BinPackArguments: false
+BinPackParameters: false
+AllowAllArgumentsOnNextLine: false
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowAllConstructorInitializersOnNextLine: false
+BreakConstructorInitializers: BeforeColon
+AllowShortLambdasOnASingleLine: true
+AllowShortFunctionsOnASingleLine: true
+AllowShortCaseLabelsOnASingleLine: true
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+BreakBeforeBraces: AllMan #Custom
+BraceWrapping:
+  BeforeLambdaBody: true
+AccessModifierOffset: -4
+IndentAccessModifiers: false
+---
+Language: JavaScript
+AlignAfterOpenBracket: AlwaysBreak
+UseTab: Never
+IndentWidth: 4
+BreakBeforeBraces: Allman
+AllowShortIfStatementsOnASingleLine: false
+IndentCaseLabels: false
+ColumnLimit: 200
 
-#BasedOnStyle: VisualStudio,
-#BreakBeforeBraces: Allman,
-#AlignAfterOpenBracket: AlwaysBreak,
-#AllowShortIfStatementsOnASingleLine: false,
-#AllowShortCaseLabelsOnASingleLine: true,
-#AllowShortFunctionsOnASingleLine: true,
-#AlwaysBreakTemplateDeclarations: true,
-#ConstructorInitializerAllOnOneLineOrOnePerLine: true,
-#BinPackParameters: false,
-#IndentCaseLabels: false,
-#IndentWidth: 4,
-#TabWidth: 4,
-#UseTab: Never,
-#MaxEmptyLinesToKeep: 2,
-PointerAlignment: Left,
-## SpaceBeforeInheritanceColon: true,
-#SpaceBeforeParens: ControlStatements,
-## SpaceBeforeRangeBasedForLoopColon: true,
-#SpacesInSquareBrackets: false,
-#AllowShortIfStatementsOnASingleLine: false,
-#ColumnLimit: 0,
-#SpaceInEmptyParentheses: false,
-## BreakBeforeClosingBrace: true,
-## BreakBeforeClosingParen: true,
-## DanglingParenthesis: true,
-}
+---
+#BasedOnStyle: VisualStudio
+#BreakBeforeBraces: Allman
+#AlignAfterOpenBracket: AlwaysBreak
+#AllowShortIfStatementsOnASingleLine: false
+#AllowShortCaseLabelsOnASingleLine: true
+#AllowShortFunctionsOnASingleLine: true
+#AlwaysBreakTemplateDeclarations: true
+#ConstructorInitializerAllOnOneLineOrOnePerLine: true
+#BinPackParameters: false
+#IndentCaseLabels: false
+#IndentWidth: 4
+#TabWidth: 4
+#UseTab: Never
+#MaxEmptyLinesToKeep: 2
+#PointerAlignment: Left
+#SpaceBeforeInheritanceColon: true
+#SpaceBeforeParens: ControlStatements
+#SpaceBeforeRangeBasedForLoopColon: true
+#SpacesInSquareBrackets: false
+#AllowShortIfStatementsOnASingleLine: false
+#ColumnLimit: 0
+#SpaceInEmptyParentheses: false
+#BreakBeforeClosingBrace: true
+#BreakBeforeClosingParen: true
+#DanglingParenthesis: true

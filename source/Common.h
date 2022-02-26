@@ -118,6 +118,36 @@ template <typename FunctorType>
 DismissableCleanupType<FunctorType> inline DismissableCleanup(FunctorType const& f) { return DismissableCleanupType<FunctorType>(f); }
 
 
+template <typename T>
+class OutputParameter
+{
+public:
+    explicit OutputParameter(T& object)
+    :   p_(&object)
+    {}
+
+    // Disable assignment because it would have totally different semantics then the other operator=
+    // also it is really not needed
+    OutputParameter& operator=(const OutputParameter&) = delete;
+
+    OutputParameter& operator=(T&& object)
+    {
+        *p_ = std::move(object);
+        return *p_;
+    }
+
+private:
+    T* p_;
+};
+
+
+template<typename T>
+OutputParameter<T> Output(T& t)
+{
+    return OutputParameter<T>(t);
+}
+
+
 // Range of iterators that can be used in a ranged for loop.
 template<typename ForwardIteratorType>
 class iterator_range

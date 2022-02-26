@@ -2914,7 +2914,7 @@ MainWindow::DialogProcResult CALLBACK MainWindow::OnNotification(HWND hwnd, int 
                     auto const& drawableObject = drawableObjects_[index];
                     if (drawableObject.IsPointInside(point.x, point.y))
                     {
-                        clickedIndex = index;
+                        clickedIndex = uint32_t(index);
                         break;
                     }
                 }

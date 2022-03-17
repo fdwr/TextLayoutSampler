@@ -1,34 +1,6 @@
-﻿/*
--Custom font fallback
--Custom font collection
--EDIT/RichEdit
--Show red attribute on parse error
-?Character glyph map
-?App translucency
-+Rendering mode
-+GDI AddFontMemResource
-+Add font open dialog for font file
-+Get all characters
-+Add font selection dialog
-+Hit test canvas
-+Pan scroll canvas
-+Font fallback enable/disable
-+Store settings
-+Load settings
-+Transform drawable objects
-+Context menu on drawable objects right-click
-+Drawable object absolute placement
-+Draw labels
-+Reflow drawable objects
-+GDI+ DrawString/MeasureString
-+GDI+ DrawDriverString
-+Show red box on drawing error
-+Draw object background colors and object together
-+Fix user32 DrawText for vertical
-+Save selected font file
-*/
-//----------------------------------------------------------------------------
+﻿//----------------------------------------------------------------------------
 //  History:    2015-06-19 Dwayne Robinson - Created
+//              2022-03-17 Updated for high DPI
 //----------------------------------------------------------------------------
 
 #if USE_CPP_MODULES
@@ -279,6 +251,10 @@ MainWindow::DialogProcResult CALLBACK MainWindow::DialogProc(HWND hwnd, UINT mes
         Resize(IddMainWindow);
         break;
 
+    case WM_DPICHANGED:
+        dpiScaler_.UpdateDpi(hwnd);
+        break;
+
     case WM_KEYDOWN:
         TranslateAccelerator(hwnd, g_accelTable, &Application::g_msg);
         break;
@@ -467,6 +443,8 @@ INT_PTR MainWindow::InitializeMainDialog()
     DefWindowProc(hwnd_, WM_SETICON, ICON_BIG, LPARAM(LoadIcon(Application::g_hModule, MAKEINTRESOURCE(1))));
     SetWindowText(hwnd_, BUILD_TITLE_STRING);
 
+    dpiScaler_.UpdateDpi(hwnd_); // Must be done before resizing.
+
     Edit_LimitText(GetWindowFromId(hwnd_, IdcLog), 1048576);
 
     // Subclass the values edit box for a few reasons.
@@ -586,7 +564,7 @@ void MainWindow::InitializeDrawableObjectsListView()
         // columns to data arrays (including strings) and enumerations than
         // simple numeric values.
         lc.iSubItem = attribute.id;
-        lc.cx = (attribute.IsTypeArray() || attribute.id == 0) ? 120 : 80;
+        lc.cx = dpiScaler_.ScaleSizeX((attribute.IsTypeArray() || attribute.id == 0) ? 120 : 80);
         lc.pszText = const_cast<LPWSTR>(ToWChar(attribute.display));
         ListView_InsertColumn(listViewHwnd, lc.iSubItem, &lc);
     }
@@ -652,8 +630,8 @@ void MainWindow::UpdateDrawableObjectsListView()
 void MainWindow::InitializeAttributesListView()
 {
     const static ListViewColumnInfo columnInfo[] = {
-        { 0, 120, u"Attribute" },
-        { 1, 400, u"Value" },
+        { 0, dpiScaler_.ScaleSizeX(120), u"Attribute" },
+        { 1, dpiScaler_.ScaleSizeX(400), u"Value" },
     };
     auto listViewHwnd = GetWindowFromId(hwnd_, IdcAttributesList);
     ListView_SetExtendedListViewStyle(listViewHwnd, LVS_EX_LABELTIP | LVS_EX_DOUBLEBUFFER | LVS_EX_HEADERDRAGDROP | LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES | LVS_EX_HEADERINALLVIEWS);
@@ -709,8 +687,8 @@ void MainWindow::FillAttributesListView()
 void MainWindow::InitializeAttributeValuesListView()
 {
     const static ListViewColumnInfo columnInfo[] = {
-        { 0, 120, u"Name" },
-        { 1, 400, u"Value" },
+        { 0, dpiScaler_.ScaleSizeX(120), u"Name" },
+        { 1, dpiScaler_.ScaleSizeX(400), u"Value" },
     };
     auto listViewHwnd = GetWindowFromId(hwnd_, IdcAttributeValuesList);
     ListView_SetExtendedListViewStyle(listViewHwnd, LVS_EX_LABELTIP | LVS_EX_DOUBLEBUFFER | LVS_EX_HEADERDRAGDROP | LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES | LVS_EX_HEADERINALLVIEWS);
@@ -3060,9 +3038,12 @@ void MainWindow::Resize(int id)
             hwnd = hwnd_;
             GetClientRect(hwnd, &clientRect);
             if (IsRectEmpty(&clientRect))
+            {
                 return; // Avoid unnecessary resizing logic if minimized.
+            }
 
-            InflateRect(&clientRect, -spacing, -spacing);
+            auto inflatedSpacing = dpiScaler_.ScaleSizeX(spacing);
+            InflateRect(&clientRect, -inflatedSpacing, -inflatedSpacing);
 
             WindowPosition windowPositions[] = {
                 /* 00 */ WindowPosition(GetWindowFromId(hwnd, IdcDrawableObjectListLoad), PositionOptionsAlignTop),
@@ -3100,12 +3081,14 @@ void MainWindow::Resize(int id)
             WindowPosition& windowPositionAttributeValuesList   = windowPositions[22];
 
             // Apply initial overall resizing.
-            WindowPosition::ReflowGrid(windowPositions, uint32_t(countof(windowPositions)), clientRect, spacing, 0, PositionOptionsNone);
-            windowPositionDrawableObjectsList.ClampRect({0x7FFF,340});
-            windowPositionAttributesList.ClampRect({340,340});
-            windowPositionAttributeValuesList.ClampRect({340,340});
-            windowPositionEditText.ClampRect({0x7FFF,160});
-            WindowPosition::ReflowGrid(windowPositions, uint32_t(countof(windowPositions)), clientRect, spacing, 0, PositionOptionsNone);
+            const int32_t attributeListWidth = dpiScaler_.ScaleSizeX(340);
+            const int32_t attributeListHeight = dpiScaler_.ScaleSizeY(340);
+            WindowPosition::ReflowGrid(windowPositions, uint32_t(countof(windowPositions)), clientRect, inflatedSpacing, 0, PositionOptionsNone);
+            windowPositionDrawableObjectsList.ClampRect({0x7FFF,attributeListWidth});
+            windowPositionAttributesList.ClampRect({attributeListHeight,attributeListWidth});
+            windowPositionAttributeValuesList.ClampRect({attributeListHeight,attributeListWidth});
+            windowPositionEditText.ClampRect({0x7FFF, dpiScaler_.ScaleSizeY(160)});
+            WindowPosition::ReflowGrid(windowPositions, uint32_t(countof(windowPositions)), clientRect, inflatedSpacing, 0, PositionOptionsNone);
 
             // Resize the objects edit and list controls.
             RECT attributesRect = windowPositionAttributesList.rect;
@@ -3119,9 +3102,11 @@ void MainWindow::Resize(int id)
             #if 0 // todo::: enable slider for variable fonts.
             windowPositionAttributeValuesSlider.options &= ~PositionOptionsIgnored;
             #endif
+
             windowPositionAttributeValuesList.SetOptions(PositionOptionsFillHeight, PositionOptionsAlignVMask | PositionOptionsUseSlackHeight);
             WindowPosition::ReflowGrid(&windowPositionAttributeValuesEdit, 3, attributeValuesRect, /*spacing*/0, 0, PositionOptionsFlowVertical | PositionOptionsUnwrapped);
-            windowPositionAttributeValuesEdit.ClampRect({0x7FFF, (GetWindowStyle(windowPositionAttributeValuesEdit.hwnd) & ES_MULTILINE) ? 48*3/2 : 12*3/2});
+            int windowPositionAttributeValuesEditHeight = (GetWindowStyle(windowPositionAttributeValuesEdit.hwnd) & ES_MULTILINE) ? 48*3/2 : 12*3/2;
+            windowPositionAttributeValuesEdit.ClampRect({0x7FFF, dpiScaler_.ScaleSizeX(windowPositionAttributeValuesEditHeight)});
             WindowPosition::ReflowGrid(&windowPositionAttributeValuesEdit, 3, attributeValuesRect, /*spacing*/0, 0, PositionOptionsFlowVertical | PositionOptionsUnwrapped);
 
             WindowPosition::Update(windowPositions, uint32_t(countof(windowPositions)));

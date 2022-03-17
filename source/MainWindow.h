@@ -4,6 +4,31 @@
 #pragma once
 
 
+struct WindowDpiScaler
+{
+    int32_t dpiX = 96;
+    int32_t dpiY = 96;
+
+    void UpdateDpi(HWND hwnd)
+    {
+        // Ideally we'd support multiple monitors of varying DPI's...
+        //
+        //      HMONITOR monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+        //      HRESULT GetDpiForMonitor(honitor, MDT_EFFECTIVE_DPI, &dpiX, &dpiY);
+        //
+        // But GetDpiForMonitor is unavailable on Windows 7.
+        // So hopefully an HDC suitable for the current window is good enough:
+
+        HDC hdc = GetDC(hwnd);
+        dpiX = GetDeviceCaps(hdc, LOGPIXELSX);
+        dpiY = GetDeviceCaps(hdc, LOGPIXELSY);
+        ReleaseDC(hwnd, hdc);
+    }
+
+    int32_t ScaleSizeX(int value) {return value * dpiX / 96;};
+    int32_t ScaleSizeY(int value) {return value * dpiY / 96;};
+};
+
 class MainWindow
 {
 public:
@@ -165,6 +190,7 @@ protected:
     std::u16string selectedAttributeValue_;
     std::u16string previousSettingsFilePath_;
     TextEscapeMode textEscapeMode_ = TextEscapeModeNone;
+    WindowDpiScaler dpiScaler_;
 
     std::vector<DrawableObjectAndValues> drawableObjects_;
 };

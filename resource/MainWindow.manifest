@@ -2,10 +2,10 @@
 <assembly xmlns='urn:schemas-microsoft-com:asm.v1' manifestVersion='1.0'>
   <assemblyIdentity
    version="1.0.0.0"
-   name="LayoutTest"
+   name="TextLayoutSampler"
    type="win32"
   />
-  <description>Various tests of DWrite's TextLayout</description>
+  <description>Displays various Windows text rendering API's (GDI, GDI+, DWrite, Direct2D)</description>
   <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
     <security>
       <requestedPrivileges>

@@ -11,9 +11,9 @@
 #include <string>
 
 #if USE_CPP_MODULES
+    export module Common.ListSubstringPrioritizer;
     import Common.ArrayRef;
     import Common.String;
-    export module Common.ListSubstringPrioritizer;
     export
     {
         #include "Common.ListSubstringPrioritizer.h"

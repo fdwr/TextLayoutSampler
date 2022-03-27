@@ -11,9 +11,9 @@
 #include "precomp.h"
 
 #if USE_CPP_MODULES
+    export module TextTreeParser;
     import Common.String;
     import Common.ArrayRef;
-    export module TextTreeParser;
     export
     {
         #include "TextTreeParser.h"

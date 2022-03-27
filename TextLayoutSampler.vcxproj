@@ -148,12 +148,18 @@
       <PrecompiledHeader>Create</PrecompiledHeader>
       <PreprocessToFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</PreprocessToFile>
     </ClCompile>
-    <ClCompile Include="source/Common.ArrayRef.ixx" />
+    <ClCompile Include="source/Common.ArrayRef.ixx">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="source/Common.String.ixx" />
-    <ClCompile Include="source/Common.Variant.ixx" />
+    <ClCompile Include="source/Common.Variant.ixx">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="source/Common.AutoResource.ixx" />
     <ClCompile Include="source/Common.AutoResource.Windows.ixx" />
-    <ClCompile Include="source/Common.FastVector.ixx" />
+    <ClCompile Include="source/Common.FastVector.ixx">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="source/Common.OptionalValue.ixx" />
     <ClCompile Include="source/Common.ListSubstringPrioritizer.ixx" />
     <ClCompile Include="source/Common.cpp" />

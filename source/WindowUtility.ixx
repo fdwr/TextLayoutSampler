@@ -9,11 +9,11 @@
 #include "precomp.h"
 
 #if USE_CPP_MODULES
+    export module WindowUtility;
     import Common.String;
     import Common.ArrayRef;
     import Common.AutoResource;
     import Common.AutoResource.Windows;
-    export module WindowUtility;
     export
     {
         #include "WindowUtility.h"

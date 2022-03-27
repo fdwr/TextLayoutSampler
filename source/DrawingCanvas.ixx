@@ -20,11 +20,11 @@
 #pragma comment(lib, "WindowsCodecs.lib")
 
 #if USE_CPP_MODULES
+    export module DrawingCanvas;
     import Common.String;
     import Common.AutoResource;
     import Common.AutoResource.Windows;
     import DWritEx;
-    export module DrawingCanvas;
     export
     {
         #include "DrawingCanvas.h"

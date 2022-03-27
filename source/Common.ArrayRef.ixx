@@ -7,8 +7,6 @@
     module;
 #endif
 
-#include "precomp.h"
-
 #include <array>
 #include <stdint.h>
 #include <initializer_list>

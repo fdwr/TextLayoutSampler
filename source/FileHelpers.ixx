@@ -5,7 +5,7 @@
 //----------------------------------------------------------------------------
 
 #if USE_CPP_MODULES
-module;
+    module;
 #endif
 
 #include "precomp.h"
@@ -15,14 +15,12 @@ module;
 #include <Shlwapi.h>
 #include <stdint.h>
 
-#pragma comment(lib, "Shlwapi.lib")
-
 #if USE_CPP_MODULES
+    export module FileHelpers;
     import Common.String;
     import Common.ArrayRef;
     import Common.AutoResource;
     import Common.AutoResource.Windows;
-    export module FileHelpers;
     export
     {
         #include "FileHelpers.h"
@@ -35,6 +33,7 @@ module;
     #include "FileHelpers.h"
 #endif
 
+#pragma comment(lib, "Shlwapi.lib")
 
 ////////////////////////////////////////
 

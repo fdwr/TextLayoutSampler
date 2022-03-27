@@ -71,7 +71,7 @@ char16_t const* SkipToEnd(_In_z_ char16_t const* stringValue) noexcept;
 _Out_range_(0, utf32text.end_ - utf32text.begin_)
 size_t ConvertTextUtf16ToUtf32(
     array_ref<char16_t const> utf16text,
-    OUT array_ref<char32_t> utf32text,
+    /*out*/ array_ref<char32_t> utf32text,
     _Out_opt_ size_t* sourceCount
     ) noexcept;
 
@@ -79,26 +79,26 @@ size_t ConvertTextUtf16ToUtf32(
 _Out_range_(0, utf32text.end_ - utf32text.begin_)
 size_t ConvertTextUtf16ToUtf32NoReplacement(
     array_ref<char16_t const> utf16text,
-    OUT array_ref<char32_t> utf32text,
+    /*out*/ array_ref<char32_t> utf32text,
     _Out_opt_ size_t* sourceCount
     ) noexcept;
 
 _Out_range_(0, return)
 size_t ConvertUtf32ToUtf16(
     array_ref<char32_t const> utf32text,
-    OUT array_ref<char16_t> utf16text
+    /*out*/ array_ref<char16_t> utf16text
     ) noexcept;
 
 // Consumes the byte order mark.
 void ConvertTextUtf8ToUtf16(
     array_ref<char const> utf8text,
-    OUT std::u16string& utf16text
+    /*out*/ std::u16string& utf16text
     );
 
 // Prepends a byte order mark.
 void ConvertTextUtf16ToUtf8(
     array_ref<char16_t const> utf16text,
-    OUT std::string& utf8text
+    /*out*/ std::string& utf8text
     );
 
 void GetFormattedString(_Inout_ std::u16string& returnString, bool shouldConcatenate, _In_z_ const char16_t* formatString, va_list vargs);
@@ -107,14 +107,14 @@ void AppendFormattedString(_Inout_ std::u16string& returnString, _In_z_ const ch
 void TrimSpaces(_Inout_ std::u16string& text);
 void UnquoteString(_Inout_ std::u16string& path);
 void ToUpperCase(_Inout_ array_ref<char16_t> s);
-void UnescapeCppUniversalCharacterNames(array_ref<char16_t const> escapedText, OUT std::u16string& expandedText);
-void UnescapeHtmlNamedCharacterReferences(array_ref<char16_t const> escapedText, OUT std::u16string& expandedText);
-void EscapeCppUniversalCharacterNames(array_ref<char16_t const> text, OUT std::u16string& escapedText);
-void EscapeHtmlNamedCharacterReferences(array_ref<char16_t const> text, OUT std::u16string& escapedText);
+void UnescapeCppUniversalCharacterNames(array_ref<char16_t const> escapedText, /*out*/ std::u16string& expandedText);
+void UnescapeHtmlNamedCharacterReferences(array_ref<char16_t const> escapedText, /*out*/ std::u16string& expandedText);
+void EscapeCppUniversalCharacterNames(array_ref<char16_t const> text, /*out*/ std::u16string& escapedText);
+void EscapeHtmlNamedCharacterReferences(array_ref<char16_t const> text, /*out*/ std::u16string& escapedText);
 void RemoveTrailingZeroes(_Inout_ std::u16string& text) noexcept;
-void WriteZeroPaddedHexNum(uint32_t value, OUT array_ref<char16_t> buffer);
+void WriteZeroPaddedHexNum(uint32_t value, /*out*/ array_ref<char16_t> buffer);
 uint32_t ReadUnsignedNumericValue(_Inout_ array_ref<char16_t const>& text, uint32_t base); // Unlike wcstoul, respects length limit, and doesn't throw exception!
-array_ref<wchar_t> ToWString(int32_t value, OUT array_ref<wchar_t> s);
+array_ref<wchar_t> ToWString(int32_t value, /*out*/ array_ref<wchar_t> s);
 
 static_assert(sizeof(wchar_t) == sizeof(char16_t), "These casts only work on platforms where wchar_t is 16 bits.");
 inline wchar_t* ToWChar(char16_t* p) { return reinterpret_cast<wchar_t*>(p); }

@@ -9,11 +9,11 @@
 #include "precomp.h"
 
 #if USE_CPP_MODULES
+    export module Attributes;
     import Common.String;
     import Common.ArrayRef;
     import Common.OptionalValue;
     import Common.ListSubstringPrioritizer;
-    export module Attributes;
     export
     {
         #include "Attributes.h"

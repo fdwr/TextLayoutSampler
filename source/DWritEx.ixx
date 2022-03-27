@@ -25,11 +25,11 @@
 #pragma comment(lib, "DWrite.lib")
 
 #if USE_CPP_MODULES
+    export module DWritEx;
     import Common.ArrayRef;
     import Common.String;
     import FileHelpers;
     import Common.AutoResource.Windows;
-    export module DWritEx;
     export
     {
         #include "DWritEx.h"

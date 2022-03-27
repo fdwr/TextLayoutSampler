@@ -8,8 +8,6 @@
     module;
 #endif
 
-#include "precomp.h"
-
 #define _ENABLE_EXTENDED_ALIGNED_STORAGE // For the SseSizedType case, which is > max_align_t.
 #define _SCL_SECURE_NO_WARNINGS // I hate doing this, but Visual Studio offers no substitute for std::uninitialized_copy.
 
@@ -18,11 +16,11 @@
 #include <assert.h>
 #include <algorithm>
 #include <stdexcept>
+#include <vector>
 
 #if USE_CPP_MODULES
-    //import std.core;
-    import Common.ArrayRef;
     export module Common.FastVector;
+    import Common.ArrayRef;
     export
     {
         #include "Common.FastVector.h"

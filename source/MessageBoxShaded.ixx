@@ -23,10 +23,10 @@
 #include <Windows.h>
 
 #if USE_CPP_MODULES
+    export module MessageBoxShaded;
     import Common.ArrayRef;
     import Common.String;
     import WindowUtility;
-    export module MessageBoxShaded;
     export
     {
         #include "MessageBoxShaded.h"

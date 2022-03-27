@@ -13,6 +13,7 @@
 #include "WindowUtility.macros.h"
 
 #if USE_CPP_MODULES
+    export module MainWindow;
     import Common.ArrayRef;
     import Common.String;
     import Common.AutoResource;
@@ -27,7 +28,6 @@
     import Application;
     import DrawableObjectAndValues;
     import TextTreeParser; // for DrawableObjectAndValues
-    export module MainWindow;
     export
     {
         #include "MainWindow.h"

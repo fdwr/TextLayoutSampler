@@ -11,8 +11,8 @@
 #include "Application.macros.h"
 
 #if USE_CPP_MODULES
-    import Common.String;
     export module Application;
+    import Common.String;
     export
     {
         #include "Application.h"

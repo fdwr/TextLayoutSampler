@@ -10,6 +10,7 @@
 #include "precomp.h"
 
 #if USE_CPP_MODULES
+    export module DrawableObjectAndValues;
     import Common.ListSubstringPrioritizer;
     import Common.AutoResource;
     import Common.AutoResource.Windows;
@@ -19,7 +20,6 @@
     import DrawingCanvas;
     import DrawableObject;
     import TextTreeParser;
-    export module DrawableObjectAndValues;
     export
     {
         #include "DrawableObjectAndValues.h"

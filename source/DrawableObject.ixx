@@ -13,6 +13,7 @@
 #include "precomp.h"
 
 #if USE_CPP_MODULES
+    export module DrawableObject;
     import Common.ArrayRef;
     import Common.String;
     import Common.AutoResource;
@@ -22,7 +23,6 @@
     import Attributes;
     import DrawingCanvas;
     import DWritEx;
-    export module DrawableObject;
     export
     {
         #include "DrawableObject.h"

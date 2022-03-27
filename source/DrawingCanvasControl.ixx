@@ -10,8 +10,8 @@
 #include "precomp.h"
 
 #if USE_CPP_MODULES
-    import DrawingCanvas;
     export module DrawingCanvasControl;
+    import DrawingCanvas;
     export
     {
         #include "DrawingCanvasControl.h"

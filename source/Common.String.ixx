@@ -9,10 +9,18 @@
 #endif
 
 #include "precomp.h"
+//#include <sal.h>
+//#include <string>
+//#define WIN32_LEAN_AND_MEAN // Exclude rarely-used stuff from Windows headers
+//#define NOMINMAX
+//#define NOSERVICE
+//#define NOMCX
+//#define NOIME
+//#include <windows.h> // TODO: Remove. Only needed for MultiByteToWideChar.
 
 #if USE_CPP_MODULES
-    import Common.ArrayRef;
     export module Common.String;
+    import Common.ArrayRef;
     export
     {
         #include "Common.String.h"
@@ -79,7 +87,7 @@ void RemoveTrailingZeroes(std::u16string& text) noexcept
 }
 
 
-array_ref<wchar_t> ToWString(int32_t value, OUT array_ref<wchar_t> s)
+array_ref<wchar_t> ToWString(int32_t value, /*out*/ array_ref<wchar_t> s)
 {
     auto charactersWritten = swprintf_s(s.data(), s.size(), L"%d", value);
     return make_array_ref(s.data(), std::max(charactersWritten, 0));
@@ -87,7 +95,7 @@ array_ref<wchar_t> ToWString(int32_t value, OUT array_ref<wchar_t> s)
 
 
 // Fills the entire buffer up to fixed size, including leading zeroes.
-void WriteZeroPaddedHexNum(uint32_t value, OUT array_ref<char16_t> text)
+void WriteZeroPaddedHexNum(uint32_t value, /*out*/ array_ref<char16_t> text)
 {
     // Convert character to digits.
     while (!text.empty())
@@ -173,7 +181,7 @@ void GetFormattedString(_Out_ std::u16string& returnString, _In_z_ const char16_
 {
     va_list vargs = nullptr;
     va_start(vargs, formatString); // initialize variable arguments
-    GetFormattedString(OUT returnString, /*shouldConcatenate*/false, formatString, vargs);
+    GetFormattedString(/*out*/ returnString, /*shouldConcatenate*/false, formatString, vargs);
     va_end(vargs); // Reset variable arguments
 }
 
@@ -182,7 +190,7 @@ void AppendFormattedString(_Inout_ std::u16string& returnString, _In_z_ const ch
 {
     va_list vargs = nullptr;
     va_start(vargs, formatString); // initialize variable arguments
-    GetFormattedString(OUT returnString, /*shouldConcatenate*/true, formatString, vargs);
+    GetFormattedString(/*out*/ returnString, /*shouldConcatenate*/true, formatString, vargs);
     va_end(vargs); // Reset variable arguments
 }
 
@@ -245,7 +253,7 @@ void ToUpperCase(_Inout_ array_ref<char16_t> s)
 
 void UnescapeCppUniversalCharacterNames(
     array_ref<char16_t const> escapedText,
-    OUT std::u16string& expandedText
+    /*out*/ std::u16string& expandedText
     )
 {
     expandedText.clear();
@@ -287,7 +295,7 @@ void UnescapeCppUniversalCharacterNames(
                     // Parse the number.
                     if (digitSpan.size() >= expectedHexSequenceLength)
                     {
-                        char32_t hexValue = ReadUnsignedNumericValue(IN OUT digitSpan, 16);
+                        char32_t hexValue = ReadUnsignedNumericValue(IN /*out*/ digitSpan, 16);
                         if (digitSpan.empty()) // Completely read the sequence.
                         {
                             replacement = hexValue;
@@ -320,7 +328,7 @@ void UnescapeCppUniversalCharacterNames(
 }
 
 
-void UnescapeHtmlNamedCharacterReferences(array_ref<char16_t const> escapedText, OUT std::u16string& expandedText)
+void UnescapeHtmlNamedCharacterReferences(array_ref<char16_t const> escapedText, /*out*/ std::u16string& expandedText)
 {
     expandedText.clear();
     expandedText.reserve(escapedText.size());
@@ -351,7 +359,7 @@ void UnescapeHtmlNamedCharacterReferences(array_ref<char16_t const> escapedText,
 
                 // Parse the number, and replacing on error with just a '\' to preserve original text.
                 array_ref<char16_t const> digitSpan = {escapeStart, escapedText.end()};
-                replacement = ReadUnsignedNumericValue(IN OUT digitSpan, radix);
+                replacement = ReadUnsignedNumericValue(/*inout*/ digitSpan, radix);
 
                 // Successful if the digits were not empty and a semicolon was present.
                 if (digitSpan.begin() > escapedText.begin() && !digitSpan.empty() && digitSpan.front() == ';')
@@ -384,7 +392,7 @@ void UnescapeHtmlNamedCharacterReferences(array_ref<char16_t const> escapedText,
 
 void EscapeCppUniversalCharacterNames(
     array_ref<char16_t const> text,
-    OUT std::u16string& escapedText
+    /*out*/ std::u16string& escapedText
     )
 {
     constexpr size_t escapePrefixLength = 2; // \u or \U
@@ -405,12 +413,12 @@ void EscapeCppUniversalCharacterNames(
         if (IsCharacterBeyondBmp(ch))
         {
             // Write surrogate pair.
-            WriteZeroPaddedHexNum(ch, OUT longDigitRange);
+            WriteZeroPaddedHexNum(ch, /*out*/ longDigitRange);
             escapedText.insert(escapedText.size(), longEscapedSequence, std::size(longEscapedSequence));
         }
         else // Single UTF-16 code unit.
         {
-            WriteZeroPaddedHexNum(ch, OUT shortDigitRange);
+            WriteZeroPaddedHexNum(ch, /*out*/ shortDigitRange);
             escapedText.insert(escapedText.size(), shortEscapedSequence, std::size(shortEscapedSequence));
         }
     }
@@ -419,7 +427,7 @@ void EscapeCppUniversalCharacterNames(
 
 void EscapeHtmlNamedCharacterReferences(
     array_ref<char16_t const> text,
-    OUT std::u16string& escapedText
+    /*out*/ std::u16string& escapedText
     )
 {
     constexpr size_t escapePrefixLength = 3; // &#x
@@ -441,12 +449,12 @@ void EscapeHtmlNamedCharacterReferences(
         if (IsCharacterBeyondBmp(ch))
         {
             // Write surrogate pair.
-            WriteZeroPaddedHexNum(ch, OUT longDigitRange);
+            WriteZeroPaddedHexNum(ch, /*out*/ longDigitRange);
             escapedText.insert(escapedText.size(), longEscapedSequence, std::size(longEscapedSequence));
         }
         else // Single UTF-16 code unit.
         {
-            WriteZeroPaddedHexNum(ch, OUT shortDigitRange);
+            WriteZeroPaddedHexNum(ch, /*out*/ shortDigitRange);
             escapedText.insert(escapedText.size(), shortEscapedSequence, std::size(shortEscapedSequence));
         }
     }
@@ -456,7 +464,7 @@ void EscapeHtmlNamedCharacterReferences(
 _Out_range_(0, utf32text.end_ - utf32text.begin_)
 size_t ConvertTextUtf16ToUtf32(
     array_ref<char16_t const> utf16text,
-    OUT array_ref<char32_t> utf32text,
+    /*out*/ array_ref<char32_t> utf32text,
     _Out_opt_ size_t* sourceCount
     ) noexcept
 {
@@ -491,7 +499,7 @@ size_t ConvertTextUtf16ToUtf32(
 _Out_range_(0, utf32text.end_ - utf32text.begin_)
 size_t ConvertTextUtf16ToUtf32NoReplacement(
     array_ref<char16_t const> utf16text,
-    OUT array_ref<char32_t> utf32text,
+    /*out*/ array_ref<char32_t> utf32text,
     _Out_opt_ size_t* sourceCount
     ) noexcept
 {
@@ -517,7 +525,7 @@ size_t ConvertTextUtf16ToUtf32NoReplacement(
 _Out_range_(0, destMax)
 size_t ConvertUtf32ToUtf16(
     array_ref<char32_t const> utf32text,
-    OUT array_ref<char16_t> utf16text
+    /*out*/ array_ref<char16_t> utf16text
     ) noexcept
 {
     size_t si = 0, di = 0;
@@ -561,7 +569,7 @@ namespace
 
 void ConvertTextUtf8ToUtf16(
     array_ref<char const> utf8text,
-    OUT std::u16string& utf16text
+    /*out*/ std::u16string& utf16text
     )
 {
     // This function can only throw if out-of-memory when resizing utf16text.
@@ -584,7 +592,7 @@ void ConvertTextUtf8ToUtf16(
         0, // no flags for UTF8 (we allow invalid characters for testing)
         (LPCSTR)&utf8text[startingOffset],
         int32_t(utf8text.size() - startingOffset),
-        OUT ToWChar(const_cast<char16_t*>(utf16text.data())), // workaround issue http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-active.html#2391
+         /*out*/ ToWChar(const_cast<char16_t*>(utf16text.data())), // workaround issue http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-active.html#2391
         int32_t(utf16text.size())
         );
 
@@ -595,7 +603,7 @@ void ConvertTextUtf8ToUtf16(
 
 void ConvertTextUtf16ToUtf8(
     array_ref<char16_t const> utf16text,
-    OUT std::string& utf8text
+    /*out*/ std::string& utf8text
     )
 {
     utf8text.clear();
@@ -616,7 +624,7 @@ void ConvertTextUtf16ToUtf8(
     // If no characters were converted (or if overflow), return empty string.
     if (charsConverted <= 0)
         return;
-    auto const bomCount = countof(utf8bom);
+    auto const bomCount = sizeof(utf8bom);
     auto totalLength = charsConverted + bomCount;
     if (uint32_t(charsConverted) <= bomCount)
         return;
@@ -631,7 +639,7 @@ void ConvertTextUtf16ToUtf8(
         0, // no flags for UTF8 (we allow invalid characters for testing)
         ToWChar(utf16text.data()),
         int32_t(utf16text.size()),
-        OUT &utf8text[bomCount],
+        /*out*/ &utf8text[bomCount],
         int32_t(utf8text.size() - bomCount),
         nullptr, // defaultChar
         nullptr // usedDefaultChar

@@ -5,8 +5,8 @@
 #include "precomp.h"
 
 #if USE_CPP_MODULES
-    import Common.AutoResource;
     export module Common.AutoResource.Windows;
+    import Common.AutoResource;
     export
     {
         #include "Common.AutoResource.Windows.h"

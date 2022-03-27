@@ -219,7 +219,7 @@ struct AttributeValue
 //   any escape sequences).
 // - The implementation may store the backing values however it wants, but
 //   utilizing AttributeValue is convenient.
-interface IAttributeSource
+struct IAttributeSource
 {
 public:
     ////////////////////////////////////////

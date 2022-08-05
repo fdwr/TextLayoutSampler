@@ -568,9 +568,11 @@ HRESULT CreateFontCollection(
     }
     else
     {
+        IDWriteFontFileEnumerator** enumeratorAddress = &fontFileEnumerator;
+
         // Pass the address of the enumerator as the unique key.
         IFR(factory->RegisterFontCollectionLoader(CustomFontCollectionLoader::GetInstance()));
-        hr = factory->CreateCustomFontCollection(CustomFontCollectionLoader::GetInstance(), fontFileEnumerator, sizeof(fontFileEnumerator), OUT fontCollection);
+        hr = factory->CreateCustomFontCollection(CustomFontCollectionLoader::GetInstance(), enumeratorAddress, sizeof(enumeratorAddress), OUT fontCollection);
         IFR(factory->UnregisterFontCollectionLoader(CustomFontCollectionLoader::GetInstance()));
     }
 
@@ -590,10 +592,9 @@ HRESULT CreateFontCollection(
 
     CustomCollectionLocalFontFileEnumerator enumerator;
     IFR(enumerator.Initialize(factory, fontFileNames, fontFileNamesSize));
-    auto* enumeratorAddress = static_cast<IDWriteFontFileEnumerator*>(&enumerator);
-    enumeratorAddress->AddRef();
+    enumerator.AddRef();
 
-    return CreateFontCollection(factory, fontFamilyModel, enumeratorAddress, OUT fontCollection);
+    return CreateFontCollection(factory, fontFamilyModel, &enumerator, OUT fontCollection);
 }
 
 
@@ -609,9 +610,9 @@ HRESULT CreateFontCollection(
 
     CustomCollectionFontFileEnumerator enumerator;
     IFR(enumerator.Initialize(factory, fontFiles, fontFilesCount));
-    auto* enumeratorAddress = static_cast<IDWriteFontFileEnumerator*>(&enumerator);
+    enumerator.AddRef();
 
-    return CreateFontCollection(factory, fontFamilyModel, enumeratorAddress, OUT fontCollection);
+    return CreateFontCollection(factory, fontFamilyModel, &enumerator, OUT fontCollection);
 }
 
 

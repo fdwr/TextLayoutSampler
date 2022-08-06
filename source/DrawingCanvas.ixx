@@ -124,8 +124,8 @@ float GetDeterminant(_In_ DX_MATRIX_3X2F const& matrix)
 D2D_POINT_2F TransformPoint(DX_MATRIX_3X2F const& matrix, D2D_POINT_2F point)
 {
     return {
-        point.x * matrix.xx + point.x * matrix.yx + matrix.dx,
-        point.y * matrix.yy + point.y * matrix.xy + matrix.dy
+        point.x * matrix.xx + point.y * matrix.yx + matrix.dx,
+        point.y * matrix.yy + point.x * matrix.xy + matrix.dy
         };
 }
 

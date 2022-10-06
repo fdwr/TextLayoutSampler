@@ -147,7 +147,10 @@ public:
     template<typename NewType> array_ref<NewType> reinterpret_as()
     {
         size_type adjustedByteSize = size_in_bytes();
-        adjustedByteSize -= adjustedByteSize % sizeof(NewType);
+        if constexpr (sizeof(NewType) != sizeof(T))
+        {
+            adjustedByteSize -= adjustedByteSize % sizeof(NewType);
+        }
         return array_ref<NewType>(
             reinterpret_cast<NewType*>(begin_),
             reinterpret_cast<NewType*>(to_byte_pointer(begin_) + adjustedByteSize)
@@ -241,11 +244,11 @@ array_ref<T> make_array_ref(T* begin, T* end)
 }
 
 template <typename ContiguousContainer>
-auto make_array_ref(ContiguousContainer& container) -> array_ref<typename std::remove_reference<decltype(*std::begin(container))>::type>
+auto make_array_ref(ContiguousContainer& container) -> array_ref<typename std::remove_reference<decltype(*std::data(container))>::type>
 {
     // The remove_reference is necessary because decltype retains the reference
     // from std::vector's dereferenced iterator.
-    using ArrayRefType = typename std::remove_reference<decltype(*std::begin(container))>::type;
+    using ArrayRefType = typename std::remove_reference<decltype(*std::data(container))>::type;
     return array_ref<ArrayRefType>(container);
 }
 

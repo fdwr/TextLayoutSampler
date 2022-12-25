@@ -41,6 +41,8 @@
 #define NOIME
 #endif
 
+#define BUILD_WINDOWS
+
 #define _ENABLE_EXTENDED_ALIGNED_STORAGE // For the SseSizedType case, which is > max_align_t.
 #define _SCL_SECURE_NO_WARNINGS // I hate doing this, but Visual Studio offers no substitute for std::uninitialized_copy.
 

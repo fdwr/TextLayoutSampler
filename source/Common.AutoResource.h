@@ -1,8 +1,11 @@
 //+---------------------------------------------------------------------------
 //  Automatic resource management helper class.
 //
-//  History:    2007-07-30   Dwayne Robinson - Created
-//              2014-10-06   Dwayne Robinson - Changed to template typedefs
+//  History:    2007-07-30   Dwayne Robinson - created
+//              2009-12-16   Dwayne Robinson - Updated to support __cdecl too (fclose)
+//              2010-07-08   Dwayne Robinson - Updated to handle ref counting policies
+//              2014-10-06   Dwayne Robinson - changed to template typedefs
+//
 //----------------------------------------------------------------------------
 #pragma once
 
@@ -17,9 +20,9 @@
 // a reference to it, or zero-initialized. The resource type itself should generally be a simple
 // trivially copyable thing such as a pointer or handle type.
 template <typename ResourceType = void*> // type of the resource held onto
-struct DefaultResourceTypePolicy
+struct AutoResourceDefaultPolicy
 {
-    inline static void InitializeEmpty(_Out_ ResourceType* resource) noexcept
+    inline static void InitializeEmpty(/*out*/ ResourceType* resource) noexcept
     {
         // Most resources (pointers to memory, HGLOBALS, HGDIOBJ...)
         // are indicated as empty by setting to 0/NULL. If a resource
@@ -63,7 +66,7 @@ struct DefaultResourceTypePolicy
 // depending on the policy implementation).
 template <
     typename ResourceType = void*, // type of the resource held onto
-    typename ResourceTypePolicy = DefaultResourceTypePolicy<ResourceType>,
+    typename ResourceTypePolicy = AutoResourceDefaultPolicy<ResourceType>,
     typename BaseResourceType = ResourceType // type as known by the resource releaser (like HGDIOBJ vs HBITMAP)
     >
 class AutoResource
@@ -86,9 +89,11 @@ public:
         ResourceTypePolicy::Acquire(resource_);
     }
 
-    AutoResource(Self&& other)
+    AutoResource(Self&& /*moveable*/ other)
+    :   resource_(other.resource_)
     {
-        resource_ = other.resource_;
+        // Just reset the other resource without changing the initialization
+        // state or reference count.
         ResourceTypePolicy::InitializeEmpty(Cast(&other.resource_));
     }
 
@@ -206,7 +211,7 @@ public:
         return *this;
     }
 
-    inline Self& operator=(const Self& other)
+    inline Self& operator=(Self const& other)
     {
         static_assert(ResourceTypePolicy::AllowsMultipleReferences, "This function is only useable on resource types that allow multiple strong references.");
         Set(other.resource_);
@@ -300,7 +305,7 @@ public:
         Set(resource);
     }
 
-    // there is no 'release' alias, since the C++ auto_ptr does something
+    // There is no release() function, since the C++ auto_ptr does something
     // different than typically expected (detaches rather than frees).
 
 protected:
@@ -320,7 +325,9 @@ protected:
         return reinterpret_cast<BaseResourceType*>(resource);
     }
 
-    ResourceType resource_; // could be void*, HANDLE, FILE*, GDIOBJ...
+    // Specific resource type, such as void*, HANDLE, FILE*, GDIOBJ...
+    // It is expected to be a simple data type with no copy constructors.
+    ResourceType resource_;
 };
 
 
@@ -350,7 +357,7 @@ namespace std
 static_assert(sizeof(int*) == sizeof(void*), "Expect all pointers have same size, such as void* and resourceType*");
 
 template <typename ResourceType>
-struct UnownedMemoryPointerPolicy : public DefaultResourceTypePolicy<ResourceType>
+struct UnownedMemoryPointerPolicy : public AutoResourceDefaultPolicy<ResourceType>
 {
     // Allow multiple references because the non-owning AutoResource does not strongly hold it anyway.
     static const bool AllowsMultipleReferences = true;
@@ -367,7 +374,7 @@ using UnownedMemoryPointer = AutoResource<ResourceType*, UnownedMemoryPointerPol
 // Steal'ing from another, or by Detach/Attach.
 
 template <typename ResourceType>
-struct OwnedMemoryPointerPolicy : public DefaultResourceTypePolicy<ResourceType>
+struct OwnedMemoryPointerPolicy : public AutoResourceDefaultPolicy<ResourceType>
 {
     inline static void Release(ResourceType resource) noexcept
     {

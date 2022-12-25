@@ -493,6 +493,38 @@ INT_PTR MainWindow::InitializeMainDialog()
     }
     SetFocus(GetWindowFromId(hwnd_, controlIdToSetFocusTo));
 
+    // For Windows 7, set toolbar button labels to older font characters before Segoe UI Symbol.
+    DWORD majorWindowsVersion = LOBYTE(LOWORD(GetVersion()));
+    // GetVersion() is deprecated because it was badly designed and error-prone, but then they messed up and replaced
+    // a *slightly* error-prone function with a *much more* complicated function like VerifyVersionInfo, where far more
+    // can go wrong. Yeah, forget you, whoever poorly designed the versioning API's. We're sticking with the simpler
+    // one here.
+    if (majorWindowsVersion <= 7)
+    {
+        struct ControlIdAndText
+        {
+            int id;
+            wchar_t const* text;
+        };
+        ControlIdAndText idsAndText[] =
+        {
+            {IdcDrawableObjectListLoad, L"Load"},
+            {IdcDrawableObjectListStore, L"Save"},
+            {IdcDrawableObjectCreate, L"+"},
+            {IdcDrawableObjectDelete, L"-"},
+            {IdcDrawableObjectCreatePermutations, L"Pm"},
+            {IdcSelectFontFile, L"File"},
+            // Already okay:
+            // IdcDrawableObjectMoveUp
+            // IdcDrawableObjectMoveDown
+            // IdcSelectFontFamily
+        };
+        for (auto& idAndText : idsAndText)
+        {
+            SetWindowText(GetWindowFromId(hwnd_, idAndText.id), idAndText.text);
+        }
+    }
+
 #if 0 // hack for debugging animating objects.
     SetTimer(hwnd_, IdcUpdateUi + 1, 10, nullptr);
 #endif

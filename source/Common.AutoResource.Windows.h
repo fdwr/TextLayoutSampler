@@ -1,3 +1,8 @@
+//----------------------------------------------------------------------------
+//
+//  2015-12-16   dwayner    Split Windows specific stuff from AutoResource.h
+//
+//----------------------------------------------------------------------------
 #pragma once
 
 template <
@@ -5,7 +10,7 @@ template <
     typename ResourceReleaserSignature,         // function prototype of the releasing function
     ResourceReleaserSignature ResourceReleaser  // address of function to release object
 >
-struct HandleResourceTypePolicy : public DefaultResourceTypePolicy<ResourceType>
+struct AutoResourceHandlePolicy : public AutoResourceDefaultPolicy<ResourceType>
 {
     inline static void Release(ResourceType resource) noexcept
     {
@@ -19,7 +24,6 @@ struct HandleResourceTypePolicy : public DefaultResourceTypePolicy<ResourceType>
     static const bool AllowsMultipleReferences = false;
 };
 
-
 // Releasing function for WaitHandleResource to pass to use with HandleResourceTypePolicy.
 inline void WaitHandleUnregister(HANDLE handle) noexcept
 {
@@ -29,28 +33,40 @@ inline void WaitHandleUnregister(HANDLE handle) noexcept
     }
 }
 
+using GdiDeviceContext      = AutoResource<HDC,     AutoResourceHandlePolicy<HDC,     BOOL (WINAPI*)(HDC),           &DeleteDC>, HDC>;
+using GdiPenHandle          = AutoResource<HPEN,    AutoResourceHandlePolicy<HGDIOBJ, BOOL (WINAPI*)(HGDIOBJ),       &DeleteObject>, HGDIOBJ>;
+using GdiFontHandle         = AutoResource<HFONT,   AutoResourceHandlePolicy<HGDIOBJ, BOOL (WINAPI*)(HGDIOBJ),       &DeleteObject>, HGDIOBJ>;
+using GdiBitmapHandle       = AutoResource<HBITMAP, AutoResourceHandlePolicy<HGDIOBJ, BOOL (WINAPI*)(HGDIOBJ),       &DeleteObject>, HGDIOBJ>;
+using GdiRegionHandle       = AutoResource<HRGN,    AutoResourceHandlePolicy<HGDIOBJ, BOOL (WINAPI*)(HGDIOBJ),       &DeleteObject>, HGDIOBJ>;
+using GlobalMemoryResource  = AutoResource<HGLOBAL, AutoResourceHandlePolicy<HGLOBAL, HGLOBAL (WINAPI*)(HGLOBAL),    &GlobalFree>, HGLOBAL>;
+using LocalMemoryResource   = AutoResource<HLOCAL,  AutoResourceHandlePolicy<HLOCAL,  HLOCAL (WINAPI*)(HLOCAL),      &LocalFree>, HLOCAL>;
+using FileHandle            = AutoResource<HANDLE,  AutoResourceHandlePolicy<HANDLE,  BOOL (WINAPI*)(HANDLE),        &CloseHandle>, HANDLE>;
+using CstdioFileHandle      = AutoResource<FILE*,   AutoResourceHandlePolicy<FILE*,   int (__cdecl *)(FILE*),        &fclose>, FILE*>;
+using ScopedMemory          = AutoResource<FILE*,   AutoResourceHandlePolicy<void*,   void (__cdecl *)(void*),       &free>, FILE*>;
+using ModuleHandle          = AutoResource<HMODULE, AutoResourceHandlePolicy<HMODULE, BOOL (WINAPI*)(HMODULE),       &FreeLibrary>, HMODULE>;
+using WindowHandle          = AutoResource<HWND,    AutoResourceHandlePolicy<HWND,    BOOL (WINAPI*)(HWND),          &DestroyWindow>, HWND>;
+using MemoryViewResource    = AutoResource<void*,   AutoResourceHandlePolicy<void*,   BOOL (WINAPI*)(void const*),   &UnmapViewOfFile>, void*>;
+using MemorySectionResource = AutoResource<HANDLE,  AutoResourceHandlePolicy<HANDLE,  BOOL (WINAPI*)(HANDLE),        &CloseHandle>, HANDLE>;
 
-using GdiDeviceContext = AutoResource<HDC, HandleResourceTypePolicy<HDC, BOOL(WINAPI*)(HDC), &DeleteDC> >;
-using GdiPenHandle = AutoResource<HPEN, HandleResourceTypePolicy<HGDIOBJ, BOOL(WINAPI*)(HGDIOBJ), &DeleteObject>, HGDIOBJ>;
-using GdiFontHandle = AutoResource<HFONT, HandleResourceTypePolicy<HGDIOBJ, BOOL(WINAPI*)(HGDIOBJ), &DeleteObject>, HGDIOBJ>;
-using GdiBitmapHandle = AutoResource<HBITMAP, HandleResourceTypePolicy<HGDIOBJ, BOOL(WINAPI*)(HGDIOBJ), &DeleteObject>, HGDIOBJ>;
-using GdiRegionHandle = AutoResource<HRGN, HandleResourceTypePolicy<HGDIOBJ, BOOL(WINAPI*)(HGDIOBJ), &DeleteObject>, HGDIOBJ>;
-using GlobalMemoryResource = AutoResource<HGLOBAL, HandleResourceTypePolicy<HGLOBAL, HGLOBAL(WINAPI*)(HGLOBAL), &GlobalFree> >;
-using LocalMemoryResource = AutoResource<HLOCAL, HandleResourceTypePolicy<HLOCAL, HLOCAL(WINAPI*)(HLOCAL), &LocalFree> >;
-using FileHandle = AutoResource<HANDLE, HandleResourceTypePolicy<HANDLE, BOOL(WINAPI*)(HANDLE), &CloseHandle> >;
-using CstdioFileHandle = AutoResource<FILE*, HandleResourceTypePolicy<FILE*, int(__cdecl *)(FILE*), &fclose> >;
-using ScopedMemory = AutoResource<void*, HandleResourceTypePolicy<void*, void(__cdecl *)(void*), &free> >;
-using ModuleHandle = AutoResource<HMODULE, HandleResourceTypePolicy<HMODULE, BOOL(WINAPI*)(HMODULE), &FreeLibrary> >;
-using WindowHandle = AutoResource<HWND, HandleResourceTypePolicy<HWND, BOOL(WINAPI*)(HWND), &DestroyWindow> >;
-using MemoryViewResource = AutoResource<void*, HandleResourceTypePolicy<void*, BOOL(WINAPI*)(void const*), &UnmapViewOfFile> >;
-using MemorySectionResource = AutoResource<HANDLE, HandleResourceTypePolicy<HANDLE, BOOL(WINAPI*)(HANDLE), &CloseHandle> >;
-using WaitHandleResource = AutoResource<HANDLE, HandleResourceTypePolicy<HANDLE, void(*)(HANDLE), &WaitHandleUnregister>>;
-
+using GdiDeviceContext      = AutoResource<HDC,     AutoResourceHandlePolicy<HDC,     BOOL (WINAPI*)(HDC),           &DeleteDC>, HDC>;
+using GdiPenHandle          = AutoResource<HPEN,    AutoResourceHandlePolicy<HGDIOBJ, BOOL (WINAPI*)(HGDIOBJ),       &DeleteObject>, HGDIOBJ>;
+using GdiFontHandle         = AutoResource<HFONT,   AutoResourceHandlePolicy<HGDIOBJ, BOOL (WINAPI*)(HGDIOBJ),       &DeleteObject>, HGDIOBJ>;
+using GdiBitmapHandle       = AutoResource<HBITMAP, AutoResourceHandlePolicy<HGDIOBJ, BOOL (WINAPI*)(HGDIOBJ),       &DeleteObject>, HGDIOBJ>;
+using GdiRegionHandle       = AutoResource<HRGN,    AutoResourceHandlePolicy<HGDIOBJ, BOOL (WINAPI*)(HGDIOBJ),       &DeleteObject>, HGDIOBJ>;
+using GlobalMemoryResource  = AutoResource<HGLOBAL, AutoResourceHandlePolicy<HGLOBAL, HGLOBAL (WINAPI*)(HGLOBAL),    &GlobalFree>, HGLOBAL>;
+using LocalMemoryResource   = AutoResource<HLOCAL,  AutoResourceHandlePolicy<HLOCAL,  HLOCAL (WINAPI*)(HLOCAL),      &LocalFree>, HLOCAL>;
+using FileHandle            = AutoResource<HANDLE,  AutoResourceHandlePolicy<HANDLE,  BOOL (WINAPI*)(HANDLE),        &CloseHandle>, HANDLE>;
+using CstdioFileHandle      = AutoResource<FILE*,   AutoResourceHandlePolicy<FILE*,   int (__cdecl *)(FILE*),        &fclose>, FILE*>;
+using ScopedMemory          = AutoResource<FILE*,   AutoResourceHandlePolicy<void*,   void (__cdecl *)(void*),       &free>, FILE*>;
+using ModuleHandle          = AutoResource<HMODULE, AutoResourceHandlePolicy<HMODULE, BOOL (WINAPI*)(HMODULE),       &FreeLibrary>, HMODULE>;
+using WindowHandle          = AutoResource<HWND,    AutoResourceHandlePolicy<HWND,    BOOL (WINAPI*)(HWND),          &DestroyWindow>, HWND>;
+using MemoryViewResource    = AutoResource<void*,   AutoResourceHandlePolicy<void*,   BOOL (WINAPI*)(void const*),   &UnmapViewOfFile>, void*>;
+using MemorySectionResource = AutoResource<HANDLE,  AutoResourceHandlePolicy<HANDLE,  BOOL (WINAPI*)(HANDLE),        &CloseHandle>, HANDLE>;
 
 ////////////////////////////////////////
 // Basic COM pointer.
 
-struct ComResourceTypePolicy : public DefaultResourceTypePolicy<IUnknown*>
+struct ComResourceTypePolicy : public AutoResourceDefaultPolicy<IUnknown*>
 {
     inline static void Acquire(_Inout_opt_ IUnknown* resource) noexcept
     {

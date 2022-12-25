@@ -140,7 +140,7 @@ inline float Lerp(float first, float last, float fraction)
 
 ////////////////////
 
-using GdiPlusStartupAutoResource = AutoResource<ULONG_PTR, HandleResourceTypePolicy<ULONG_PTR, void (WINAPI*)(ULONG_PTR), &Gdiplus::GdiplusShutdown>, ULONG_PTR>;
+using GdiPlusStartupAutoResource = AutoResource<ULONG_PTR, AutoResourceHandlePolicy<ULONG_PTR, void (WINAPI*)(ULONG_PTR), &Gdiplus::GdiplusShutdown>, ULONG_PTR>;
 
 
 class __declspec(uuid("74868E11-F1CF-461A-AEAF-175216DFF0BA")) DrawingCanvas : public ComObject

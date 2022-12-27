@@ -1,0 +1,22 @@
+﻿{
+  "content": "TextLayoutSamplerSettings",
+  "objects":[
+    {
+      "text": "This is a test 😎👧🏼👧🏾.",
+      "font_size": "18",
+      "font_family": "Segoe UI"
+    },
+    {
+      "function": "D2D DrawTextLayout"
+    },
+    {
+      "function": "IDWriteBitmapRenderTarget IDWriteTextLayout"
+    },
+    {
+      "function": "User32 DrawText"
+    },
+    {
+      "function": "GDIPlus DrawString"
+    }
+  ]
+}

@@ -109,6 +109,7 @@ void WriteZeroPaddedHexNum(uint32_t value, /*out*/ array_ref<char16_t> text)
 }
 
 
+// 'text' is updated to point to first character after all characters consumed.
 uint32_t ReadUnsignedNumericValue(_Inout_ array_ref<char16_t const>& text, _In_range_(2, 36) uint32_t base)
 {
     // Sadly, both wcstoul and std::stoul are useless functions because:
@@ -295,7 +296,7 @@ void UnescapeCppUniversalCharacterNames(
                     // Parse the number.
                     if (digitSpan.size() >= expectedHexSequenceLength)
                     {
-                        char32_t hexValue = ReadUnsignedNumericValue(IN /*out*/ digitSpan, 16);
+                        char32_t hexValue = ReadUnsignedNumericValue(/*inout*/ digitSpan, 16);
                         if (digitSpan.empty()) // Completely read the sequence.
                         {
                             replacement = hexValue;
@@ -406,7 +407,7 @@ void EscapeCppUniversalCharacterNames(
     array_ref<char16_t> shortDigitRange(&shortEscapedSequence[escapePrefixLength], &shortEscapedSequence[escapePrefixLength + shortEscapeDigitLength]);
     array_ref<char16_t> longDigitRange(&longEscapedSequence[escapePrefixLength], &longEscapedSequence[escapePrefixLength + longEscapeDigitLength]);
 
-    for (UnicodeCharacterReader reader(text.data(), text.data_end()); !reader.IsAtEnd(); )
+    for (Utf16CharacterReader reader(text.data(), text.data_end()); !reader.IsAtEnd(); )
     {
         char32_t ch = reader.ReadNext();
 
@@ -442,7 +443,7 @@ void EscapeHtmlNamedCharacterReferences(
     array_ref<char16_t> shortDigitRange(shortEscapedSequence + escapePrefixLength, shortEscapedSequence + escapePrefixLength + shortEscapeDigitLength);
     array_ref<char16_t> longDigitRange(longEscapedSequence + escapePrefixLength, longEscapedSequence + escapePrefixLength + longEscapeDigitLength);
 
-    for (UnicodeCharacterReader reader(text.data(), text.data_end()); !reader.IsAtEnd(); )
+    for (Utf16CharacterReader reader(text.data(), text.data_end()); !reader.IsAtEnd(); )
     {
         char32_t ch = reader.ReadNext();
 
@@ -470,20 +471,13 @@ size_t ConvertTextUtf16ToUtf32(
 {
     // Convert all code points, substituting the replacement character for unpaired surrogates.
 
-    UnicodeCharacterReader reader(utf16text.data(), utf16text.data_end());
+    Utf16CharacterReader reader(utf16text.data(), utf16text.data_end());
     size_t utf32count = utf32text.size();
     size_t utf32index = 0;
 
     for (; !reader.IsAtEnd() && utf32index < utf32count; ++utf32index)
     {
-        char32_t ch = reader.ReadNext();
-
-        if (IsSurrogate(ch))
-        {
-            // Illegal unpaired surrogate. Substitute with replacement char.
-            ch = UnicodeReplacementCharacter;
-        }
-        utf32text[utf32index] = ch;
+        utf32text[utf32index] = reader.ReadNext();
     }
 
     // Return how many UTF-16 code units and UTF-32 units were read/written.
@@ -503,16 +497,13 @@ size_t ConvertTextUtf16ToUtf32NoReplacement(
     _Out_opt_ size_t* sourceCount
     ) noexcept
 {
-    // Can have more UTF16 characters than UTF32,
-    // but never the other way around.
-
-    UnicodeCharacterReader reader(utf16text.data(), utf16text.data_end());
+    Utf16CharacterReader reader(utf16text.data(), utf16text.data_end());
     size_t const utf32count = utf32text.size();
     size_t utf32index = 0;
 
     for (; !reader.IsAtEnd() && utf32index < utf32count; ++utf32index)
     {
-        utf32text[utf32index] = reader.ReadNext();
+        utf32text[utf32index] = reader.ReadNextRaw();
     }
 
     if (sourceCount != nullptr)
@@ -525,39 +516,43 @@ size_t ConvertTextUtf16ToUtf32NoReplacement(
 _Out_range_(0, destMax)
 size_t ConvertUtf32ToUtf16(
     array_ref<char32_t const> utf32text,
-    /*out*/ array_ref<char16_t> utf16text
-    ) noexcept
+    /*out*/ array_ref<char16_t> utf16text,
+    _Out_opt_ size_t* sourceCount
+) noexcept
 {
-    size_t si = 0, di = 0;
-    size_t sc = utf32text.size(), dc = utf16text.size();
+    size_t sourceIndex = 0, destinationIndex = 0;
+    size_t sc = utf32text.size(), destinationCount = utf16text.size();
 
-    if (dc <= 0)
+    if (destinationCount <= 0)
         return 0;
 
-    for ( ; si < sc; ++si)
+    for (; sourceIndex < sc; ++sourceIndex)
     {
-        if (di >= dc)
+        if (destinationIndex >= destinationCount)
             break;
 
-        char32_t ch = utf32text[si];
+        char32_t ch = utf32text[sourceIndex];
 
-        if (IsCharacterBeyondBmp(ch) && dc - di >= 2)
+        if (IsCharacterBeyondBmp(ch) && destinationCount - destinationIndex >= 2)
         {
             // Split into leading and trailing surrogatse.
             // From http://unicode.org/faq/utf_bom.html#35
-            utf16text[di + 0] = GetLeadingSurrogate(ch);
-            utf16text[di + 1] = GetTrailingSurrogate(ch);
-            ++di;
+            utf16text[destinationIndex + 0] = GetLeadingSurrogate(ch);
+            utf16text[destinationIndex + 1] = GetTrailingSurrogate(ch);
+            ++destinationIndex;
         }
         else
         {
             // A BMP character (or isolated surrogate)
-            utf16text[di + 0] = wchar_t(ch);
+            utf16text[destinationIndex + 0] = wchar_t(ch);
         }
-        ++di;
+        ++destinationIndex;
     }
 
-    return di;
+    if (sourceCount != nullptr)
+        *sourceCount = sourceIndex;
+
+    return destinationIndex;
 }
 
 

@@ -73,33 +73,34 @@ size_t ConvertTextUtf16ToUtf32(
     array_ref<char16_t const> utf16text,
     /*out*/ array_ref<char32_t> utf32text,
     _Out_opt_ size_t* sourceCount
-    ) noexcept;
+) noexcept;
 
 // Carries unpaired surrogates through, for testing of API behavior.
 _Out_range_(0, utf32text.end_ - utf32text.begin_)
 size_t ConvertTextUtf16ToUtf32NoReplacement(
     array_ref<char16_t const> utf16text,
     /*out*/ array_ref<char32_t> utf32text,
-    _Out_opt_ size_t* sourceCount
-    ) noexcept;
+    _Out_opt_ size_t* sourceCount = nullptr
+) noexcept;
 
 _Out_range_(0, return)
 size_t ConvertUtf32ToUtf16(
     array_ref<char32_t const> utf32text,
-    /*out*/ array_ref<char16_t> utf16text
-    ) noexcept;
+    /*out*/ array_ref<char16_t> utf16text,
+    _Out_opt_ size_t* sourceCount = nullptr
+) noexcept;
 
 // Consumes the byte order mark.
 void ConvertTextUtf8ToUtf16(
     array_ref<char const> utf8text,
     /*out*/ std::u16string& utf16text
-    );
+);
 
 // Prepends a byte order mark.
 void ConvertTextUtf16ToUtf8(
     array_ref<char16_t const> utf16text,
     /*out*/ std::string& utf8text
-    );
+);
 
 void GetFormattedString(_Inout_ std::u16string& returnString, bool shouldConcatenate, _In_z_ const char16_t* formatString, va_list vargs);
 void GetFormattedString(_Out_ std::u16string& returnString, _In_z_ const char16_t* formatString, ...);
@@ -129,43 +130,67 @@ uint32_t IntLen(_In_z_ char16_t const* text);
 
 array_ref<char16_t const> ToChar16ArrayRef(_In_z_ char16_t const* text);
 
-struct UnicodeCharacterReader : public array_ref<char16_t const>
+struct Utf16CharacterReader : public array_ref<char16_t const>
 {
-    UnicodeCharacterReader() = default;
+    Utf16CharacterReader() = default;
 
-    UnicodeCharacterReader(array_ref::pointer begin, array_ref::pointer end) : array_ref(begin, end)
+    Utf16CharacterReader(array_ref::pointer begin, array_ref::pointer end) : array_ref(begin, end)
     {}
 
-    // todo: Inheriting constructors causes Visual Studio 15.4.1 compiler to crash when calling base class size().
-    //using array_ref::array_ref;
+    // Note inheriting constructors causes Visual Studio 15.4.1 compiler to crash when calling base class size().
+    // Works fine in 17.4.4.
+    using array_ref::array_ref;
 
-    bool IsAtEnd()
+    bool IsAtEnd() const noexcept
     {
         return begin_ >= end_;
     }
 
-    char32_t ReadNext()
+    char32_t ReadNext() noexcept
     {
         if (begin_ >= end_)
             return 0;
 
-        char32_t ch = *begin_;
+        char32_t ch = *begin_++;
+
+        if (!IsSurrogate(ch))
+            return ch; // Character fits in the basic multilingual plane.
+
+        if (!IsLeadingSurrogate(ch) || begin_ >= end_)
+            return UnicodeReplacementCharacter; // Illegal unpaired surrogate. Substitute with replacement character.
+
+        char32_t leading = ch;
+        char32_t trailing = *begin_;
+
+        if (!IsTrailingSurrogate(trailing))
+            return UnicodeReplacementCharacter; // Illegal unpaired surrogate. Substitute with replacement character.
+
         ++begin_;
+
+        return MakeUnicodeCodePoint(leading, trailing);
+    }
+
+    char32_t ReadNextRaw() noexcept
+    {
+        if (begin_ >= end_)
+            return 0;
+
+        char32_t codePoint = *begin_++;
 
         // Just use the character if not a surrogate code point.
         // For unpaired surrogates, pass the isolated surrogate
-        // through (rather than remap to U+FFFD).
-        if (IsLeadingSurrogate(ch) && begin_ < end_)
+        // through (rather than remap to U+FFFD replacement).
+        if (IsLeadingSurrogate(codePoint) && begin_ < end_)
         {
-            char32_t leading = ch;
-            char32_t trailing = *begin_;
-            if (IsTrailingSurrogate(trailing))
+            char32_t leadingCodeUnit = codePoint;
+            char32_t trailingCodeUnit = *begin_;
+            if (IsTrailingSurrogate(trailingCodeUnit))
             {
-                ch = MakeUnicodeCodePoint(leading, trailing);
+                codePoint = MakeUnicodeCodePoint(leadingCodeUnit, trailingCodeUnit);
                 ++begin_;
             }
         }
 
-        return ch;
+        return codePoint;
     }
 };

@@ -574,7 +574,7 @@ void EnumerateAndAddToQueue(
 
 
 HRESULT EnumerateMatchingFiles(
-    __in_z_opt const char16_t* fileDirectory,
+    __in_z_opt char16_t const* fileDirectory,
     __in_z_opt char16_t const* originalFileMask,
     IN OUT std::u16string& fileNames // Append list of nul-delimited fileNames.
     )

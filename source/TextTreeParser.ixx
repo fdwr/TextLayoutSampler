@@ -2880,7 +2880,7 @@ HRESULT XmlWriter::EndScope()
 }
 
 
-HRESULT RunTests()
+void RunTests()
 {
     const char16_t* testString = u"thistest=foo bar(stuff:boo cat[1 2]) singleitem singleitem2";
 
@@ -2923,8 +2923,4 @@ HRESULT RunTests()
     auto s2 = i.GetText();
     auto s3 = i.GetSubvalue();
     auto s4 = i.GetSubvalue(u"Hello", 5);
-
-    MessageBox(nullptr, ToWChar(t.c_str()), L"Caption", MB_OK);
-
-    return S_OK;
 }

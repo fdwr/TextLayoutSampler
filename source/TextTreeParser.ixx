@@ -90,7 +90,7 @@ TextTree::Node& TextTree::NodePointer::operator*() const
 TextTree::NodePointer& TextTree::NodePointer::operator++()
 {
     // todo: Check for end? Check for parent index?
-    if (!textTree_.AdvanceNode(nodeDirection_, 1, IN OUT nodeIndex_))
+    if (!textTree_.AdvanceNode(nodeDirection_, 1, /*inout*/ nodeIndex_))
     {
         MarkInvalid(); // todo: consider whether to mark as invalid or not, because one could back up via -- after calling this.
     }
@@ -101,7 +101,7 @@ TextTree::NodePointer& TextTree::NodePointer::operator++()
 TextTree::NodePointer& TextTree::NodePointer::operator--()
 {
     // todo: Check for end? Check for parent index?
-    if (!textTree_.AdvanceNode(nodeDirection_, -1, IN OUT nodeIndex_))
+    if (!textTree_.AdvanceNode(nodeDirection_, -1, /*inout*/ nodeIndex_))
     {
         MarkInvalid();
     }
@@ -127,7 +127,7 @@ TextTree::NodePointer TextTree::NodePointer::operator--(int)
 TextTree::NodePointer& TextTree::NodePointer::operator+=(int32_t nodeCount)
 {
     // todo: Check for end? Check for parent index?
-    if (!textTree_.AdvanceNode(nodeDirection_, nodeCount, IN OUT nodeIndex_))
+    if (!textTree_.AdvanceNode(nodeDirection_, nodeCount, /*inout*/ nodeIndex_))
     {
         MarkInvalid(); // todo: consider whether to mark as invalid or not, because one could back up via -- after calling this.
     }
@@ -138,7 +138,7 @@ TextTree::NodePointer& TextTree::NodePointer::operator+=(int32_t nodeCount)
 TextTree::NodePointer& TextTree::NodePointer::operator-=(int32_t nodeCount)
 {
     // todo: Check for end? Check for parent index?
-    if (!textTree_.AdvanceNode(nodeDirection_, -nodeCount, IN OUT nodeIndex_))
+    if (!textTree_.AdvanceNode(nodeDirection_, -nodeCount, /*inout*/ nodeIndex_))
     {
         MarkInvalid();
     }
@@ -158,7 +158,7 @@ TextTree::NodePointer TextTree::NodePointer::begin()
     // If the current node pointer is invalid, propagate that, and return an invalid one.
 
     NodePointer pointer(textTree_, nodeIndex_);
-    if (!IsValid() || !textTree_.AdvanceNode(AdvanceNodeDirectionLineageChild, 1, IN OUT pointer.nodeIndex_))
+    if (!IsValid() || !textTree_.AdvanceNode(AdvanceNodeDirectionLineageChild, 1, /*inout*/ pointer.nodeIndex_))
     {
         pointer.MarkInvalid();
     }
@@ -173,8 +173,8 @@ TextTree::NodePointer TextTree::NodePointer::end()
 
     NodePointer pointer(textTree_, nodeIndex_);
     if (!IsValid()
-    ||  !textTree_.AdvanceNode(AdvanceNodeDirectionLineageChild, 1, IN OUT pointer.nodeIndex_) // todo: debate AdvanceNodeDirectionLineageChild and true/false
-    ||  !textTree_.AdvanceNode(AdvanceNodeDirectionSiblingNextEnd, INT_MAX, IN OUT pointer.nodeIndex_))
+    ||  !textTree_.AdvanceNode(AdvanceNodeDirectionLineageChild, 1, /*inout*/ pointer.nodeIndex_) // todo: debate AdvanceNodeDirectionLineageChild and true/false
+    ||  !textTree_.AdvanceNode(AdvanceNodeDirectionSiblingNextEnd, INT32_MAX, /*inout*/ pointer.nodeIndex_))
     {
         pointer.MarkInvalid(); // todo: debate whether the call should be false if count not reached
     }
@@ -200,7 +200,7 @@ TextTree::NodePointer TextTree::NodePointer::Find(
         text,
         textLength,
         TextTree::Node::TypeNone, // no specific type
-        OUT matchingNodeIndex // remains unchanged if no match
+        /*out*/ matchingNodeIndex // remains unchanged if no match
         ))
     {
         // Return match with new node index (and same direction).
@@ -218,7 +218,7 @@ std::u16string TextTree::NodePointer::GetText() const
 
     if (IsValid())
     {
-        textTree_.GetText(nodeIndex_, IN OUT text);
+        textTree_.GetText(nodeIndex_, /*out*/ text);
     }
 
     return text;
@@ -231,7 +231,7 @@ std::u16string TextTree::NodePointer::GetSubvalue() const
 
     if (IsValid())
     {
-        textTree_.GetSingleSubvalue(nodeIndex_, IN OUT text);
+        textTree_.GetSingleSubvalue(nodeIndex_, /*inout*/ text);
     }
 
     return text;
@@ -251,7 +251,7 @@ std::u16string TextTree::NodePointer::GetSubvalue(__in_ecount(defaultTextLength)
 
     uint32_t textLength = TextTreeWriter::GetTextLength(defaultText, defaultTextLength);
 
-    if (!IsValid() || !textTree_.GetSingleSubvalue(nodeIndex_, IN OUT text))
+    if (!IsValid() || !textTree_.GetSingleSubvalue(nodeIndex_, /*inout*/ text))
     {
         // Value was not found, so return the supplied default.
         text.assign(defaultText, textLength);
@@ -270,7 +270,7 @@ TextTree::NodePointer TextTree::NodePointer::AppendChild(
 {
     NodePointer pointer(textTree_, nodeIndex_);
     if (!IsValid()
-    ||  !textTree_.AppendChild(nodeIndex_, type, text, textLength, OUT pointer.nodeIndex_))
+    ||  !textTree_.AppendChild(nodeIndex_, type, text, textLength, /*out*/ pointer.nodeIndex_))
     {
         pointer.MarkInvalid(); // todo: debate whether the call should be false if count not reached
     }
@@ -364,7 +364,7 @@ const char16_t* TextTree::GetText(const Node& node, __out uint32_t& textLength) 
 }
 
 
-void TextTree::GetText(const Node& node, OUT std::u16string& text) const
+void TextTree::GetText(const Node& node, __out std::u16string& text) const
 {
     assert(size_t(&node - nodes_.data()) < nodes_.size());
     auto textPointer = &nodesText_[node.start];
@@ -372,7 +372,7 @@ void TextTree::GetText(const Node& node, OUT std::u16string& text) const
 }
 
 
-void TextTree::GetText(uint32_t nodeIndex, OUT std::u16string& text) const
+void TextTree::GetText(uint32_t nodeIndex, __out std::u16string& text) const
 {
     auto& node = GetNode(nodeIndex);
     auto textPointer = &nodesText_[node.start];
@@ -528,38 +528,38 @@ bool TextTree::AdvanceNode(
 
 bool TextTree::AdvanceNextNode(__inout uint32_t& matchingNodeIndex) const
 {
-    return AdvanceNode(AdvanceNodeDirectionSiblingNext, 1, IN OUT matchingNodeIndex);
+    return AdvanceNode(AdvanceNodeDirectionSiblingNext, 1, /*inout*/ matchingNodeIndex);
 }
 
 
 bool TextTree::AdvancePreviousNode(__inout uint32_t& matchingNodeIndex) const
 {
-    return AdvanceNode(AdvanceNodeDirectionSiblingPrevious, 1, IN OUT matchingNodeIndex);
+    return AdvanceNode(AdvanceNodeDirectionSiblingPrevious, 1, /*inout*/ matchingNodeIndex);
 }
 
 
 bool TextTree::AdvanceChildNode(__inout uint32_t& nodeIndex) const
 {
-    return AdvanceNode(AdvanceNodeDirectionLineageChild, 1, IN OUT nodeIndex);
+    return AdvanceNode(AdvanceNodeDirectionLineageChild, 1, /*inout*/ nodeIndex);
 }
 
 
 bool TextTree::AdvanceParentNode(__inout uint32_t& nodeIndex) const
 {
-    return AdvanceNode(AdvanceNodeDirectionLineageParent, 1, IN OUT nodeIndex);
+    return AdvanceNode(AdvanceNodeDirectionLineageParent, 1, /*inout*/ nodeIndex);
 }
 
 
 bool TextTree::AdvanceLastSiblingNode(__inout uint32_t& matchingNodeIndex) const
 {
-    AdvanceNode(AdvanceNodeDirectionSiblingNext, INT32_MAX, IN OUT matchingNodeIndex);
+    AdvanceNode(AdvanceNodeDirectionSiblingNext, INT32_MAX, /*inout*/ matchingNodeIndex);
     return true; // Ignore whether the count was satisfied.
 }
 
 
 bool TextTree::AdvanceFirstSiblingNode(__inout uint32_t& matchingNodeIndex) const
 {
-    AdvanceNode(AdvanceNodeDirectionSiblingPrevious, INT32_MAX, IN OUT matchingNodeIndex);
+    AdvanceNode(AdvanceNodeDirectionSiblingPrevious, INT32_MAX, /*inout*/ matchingNodeIndex);
     return true; // Ignore whether the count was satisfied.
 }
 
@@ -572,7 +572,7 @@ bool TextTree::AdvanceIntoEmptyNode(__inout uint32_t& matchingNodeIndex) const
     // Check the first node to see if it is empty.
     auto& node = nodes_[matchingNodeIndex];
     if (node.length == 0 && node.GetGenericType() == node.TypeKey)
-        return AdvanceChildNode(IN OUT matchingNodeIndex);
+        return AdvanceChildNode(/*inout*/ matchingNodeIndex);
 
     return false;
 }
@@ -591,7 +591,7 @@ bool TextTree::Find(
     const auto nodesCount = nodes_.size();
     auto nodeIndex = firstNodeIndex;
 
-    if (firstNodeIndexIsParent && !AdvanceChildNode(IN OUT nodeIndex))
+    if (firstNodeIndexIsParent && !AdvanceChildNode(/*inout*/ nodeIndex))
     {
         return false;
     }
@@ -616,7 +616,7 @@ bool TextTree::Find(
             }
         }
 
-        if (!AdvanceNextNode(IN OUT nodeIndex))
+        if (!AdvanceNextNode(/*inout*/ nodeIndex))
             break;
     }
 
@@ -710,10 +710,10 @@ bool TextTree::GetKeyValue(
 
     // Resolve keyName to a node index.
     uint32_t keyNodeIndex;
-    if (!FindKey(parentNodeIndex, keyName, OUT keyNodeIndex))
+    if (!FindKey(parentNodeIndex, keyName, /*out*/ keyNodeIndex))
         return false;
 
-    return GetSingleSubvalue(keyNodeIndex, OUT valueText);
+    return GetSingleSubvalue(keyNodeIndex, /*out*/ valueText);
 }
 
 
@@ -722,7 +722,7 @@ bool TextTree::SetKey(
     uint32_t parentNodeIndex,
     __in_z char16_t const* keyName,
     TextTree::Node::Type type,
-    OUT uint32_t& keyNodeIndex // unchanged if not set (must have been created or already exist)
+    __out uint32_t& keyNodeIndex // unchanged if not set (must have been created or already exist)
     )
 {
     // Set the key, either finding the existing one or inserting a new key.
@@ -730,7 +730,7 @@ bool TextTree::SetKey(
     auto nodeIndex = parentNodeIndex;
 
     // If key already exists, just return it.
-    if (FindKey(parentNodeIndex, keyName, OUT nodeIndex))
+    if (FindKey(parentNodeIndex, keyName, /*out*/ nodeIndex))
     {
         keyNodeIndex = nodeIndex;
         return true;
@@ -743,7 +743,7 @@ bool TextTree::SetKey(
                 type, // TextTree::Node::TypeAttribute usually
                 keyName,
                 static_cast<uint32_t>(wcslen(ToWChar(keyName))),
-                OUT keyNodeIndex
+                /*out*/ keyNodeIndex
                 );
 }
 
@@ -834,7 +834,7 @@ bool TextTree::SetKeyValue(
     uint32_t valueTextLength = static_cast<uint32_t>(valueTextEnd - p);
 
     uint32_t keyNodeIndex;
-    return SetKey(parentNodeIndex, keyName, TextTree::Node::TypeAttribute, OUT keyNodeIndex)
+    return SetKey(parentNodeIndex, keyName, TextTree::Node::TypeAttribute, /*out*/ keyNodeIndex)
         && SetSubvalue(keyNodeIndex, p, valueTextLength, TextTree::Node::TypeNumber);
 }
 
@@ -847,7 +847,7 @@ bool TextTree::SetKeyValue(
     )
 {
     uint32_t keyNodeIndex;
-    return SetKey(parentNodeIndex, keyName, TextTree::Node::TypeAttribute, OUT keyNodeIndex)
+    return SetKey(parentNodeIndex, keyName, TextTree::Node::TypeAttribute, /*out*/ keyNodeIndex)
         && SetSubvalue(keyNodeIndex, valueText, valueTextLength);
 }
 
@@ -859,7 +859,7 @@ bool TextTree::SetKeyValue(
     )
 {
     uint32_t keyNodeIndex;
-    return SetKey(parentNodeIndex, keyName, TextTree::Node::TypeAttribute, OUT keyNodeIndex)
+    return SetKey(parentNodeIndex, keyName, TextTree::Node::TypeAttribute, /*out*/ keyNodeIndex)
         && SetSubvalue(keyNodeIndex, valueText.c_str(), static_cast<uint32_t>(valueText.size()));
 }
 
@@ -925,7 +925,7 @@ bool TextTree::AppendChild(
         type,
         text,
         textLength,
-        OUT newNodeIndex
+        /*out*/ newNodeIndex
         );
 }
 
@@ -954,13 +954,13 @@ bool TextTree::Insert(
     {
         // Resolve from parent to first child node index.
         ++newNodeLevel; // Set level to child (parent + 1).
-        if (!AdvanceNode(direction, 1, IN OUT nodeIndex))
+        if (!AdvanceNode(direction, 1, /*inout*/ nodeIndex))
             return false; // todo: debate whether the call should be false if count not reached
     }
     else
     {
         // Verify nodeIndex validity, and move after node if insertAfter.
-        if (!AdvanceNode(direction, insertAfter ? 1 : 0, IN OUT nodeIndex))
+        if (!AdvanceNode(direction, insertAfter ? 1 : 0, /*inout*/ nodeIndex))
             return false; // todo: debate whether the call should be false if count not reached
     }
 
@@ -1150,7 +1150,7 @@ char32_t TextTreeParser::ReadCStyleEscapeCharacter()
             text_,
             textIndex_,
             std::min(textLength_, textIndex_ + 4),
-            OUT textIndex_,
+            /*out*/ textIndex_,
             16 // hex
             );
 
@@ -1160,7 +1160,7 @@ char32_t TextTreeParser::ReadCStyleEscapeCharacter()
             text_,
             textIndex_,
             std::min(textLength_, textIndex_ + 8),
-            OUT textIndex_,
+            /*out*/ textIndex_,
             16 // hex
             );
 
@@ -1181,7 +1181,7 @@ bool TextTreeParser::ReadNodes(__inout TextTree& textTree)
         ++treeLevel_;
     }
 
-    while (ReadNode(OUT node, OUT textTree.nodesText_))
+    while (ReadNode(/*out*/ node, /*out*/ textTree.nodesText_))
     {
         textTree.nodes_.push_back(node);
         textTree.nodesText_.push_back('\0'); // Add explicit nul just because it makes the life easier of callers later.
@@ -1539,7 +1539,7 @@ bool JsonexParser::ReadWord(
             }
             else if (ch == '\\' && !(options_ & OptionsNoEscapeSequence))
             {
-                AppendCharacter(IN OUT nodeText, ReadCStyleEscapeCharacter());
+                AppendCharacter(/*inout*/ nodeText, ReadCStyleEscapeCharacter());
             }
             else
             {
@@ -1566,7 +1566,7 @@ bool JsonexParser::ReadWord(
             ++textIndex_;
             if (ch == '\\' && !(options_ & OptionsNoEscapeSequence))
             {
-                AppendCharacter(IN OUT nodeText, ReadCStyleEscapeCharacter());
+                AppendCharacter(/*inout*/ nodeText, ReadCStyleEscapeCharacter());
             }
             else
             {
@@ -1605,7 +1605,7 @@ void JsonexParser::CheckClosingTag(
     TextTree::Node closingNode;
     std::u16string closingTag;
     uint32_t textIndex = textIndex_;
-    if (!ReadWord(OUT closingNode, IN OUT closingTag))
+    if (!ReadWord(/*out*/ closingNode, /*inout*/ closingTag))
     {
         ReportError(textIndex, u"Expected explicit closing identifier.");
         return;
@@ -1653,7 +1653,7 @@ bool JsonexParser::ReadNode(
         node.level = treeLevel_;
         node.type = TextTree::Node::TypeNone;
 
-        bool haveWord = ReadWord(IN OUT node, IN OUT nodeText);
+        bool haveWord = ReadWord(/*inout*/ node, /*inout*/ nodeText);
 
         if (node.type == TextTree::Node::TypeComment)
         {
@@ -1880,7 +1880,7 @@ bool IniParser::ReadWord(
             }
             else if (ch == '\\' && !(options_ & OptionsNoEscapeSequence))
             {
-                AppendCharacter(IN OUT nodeText, ReadCStyleEscapeCharacter());
+                AppendCharacter(/*inout*/ nodeText, ReadCStyleEscapeCharacter());
             }
             else
             {
@@ -1906,7 +1906,7 @@ bool IniParser::ReadWord(
             ++textIndex_;
             if (ch == '\\' && !(options_ & OptionsNoEscapeSequence))
             {
-                AppendCharacter(IN OUT nodeText, ReadCStyleEscapeCharacter());
+                AppendCharacter(/*inout*/ nodeText, ReadCStyleEscapeCharacter());
             }
             else
             {
@@ -1954,7 +1954,7 @@ bool IniParser::ReadNode(
 
         AdvanceCodeUnit();
         SkipSpaces();
-        ReadWord(TextTree::Node::TypeSection, IN OUT node, IN OUT nodeText);
+        ReadWord(TextTree::Node::TypeSection, /*inout*/ node, /*inout*/ nodeText);
         SkipSpaces();
         if (PeekCodeUnit() == ']')
         {
@@ -1971,7 +1971,7 @@ bool IniParser::ReadNode(
     case ';':
         treeLevel_ = sectionLevel_;
         AdvanceCodeUnit();
-        ReadWord(TextTree::Node::TypeComment, IN OUT node, IN OUT nodeText);
+        ReadWord(TextTree::Node::TypeComment, /*inout*/ node, /*inout*/ nodeText);
         SkipSpacesAndLineBreaks();
         break;
 
@@ -1980,7 +1980,7 @@ bool IniParser::ReadNode(
         treeLevel_ = sectionLevel_ + 1;
         AdvanceCodeUnit();
         SkipSpaces();
-        ReadWord(TextTree::Node::TypeValue, IN OUT node, IN OUT nodeText);
+        ReadWord(TextTree::Node::TypeValue, /*inout*/ node, /*inout*/ nodeText);
         SkipSpacesAndLineBreaks();
         break;
 
@@ -1992,7 +1992,7 @@ bool IniParser::ReadNode(
         // Assume key.
         treeLevel_ = sectionLevel_;
         SkipSpaces();
-        ReadWord(TextTree::Node::TypeAttribute, IN OUT node, IN OUT nodeText);
+        ReadWord(TextTree::Node::TypeAttribute, /*inout*/ node, /*inout*/ nodeText);
         SkipSpaces();
         break;
     }
@@ -2044,7 +2044,7 @@ const char16_t* TextTreeWriter::GetText(__out uint32_t& textLength) const noexce
 }
 
 
-void TextTreeWriter::GetText(OUT std::u16string& text) const
+void TextTreeWriter::GetText(/*out*/ std::u16string& text) const
 {
     text = text_;
 }
@@ -2082,7 +2082,7 @@ HRESULT TextTreeWriter::WriteNodes(const TextTree& textTree)
     {
         uint32_t textLength = 0;
         const auto& node = textTree.GetNode(i);
-        auto text = textTree.GetText(node, OUT textLength);
+        auto text = textTree.GetText(node, /*out*/ textLength);
         auto currentLevel = node.level;
 
         if (currentLevel > previousLevel)
@@ -2888,7 +2888,7 @@ HRESULT RunTests()
     TextTree nodes;
     uint32_t testStringLength = static_cast<uint32_t>(wcslen(ToWChar(testString)));
     JsonexParser parser(testString, testStringLength, TextTreeParser::OptionsNoEscapeSequence);
-    parser.ReadNodes(IN OUT nodes);
+    parser.ReadNodes(/*inout*/ nodes);
 
     std::u16string t;
     for (auto i = nodes.begin(), e = nodes.end(); i != e; ++i)

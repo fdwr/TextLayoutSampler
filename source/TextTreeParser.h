@@ -161,7 +161,7 @@ public:
     void Clear();
     uint32_t GetNodeCount() const noexcept;
     bool empty() const noexcept; // Node there exists a virtual root. So after calling ReadNodes, it will be non-empty even if the file was empty.
-    iterator begin();   // Iterator warks entire tree, top down (pre-order).
+    iterator begin();   // Iterator walks entire tree, top down (pre-order).
     iterator end();
     iterator BeginFirstChild(); // You cannot deference this iterator, but you can use it to search from.
 

@@ -3,6 +3,10 @@
 //----------------------------------------------------------------------------
 #pragma once
 
+//#include <gsl/span>
+#include <memory> // For uninitialized_move/copy and std::unique_ptr.
+#include <assert.h>
+
 #pragma warning(push)
 #pragma warning(disable:4127) // Conditional expression is constant. VS can't tell that certain compound conditionals of template parameters aren't always constant when the tempalate parameter is true.
 
@@ -244,11 +248,11 @@ public:
         clear();
 
         reserve(newSize);
-        std::uninitialized_fill(begin(), end(), /*out*/ value);
+        std::uninitialized_fill(begin(), end(), value);
         size_ = newSize;
     }
 
-    // Tranfer all elements from the other vector to this one.
+    // Transfer all elements from the other vector to this one.
     // This only offers the weak exception guarantee, that no leaks will happen
     // if type T throws in the middle of a copy.
     void transfer_from(array_ref<const T> span)
@@ -375,10 +379,9 @@ public:
         capacity_ = size_;
     }
 
-
     void push_back(const T& newValue)
     {
-        reserve(size_ + 1);// 
+        reserve(size_ + 1);
         new(static_cast<void*>(data_ + size_)) T(newValue);
         ++size_;
     }
@@ -529,6 +532,13 @@ public:
         size_ = (dataEnd - reinterpret_cast<uint8_t*>(data_)) / sizeof(T);
         capacity_ = size_;
         dataIsAllocatedMemory_ = true;
+    }
+
+    template <typename U>
+     bool intersects(array_ref<U> other) const noexcept
+    {
+        return reinterpret_cast<const void*>(data())     < reinterpret_cast<const void*>(other.data())
+            && reinterpret_cast<const void*>(data_end()) > reinterpret_cast<const void*>(other.data() + other.size());
     }
 
 protected:

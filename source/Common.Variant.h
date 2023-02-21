@@ -1,14 +1,14 @@
 //----------------------------------------------------------------------------
 //  History:    2018-11-29 Dwayne Robinson - Created
 //  Summary:    Extended std::variant which contains more intuitive methods
-//              rather awkward and poorly named free functions.
+//              rather than awkwardly named and inconvenient free functions.
 // 
 //              Extended methods:
 //
-//              v.get<T>()
-//              v.is_type<T>()
-//              v.index_of_type<T>()
-//              v.call<Callback>(Callback& callback)
+//              v.get<T>()           == std::get<T>(v)
+//              v.is_type<T>()       == std::holds_alternative<T>(v)
+//              v.index_of_type<T>() == no equivalent
+//              v.call(callback)     == std::visit(callback, v)
 //
 //----------------------------------------------------------------------------
 #pragma once

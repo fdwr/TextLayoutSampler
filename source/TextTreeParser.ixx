@@ -1180,12 +1180,19 @@ bool TextTreeParser::ReadNodes(__inout TextTree& textTree)
         textTree.nodes_.push_back(node);
         ++treeLevel_;
     }
+    uint32_t baseTreeLevel = treeLevel_;
 
     while (ReadNode(/*out*/ node, /*out*/ textTree.nodesText_))
     {
         textTree.nodes_.push_back(node);
         textTree.nodesText_.push_back('\0'); // Add explicit nul just because it makes the life easier of callers later.
     }
+
+    if (treeLevel_ != baseTreeLevel) // nodeStack_ should be empty here.
+    {
+        ReportError(textIndex_ - 1, U("Closing brace/parenthesis is missing to match opening brace/parenthesis."));
+    }
+
     return true;
 }
 
@@ -1717,7 +1724,7 @@ bool JsonexParser::ReadNode(
             // Confirm the closing type matches the opening one.
             if (nodeStack_.empty())
             {
-                ReportError(textIndex_ - 1, u"Closing brace did not match opening brace.");
+                ReportError(textIndex_ - 1, u"Closing brace did not match any opening brace.");
             }
             else
             {
@@ -1728,7 +1735,7 @@ bool JsonexParser::ReadNode(
                     treeLevel_ = back.level;
                     if (back.type != JsonexGetNodeTypeFromCharacter(ch))
                     {
-                        ReportError(textIndex_ - 1, u"Closing brace did not match opening brace.");
+                        ReportError(textIndex_ - 1, u"Closing brace did not match opening brace type.");
                     }
                     CheckClosingTag(back, nodeText);
                     nodeStack_.pop_back();

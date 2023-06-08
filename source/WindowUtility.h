@@ -15,9 +15,9 @@ T* GetClassFromDialog(HWND hwnd)
     return reinterpret_cast<T*>(::GetWindowLongPtr(hwnd, DWLP_USER));
 }
 
-HRESULT CopyTextToClipboard(HWND hwnd, array_ref<char16_t const> text);
+HRESULT SetClipboardText(HWND hwnd, array_ref<char16_t const> text);
 
-HRESULT PasteFromClipboard(OUT std::u16string& text);
+HRESULT GetClipboardText(OUT std::u16string& text);
 
 int GetWindowText(HWND hwnd, _Out_ std::u16string& s);
 

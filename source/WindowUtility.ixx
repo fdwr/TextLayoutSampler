@@ -85,12 +85,10 @@ HRESULT ExceptionToHResult() noexcept
 }
 
 
-HRESULT CopyTextToClipboard(HWND hwnd, array_ref<char16_t const> text)
+HRESULT SetClipboardText(HWND hwnd, array_ref<char16_t const> text)
 {
     // Copies selected text to clipboard.
     LastError lastError;
-
-    const char16_t* rawInputText = text.data();
 
     // Open and empty existing contents.
     if (OpenClipboard(hwnd))
@@ -101,28 +99,29 @@ HRESULT CopyTextToClipboard(HWND hwnd, array_ref<char16_t const> text)
             size_t const textLength = text.size();
             size_t const textByteCount = textLength * sizeof(char16_t);
             size_t const totalByteCount = textByteCount + 2 /*add terminating null*/;
-            HGLOBAL hClipboardData  = GlobalAlloc(GMEM_DDESHARE | GMEM_ZEROINIT | GMEM_MOVEABLE, totalByteCount);
+            HGLOBAL clipboardData = GlobalAlloc(GMEM_DDESHARE | GMEM_ZEROINIT | GMEM_MOVEABLE, totalByteCount);
 
-            if (hClipboardData != nullptr)
+            if (clipboardData != nullptr)
             {
-                void* memory = GlobalLock(hClipboardData);
+                void* memory = GlobalLock(clipboardData);
 
                 if (memory != nullptr)
                 {
                     // Copy text to memory block.
-                    char16_t* rawOutputText = reinterpret_cast<char16_t*>(memory);
-                    memcpy(rawOutputText, rawInputText, textByteCount);
-                    rawOutputText[textLength] = '\0'; // explicit nul terminator in case there is none
-                    GlobalUnlock(hClipboardData);
+                    const char16_t* inputText = text.data();
+                    char16_t* outputText = reinterpret_cast<char16_t*>(memory);
+                    memcpy(outputText, inputText, textByteCount);
+                    outputText[textLength] = '\0'; // explicit nul terminator in case there is none
+                    GlobalUnlock(clipboardData);
 
-                    if (SetClipboardData(CF_UNICODETEXT, hClipboardData) != nullptr)
+                    if (SetClipboardData(CF_UNICODETEXT, clipboardData) != nullptr)
                     {
-                        hClipboardData = nullptr; // system now owns the clipboard, so don't touch it.
+                        clipboardData = nullptr; // system now owns the clipboard, so don't touch it.
                                                   // lastError.hr = S_OK;
                     }
                     lastError.Check();
                 }
-                GlobalFree(hClipboardData); // free if failed (still non-null)
+                GlobalFree(clipboardData); // free if failed (passing null is fine and ignorable)
             }
             lastError.Check();
         }
@@ -135,7 +134,7 @@ HRESULT CopyTextToClipboard(HWND hwnd, array_ref<char16_t const> text)
 }
 
 
-HRESULT PasteFromClipboard(OUT std::u16string& text)
+HRESULT GetClipboardText(OUT std::u16string& text)
 {
     // Copy Unicode text from clipboard.
 
@@ -147,17 +146,22 @@ HRESULT PasteFromClipboard(OUT std::u16string& text)
 
         if (hClipboardData != nullptr)
         {
-            // Get text and size of text.
-            size_t byteSize                 = GlobalSize(hClipboardData);
-            void* memory                    = GlobalLock(hClipboardData); // [byteSize] in bytes
-            const char16_t* rawText         = reinterpret_cast<const char16_t*>(memory);
-            uint32_t textLength             = static_cast<uint32_t>(wcsnlen(reinterpret_cast<wchar_t const*>(rawText), byteSize / sizeof(char16_t)));
-
+            void* memory = GlobalLock(hClipboardData); // [byteSize] in bytes
             if (memory != nullptr)
             {
+                // Get text and size of text.
+                // There could be embedded nulls, and the memory block can be larger than the actual text.
+                // So take the minimum of the global size and wcsnlen.
+
+                char16_t const* inputText = reinterpret_cast<char16_t const*>(memory);
+                wchar_t const* inputTextWchar = reinterpret_cast<wchar_t const*>(memory);
+                size_t totalByteCount = GlobalSize(hClipboardData);
+                size_t maximumTextLength = totalByteCount / sizeof(char16_t);
+                size_t textLength = wcsnlen(inputTextWchar, maximumTextLength);
+
                 try
                 {
-                    text.assign(rawText, textLength);
+                    text.assign(inputText, textLength);
                 }
                 catch (...)
                 {
@@ -183,7 +187,7 @@ void CopyListTextToClipboard(
     )
 {
     std::u16string text = GetListViewText(listViewHwnd, separator);
-    CopyTextToClipboard(listViewHwnd, {text.c_str(), text.length()});
+    SetClipboardText(listViewHwnd, {text.c_str(), text.length()});
 }
 
 HRESULT CopyImageToClipboard(

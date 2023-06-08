@@ -2133,7 +2133,7 @@ HRESULT MainWindow::GetAllFontCharacters(bool copyToClipboardInstead, bool getOn
 
     if (copyToClipboardInstead)
     {
-        IFR(CopyTextToClipboard(hwnd_, characters));
+        IFR(SetClipboardText(hwnd_, characters));
     }
     else
     {

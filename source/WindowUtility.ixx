@@ -90,27 +90,28 @@ HRESULT CopyTextToClipboard(HWND hwnd, array_ref<char16_t const> text)
     // Copies selected text to clipboard.
     LastError lastError;
 
-    const uint32_t textLength = static_cast<uint32_t>(text.size());
     const char16_t* rawInputText = text.data();
 
     // Open and empty existing contents.
-    if (OpenClipboard(nullptr))
+    if (OpenClipboard(hwnd))
     {
-        if (EmptyClipboard())
+        if (hwnd == nullptr || EmptyClipboard())
         {
             // Allocate room for the text
-            const uint32_t byteSize = sizeof(char16_t) * (textLength + 1);
-            HGLOBAL hClipboardData  = GlobalAlloc(GMEM_DDESHARE | GMEM_ZEROINIT, byteSize);
+            size_t const textLength = text.size();
+            size_t const textByteCount = textLength * sizeof(char16_t);
+            size_t const totalByteCount = textByteCount + 2 /*add terminating null*/;
+            HGLOBAL hClipboardData  = GlobalAlloc(GMEM_DDESHARE | GMEM_ZEROINIT | GMEM_MOVEABLE, totalByteCount);
 
             if (hClipboardData != nullptr)
             {
                 void* memory = GlobalLock(hClipboardData);
-                char16_t* rawOutputText = reinterpret_cast<char16_t*>(memory);
 
                 if (memory != nullptr)
                 {
                     // Copy text to memory block.
-                    memcpy(rawOutputText, rawInputText, byteSize);
+                    char16_t* rawOutputText = reinterpret_cast<char16_t*>(memory);
+                    memcpy(rawOutputText, rawInputText, textByteCount);
                     rawOutputText[textLength] = '\0'; // explicit nul terminator in case there is none
                     GlobalUnlock(hClipboardData);
 

@@ -1190,7 +1190,7 @@ bool TextTreeParser::ReadNodes(__inout TextTree& textTree)
 
     if (treeLevel_ != baseTreeLevel) // nodeStack_ should be empty here.
     {
-        ReportError(textIndex_ - 1, U("Closing brace/parenthesis is missing to match opening brace/parenthesis."));
+        ReportError(textIndex_ - 1, u"Closing brace/parenthesis is missing to match opening brace/parenthesis.");
     }
 
     return true;

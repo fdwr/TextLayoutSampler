@@ -9,7 +9,7 @@
 #endif
 
 #include "precomp.h"
-#include "resource/resource.h"
+#include "resource/MessageBoxShadedResource.h"
 #include <string>
 
 #ifndef WIN32_LEAN_AND_MEAN
@@ -88,7 +88,7 @@ int32_t MessageBoxShaded::Show(
     params.lpszText = ToWChar(text);
     params.lpszCaption = ToWChar(caption);
     params.dwStyle = type;
-    auto result = ::DialogBoxParam(moduleHandle, MAKEINTRESOURCE(IddMessageDialog), ownerHwnd, &MessageBoxShaded::StaticDialogProc, (LPARAM)&params);
+    auto result = ::DialogBoxParam(moduleHandle, MAKEINTRESOURCE(IddMessageBoxShadedDialog), ownerHwnd, &MessageBoxShaded::StaticDialogProc, (LPARAM)&params);
     return static_cast<int32_t>(result);
 }
 
@@ -101,7 +101,7 @@ MessageBoxShaded::MessageBoxShaded(HWND hwnd)
 
 INT_PTR MessageBoxShaded::Initialize(MSGBOXPARAMS const& params)
 {
-    HWND iconHwnd = GetDlgItem(hwnd_, IdcMessageDialogIcon);
+    HWND iconHwnd = GetDlgItem(hwnd_, IdcMessageBoxShadedIcon);
 
     HICON icon = nullptr;
     if (params.dwStyle & MB_USERICON)
@@ -116,7 +116,7 @@ INT_PTR MessageBoxShaded::Initialize(MSGBOXPARAMS const& params)
     }
 
     Static_SetIcon(iconHwnd, icon);
-    Static_SetText(GetDlgItem(hwnd_, IdcMessageDialogMessage), params.lpszText);
+    Static_SetText(GetDlgItem(hwnd_, IdcMessageBoxShadedMessage), params.lpszText);
 
     // Check for either right to left (RLM) or left to right mark (LRM).
     if ((params.lpszText[0] & 0x200E) == 0x200E)
@@ -302,9 +302,9 @@ void MessageBoxShaded::Resize()
     GetClientRect(hwnd_, OUT &clientRect);
 
     WindowPosition windowPositions[] = {
-        WindowPosition( GetDlgItem(hwnd_, IdcMessageDialogBackground), PositionOptionsIgnored),
-        WindowPosition( GetDlgItem(hwnd_, IdcMessageDialogIcon), PositionOptionsAlignLeft|PositionOptionsAlignTop),
-        WindowPosition( GetDlgItem(hwnd_, IdcMessageDialogMessage), PositionOptionsAlignTop),
+        WindowPosition( GetDlgItem(hwnd_, IdcMessageBoxShadedBackground), PositionOptionsIgnored),
+        WindowPosition( GetDlgItem(hwnd_, IdcMessageBoxShadedIcon), PositionOptionsAlignLeft|PositionOptionsAlignTop),
+        WindowPosition( GetDlgItem(hwnd_, IdcMessageBoxShadedMessage), PositionOptionsAlignTop),
         WindowPosition( GetDlgItem(hwnd_, IDOK), PositionOptionsUseSlackWidth|PositionOptionsPreNewLine),
     };
 

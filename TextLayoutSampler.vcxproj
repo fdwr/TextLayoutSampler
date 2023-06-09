@@ -177,6 +177,7 @@
     <ClCompile Include="source/MainWindow.ixx" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="resource\MessageBoxShadedResource.h" />
     <ClInclude Include="source/Application.h" />
     <ClInclude Include="source/Application.macros.h" />
     <ClInclude Include="source/Common.ArrayRef.h" />
@@ -205,6 +206,7 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resource/MainWindow.rc" />
+    <ResourceCompile Include="resource\MessageBoxShaded.rc" />
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="resource/MainWindow.manifest" />

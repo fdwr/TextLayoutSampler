@@ -1371,7 +1371,8 @@ namespace
 
     bool JsonexIsControlCharacter(char32_t ch)
     {
-        return (ch <= 0x001F || (ch >= 0x007F && ch <= 0x009F));
+        return (ch <= 0x001F);
+        // Note: exclude (ch >= 0x007F && ch <= 0x009F).
     }
 
     bool JsonexIsNewLineCharacter(char32_t ch)

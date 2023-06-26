@@ -76,7 +76,7 @@ public:
     T const& operator*() const { return value(); }
 
     // Container compatible helpers to accomodate generic template algorithms,
-    // treating std::optional like an std::vecto of size 0 or 1.
+    // treating std::optional like an std::vector of size 0 or 1.
     bool empty() { return !valueExists_; }
     T* data() { return &value(); }
     T const* data() const { return &value(); }

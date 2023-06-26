@@ -1993,7 +1993,7 @@ HRESULT CachedDWriteRenderingParams::Update(IAttributeSource& attributeSource, D
     // Otherwise create custom one, using the default one as a template for any unspecified parameters.
     auto* dwriteFactory = drawingCanvas.GetDWriteFactoryWeakRef();
     ComPtr<IDWriteFactory2> dwriteFactory2;
-    IFR(drawingCanvas.GetDWriteFactoryWeakRef()->QueryInterface(OUT &dwriteFactory2));
+    drawingCanvas.GetDWriteFactoryWeakRef()->QueryInterface(OUT &dwriteFactory2);
 
     // Get defaults for gamma, contrast, CT level, pixel geometry...
     ComPtr<IDWriteRenderingParams> defaultRenderingParams;

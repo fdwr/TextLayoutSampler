@@ -702,7 +702,7 @@ array_ref<uint8_t> AttributeValue::Get()
 }
 
 
-// Return a wstring copy of the string as a wstring rather than
+// Return a UTF-16 string copy of the string as a wstring rather than
 // a lightweight view into the text.
 HRESULT IAttributeSource::GetString(uint32_t id, _Out_ std::u16string& s)
 {

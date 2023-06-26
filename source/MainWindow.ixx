@@ -700,10 +700,10 @@ void MainWindow::FillAttributesListView()
         auto weight = substringPrioritizer.GetStringWeight(ToChar16ArrayRef(attribute.display));
         substringPrioritizer.SetItemWeight(i, weight);
     }
-    auto clampedListIndices = substringPrioritizer.GetItemIndices(OUT listIndices, /*excludeMismatches*/true);
+    auto listIndicesSubset = substringPrioritizer.GetItemIndices(OUT listIndices, /*excludeMismatches*/false);
 
     // Add matching items to the ListView.
-    for (auto& index : clampedListIndices)
+    for (auto& index : listIndicesSubset)
     {
         auto& attribute = DrawableObject::attributeList[index];
         lw.lParam = attribute.id;

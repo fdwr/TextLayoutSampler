@@ -200,7 +200,7 @@ struct AttributeValue
     Attribute::Variant data; // Room for one element, which is the common case.
     std::vector<uint8_t> dataArray; // Variable length data in case the fixed size variant is too small.
     std::u16string stringValue; // string representation, typed by user or read from data file.
-    uint32_t cookieValue = 0; // useful to compare for value changes, incremented each time.
+    uint32_t cookieValue = 0; // useful to compare for value changes, incremented each time data is changed.
 
     array_ref<uint8_t> Get(); // Get the data.
     HRESULT Set(Attribute const& attribute, _In_z_ char16_t const* newStringValue);
@@ -249,8 +249,8 @@ public:
 
     // Get single value of specific type (not binary data).
     // If the actual type is incompatible with the desired type or the value
-    // is empty, it returns the default value and HRESULT for
-    // ERROR_UNMAPPED_SUBSTITUTION_STRING.
+    // is empty or it gets ERROR_UNMAPPED_SUBSTITUTION_STRING, then it returns
+    // the default value.
     template <typename T>
     T GetValue(uint32_t id, T defaultValue)
     {
@@ -319,7 +319,7 @@ public:
 
     // Get an array of specific data types.
     // If the actual type is incompatible with the desired type, it returns
-    // an empty array and HRESULT for ERROR_UNMAPPED_SUBSTITUTION_STRING.
+    // an empty array.
     template <typename T>
     array_ref<T> GetValues(uint32_t id)
     {

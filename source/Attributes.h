@@ -222,6 +222,22 @@ struct AttributeValue
 struct IAttributeSource
 {
 public:
+    // Client implemented. The other two GetString functions are conveniences that just
+    // forward to this implementation.
+    virtual HRESULT GetString(uint32_t id, _Out_ array_ref<char16_t>& value) = 0;
+
+    // Client implemented. Callers generally use the more convenient helper methods,
+    // since the actual implementation just returns raw byte data.
+    virtual HRESULT GetValueData(uint32_t id, _Out_ Attribute::Type& type, _Out_ array_ref<uint8_t>& value) = 0;
+
+    // Retrieve the last update for this attribute, enabling a caller to
+    // cache results for expensive operations. It's okay to update the
+    // cookie value even if the same value was set for an attribute (it just
+    // means the client will lose caching), but the cookieValue must be
+    // updated each time that attribute is changed (incrementing is
+    // simple enough).
+    virtual HRESULT GetCookie(uint32_t id, _Out_ uint32_t& cookieValue) = 0;
+
     ////////////////////////////////////////
     // String form getters.
     // - The string is both length delimited and nul-terminated.
@@ -235,10 +251,6 @@ public:
 
     // Return copy of the string rather than view.
     HRESULT GetString(uint32_t id, _Out_ std::u16string& s);
-
-    // Client implemented. The other two forms are conveniences that just
-    // forward to this implementation.
-    virtual HRESULT GetString(uint32_t id, _Out_ array_ref<char16_t>& value) = 0;
 
     ////////////////////////////////////////
     // Value getters.
@@ -341,10 +353,6 @@ public:
         return values;
     }
 
-    // Client implemented. Callers generally use the more convenient ones above,
-    // since the actual implementation just returns raw byte data.
-    virtual HRESULT GetValueData(uint32_t id, _Out_ Attribute::Type& type, _Out_ array_ref<uint8_t>& value) = 0;
-
     ////////////////////////////////////////
     // Cookie functions for value modification awareness.
 
@@ -360,12 +368,4 @@ public:
         previousCookieValue = cookieValue;
         return false;
     }
-
-    // Retrieve the last update for this attribute, enabling a caller to
-    // cache results for expensive operations. It's okay to update the
-    // cookie value even if the same value was set for an attribute (it just
-    // means the client will lose caching), but the cookieValue must be
-    // updated each time that attribute is changed (incrementing is
-    // simple enough).
-    virtual HRESULT GetCookie(uint32_t id, _Out_ uint32_t& cookieValue) = 0;
 };

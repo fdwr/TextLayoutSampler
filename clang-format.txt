@@ -1,14 +1,18 @@
+# This isn't enabled because clangformat messes things up pretty badly
+# in cases where readability is better without a bulldozer (like alignment
+# of math equations and tables), but it's here for reference of what the
+# standard layout would be.
+#
 # Run manually to reformat a file:
 #
-# LLVM14.0.0RC1\bin\clang-format.exe -i -style=file:clang-format.txt <file>
+# LLVM14.0.0RC1\bin\clang-format.exe -i -style=file:clang-format.txt yourfile.cpp
 #
 # To reformat all files using cmd.exe:
 # for /r %t in (*.cc *.h) do clang-format.exe -i -style=file "%t"
 #
-
-#DisableFormat: true
----
+DisableFormat: true
 BasedOnStyle: Microsoft
+
 ---
 Language: Cpp
 AlignAfterOpenBracket: BlockIndent
@@ -30,11 +34,12 @@ AllowShortLambdasOnASingleLine: true
 AllowShortFunctionsOnASingleLine: true
 AllowShortCaseLabelsOnASingleLine: true
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
-BreakBeforeBraces: AllMan #Custom
+BreakBeforeBraces: Allman #Custom
 BraceWrapping:
   BeforeLambdaBody: true
 AccessModifierOffset: -4
 IndentAccessModifiers: false
+
 ---
 Language: JavaScript
 AlignAfterOpenBracket: AlwaysBreak

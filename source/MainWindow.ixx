@@ -167,7 +167,7 @@ void MainWindow::RegisterCustomClasses()
     INITCOMMONCONTROLSEX icex;
     icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
     icex.dwICC  = ICC_LISTVIEW_CLASSES;
-    InitCommonControlsEx(&icex); 
+    InitCommonControlsEx(&icex);
 
     DrawingCanvasControl::RegisterWindowClass(Application::g_hModule);
 }
@@ -187,6 +187,7 @@ MainWindow* MainWindow::GetClass(HWND hwnd)
 
 INT_PTR CALLBACK MainWindow::StaticDialogProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+    // Create the window the first time.
     MainWindow* window = GetClassFromDialog<MainWindow>(hwnd);
     if (window == nullptr)
     {
@@ -478,10 +479,11 @@ INT_PTR MainWindow::InitializeMainDialog()
     // UpdateAttributesListView();
     // UpdateAttributeValuesListView();
 
-    AppendLog(u"Mouse wheel scrolls, middle button drag pans, right click opens menu, left click selects object (ctrl to toggle). "
-              u"You can select multiple objects in the list to change an attribute across all.\r\n"
-              u"Double click cell to edit. Press delete key to delete selected object. Press delete in attribute list to clear value.\r\n"
-              );
+    AppendLog(
+        u"Mouse wheel scrolls, middle button drag pans, right click opens menu, left click selects object (ctrl to toggle). "
+        u"You can select multiple objects in the list to change an attribute across all.\r\n"
+        u"Double click cell to edit. Press delete key to delete selected object. Press delete in attribute list to clear value.\r\n"
+    );
 
     uint32_t controlIdToSetFocusTo = 0;
     static_assert(SettingsVisibilityTotal == 3, "");

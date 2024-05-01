@@ -95,7 +95,7 @@ LRESULT CALLBACK DrawingCanvasControl::WindowProc(HWND hwnd, UINT message, WPARA
         }
         break;
 
-    case WM_DESTROY:
+    case WM_NCDESTROY:
         {
             LRESULT result = DefWindowProc(hwnd, message, wParam, lParam);
             delete this;

@@ -700,7 +700,6 @@ void DrawingCanvas::DrawGrid(uint32_t color, uint32_t step)
             {
                 xLineMod = 0;
             }
-            // Duplicate the alpha channel in the other three color channels.
             destRow[x] = pixelColor;
         }
         ++yMod;
@@ -863,7 +862,9 @@ namespace
         return S_OK;
     }
 
-    uint32_t GetSolidLineCount(
+    // Using the top left pixel as a reference color (like chroma key), and which direction to start from,
+    // count how many ignorable padding lines there are of the same color.
+    uint32_t GetIgnorablePaddingLineCount(
         uint32_t* pixels,
         size_t bytesPerRow,
         uint32_t width,
@@ -963,10 +964,10 @@ namespace
         {
             const size_t bytesPerRow = sourceBitmapInfo.dsBm.bmWidthBytes;
             uint32_t* pixels = reinterpret_cast<uint32_t*>(sourceBitmapInfo.dsBm.bmBits);
-            top     = GetSolidLineCount(pixels, bytesPerRow, bitmapWidth, bitmapHeight, bitmapHeight, 0);
-            bottom -= GetSolidLineCount(pixels, bytesPerRow, bitmapWidth, bitmapHeight, bitmapHeight - top, 1);
-            left    = GetSolidLineCount(pixels, bytesPerRow, bitmapWidth, bitmapHeight, bitmapWidth, 2);
-            right  -= GetSolidLineCount(pixels, bytesPerRow, bitmapWidth, bitmapHeight, bitmapWidth - left, 3);
+            top     = GetIgnorablePaddingLineCount(pixels, bytesPerRow, bitmapWidth, bitmapHeight, bitmapHeight, 0);
+            bottom -= GetIgnorablePaddingLineCount(pixels, bytesPerRow, bitmapWidth, bitmapHeight, bitmapHeight - top, 1);
+            left    = GetIgnorablePaddingLineCount(pixels, bytesPerRow, bitmapWidth, bitmapHeight, bitmapWidth, 2);
+            right  -= GetIgnorablePaddingLineCount(pixels, bytesPerRow, bitmapWidth, bitmapHeight, bitmapWidth - left, 3);
 
             top     = std::max(int32_t(top    - padding), 0);
             bottom  = std::min(int32_t(bottom + padding), int32_t(bitmapHeight));

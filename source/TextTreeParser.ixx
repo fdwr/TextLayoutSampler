@@ -337,7 +337,7 @@ TextTree::Node::Type TextTree::Node::GetGenericType() const noexcept
 TextTree::Node& TextTree::GetNode(uint32_t nodeIndex)
 {
     assert(nodeIndex < nodes_.size());
-    if (nodeIndex > nodes_.size())
+    if (nodeIndex >= nodes_.size())
     {
         return *static_cast<Node*>(nullptr); // Force AV.
     }
@@ -348,7 +348,7 @@ TextTree::Node& TextTree::GetNode(uint32_t nodeIndex)
 const TextTree::Node& TextTree::GetNode(uint32_t nodeIndex) const
 {
     assert(nodeIndex < nodes_.size());
-    if (nodeIndex > nodes_.size())
+    if (nodeIndex >= nodes_.size())
     {
         return *static_cast<Node*>(nullptr); // Force AV.
     }

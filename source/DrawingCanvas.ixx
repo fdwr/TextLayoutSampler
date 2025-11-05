@@ -390,7 +390,7 @@ HRESULT DrawingCanvas::CreateRenderTargetsOnDemand(_In_opt_ HDC templateHdc, SIZ
         D2D1_RENDER_TARGET_PROPERTIES targetProperties =
             D2D1::RenderTargetProperties(
                 D2D1_RENDER_TARGET_TYPE_SOFTWARE,
-                D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED), // D2D1_ALPHA_MODE_IGNORE
+                D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE), // D2D1_ALPHA_MODE_PREMULTIPLIED prevents ClearType.
                 0,0,
                 D2D1_RENDER_TARGET_USAGE_NONE
                 );

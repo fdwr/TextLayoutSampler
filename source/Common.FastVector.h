@@ -765,7 +765,7 @@ public:
 private:
     constexpr array_ref<T> GetFixedSizeArrayData() noexcept
     {
-        return array_ref<T>(reinterpret_cast<T*>(std::data(fixedSizedArrayData_)), std::size(fixedSizedArrayData_));
+        return array_ref<T>(reinterpret_cast<T*>(std::data(fixedSizedArrayData_)), DefaultArraySize);
     }
 
 private:
@@ -776,7 +776,7 @@ private:
     // Note Visual Studio 2017 15.8 requires you to declare _ENABLE_EXTENDED_ALIGNED_STORAGE
     // if your type T is > max_align_t.
     //
-    std::aligned_storage_t<sizeof(T), alignof(T)> fixedSizedArrayData_[DefaultArraySize];
+    /*[[uninitialized]]*/ alignas(T) std::byte fixedSizedArrayData_[sizeof(T) * DefaultArraySize];
 };
 
 #ifdef USE_GSL_SPAN_INSTEAD_OF_ARRAY_REF

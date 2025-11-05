@@ -155,7 +155,7 @@ public:
     void AppendLogUnformatted(char16_t const* logMessage);
     void ShowMessageAndAppendLog(char16_t const* logMessage, ...);
     void ShowMessageAndAppendLogUnformatted(char16_t const* logMessage);
-    HRESULT ShowMessageIfError(char16_t const* logMessage, HRESULT hr, ...);
+    HRESULT ShowMessageIfError(char16_t const* logMessage, /*HRESULT hr,*/ ...);
 
     void ClearLog();
 

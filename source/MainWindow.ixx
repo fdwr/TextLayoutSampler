@@ -1,4 +1,4 @@
-﻿//----------------------------------------------------------------------------
+//----------------------------------------------------------------------------
 //  History:    2015-06-19 Dwayne Robinson - Created
 //              2022-03-17 Updated for high DPI
 //----------------------------------------------------------------------------
@@ -3291,6 +3291,7 @@ void MainWindow::AppendLogCached(char16_t const* logMessage, ...)
     buffer[0] = 0;
 
     StringCchVPrintf(OUT ToWChar(buffer), countof(buffer), ToWChar(logMessage), argList);
+    va_end(argList);
     cachedLog_ += buffer;
 }
 
@@ -3319,6 +3320,7 @@ void MainWindow::AppendLog(char16_t const* logMessage, ...)
     buffer[0] = 0;
 
     StringCchVPrintf(OUT ToWChar(buffer), countof(buffer), ToWChar(logMessage), argList);
+    va_end(argList);
     AppendLogUnformatted(buffer);
 }
 
@@ -3342,22 +3344,28 @@ void MainWindow::ShowMessageAndAppendLog(char16_t const* logMessage, ...)
     buffer[0] = 0;
 
     StringCchVPrintf(OUT ToWChar(buffer), countof(buffer), ToWChar(logMessage), argList);
+    va_end(argList);
     ShowMessageAndAppendLogUnformatted(buffer);
 }
 
 
-HRESULT MainWindow::ShowMessageIfError(char16_t const* logMessage, HRESULT hr, ...)
+HRESULT MainWindow::ShowMessageIfError(char16_t const* logMessage, /*HRESULT hr,*/ ...)
 {
+    va_list originalList, argList;
+    va_start(originalList, logMessage);
+    va_copy(argList, originalList);
+    HRESULT hr = va_arg(originalList, HRESULT);
+
     if (FAILED(hr))
     {
-        va_list argList;
-        va_start(argList, logMessage);
         char16_t buffer[1000];
         buffer[0] = 0;
 
         StringCchVPrintf(OUT ToWChar(buffer), countof(buffer), ToWChar(logMessage), argList);
         MainWindow::ShowMessageAndAppendLogUnformatted(buffer);
     }
+    va_end(argList);
+    va_end(originalList);
     return hr;
 }
 

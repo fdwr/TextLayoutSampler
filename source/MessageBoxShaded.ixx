@@ -129,7 +129,18 @@ INT_PTR MessageBoxShaded::Initialize(MSGBOXPARAMS const& params)
 
     // Overlay the modal dialog atop the owner window with the same size.
     RECT ownerRect = {};
+    RECT dialogRect = {};
+
     GetWindowRect(params.hwndOwner, OUT &ownerRect);
+    GetClientRect(params.hwndOwner, OUT &dialogRect); // Client area (visible content)  
+ 
+    // Convert clientRect to screen coordinates  
+    ClientToScreen(params.hwndOwner, (POINT*)&dialogRect.left); // Top-left of client area  
+    dialogRect.right += dialogRect.left;
+    dialogRect.bottom += dialogRect.top;
+
+    // Just use the top of the owner rect. Using GetTitleBarInfo leaves a gap.
+    dialogRect.top = ownerRect.top;
 
     if (IsMaximized(params.hwndOwner))
     {
@@ -143,10 +154,10 @@ INT_PTR MessageBoxShaded::Initialize(MSGBOXPARAMS const& params)
         monitorInfo.cbSize = sizeof(monitorInfo);
         HMONITOR monitor = MonitorFromWindow(params.hwndOwner, MONITOR_DEFAULTTONEAREST);
         GetMonitorInfo(monitor, OUT &monitorInfo);
-        IntersectRect(OUT &ownerRect, &ownerRect, &monitorInfo.rcWork);
+        IntersectRect(OUT &dialogRect, &dialogRect, &monitorInfo.rcWork);
     }
 
-    SetWindowPos(hwnd_, nullptr, ownerRect.left, ownerRect.top, ownerRect.right - ownerRect.left, ownerRect.bottom - ownerRect.top, SWP_NOZORDER|SWP_NOACTIVATE);
+    SetWindowPos(hwnd_, nullptr, dialogRect.left, dialogRect.top, dialogRect.right - dialogRect.left, dialogRect.bottom - dialogRect.top, SWP_NOZORDER|SWP_NOACTIVATE);
 
     SetLayeredWindowAttributes(hwnd_, 0, 224, LWA_ALPHA);
 
